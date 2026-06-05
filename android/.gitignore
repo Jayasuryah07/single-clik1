@@ -1,0 +1,108 @@
+# =========================
+# Flutter / Dart
+# =========================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+pubspec.lock
+*.dill
+
+# Flutter build artifacts
+.flutter-*
+**/libflutter.so
+**/*.so
+**/*.dylib
+**/*.dll
+
+# =========================
+# Android
+# =========================
+/android/.gradle/
+/android/app/*.keystore
+/android/key.properties
+.gradle/
+captures/
+local.properties
+*.apk
+*.aab
+
+# Android Studio/Gradle Wrapper
+gradlew
+gradlew.bat
+
+# =========================
+# iOS
+# =========================
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Flutter/Flutter.framework/
+ios/Flutter/App.framework/
+ios/Flutter/Generated.xcconfig
+ios/.symlinks/
+ios/Flutter/ephemeral/
+
+# =========================
+# macOS
+# =========================
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/Runner.xcworkspace/
+
+# =========================
+# Web
+# =========================
+web/.dart_tool/
+web/build/
+
+# =========================
+# Windows / Linux
+# =========================
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+
+# =========================
+# IDE & Editor
+# =========================
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# =========================
+# Keystore & Signing
+# =========================
+**/*.jks
+**/*.keystore
+key.properties
+
+# =========================
+# Miscellaneous
+# =========================
+GeneratedPluginRegistrant.java
+
+# Large binaries / archives
+*.zip
+*.tar
+*.tar.gz
+*.jar
+*.so
+*.exe
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Coverage
+# =========================
+coverage/

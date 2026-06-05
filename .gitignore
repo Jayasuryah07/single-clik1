@@ -1,0 +1,67 @@
+# Flutter/Dart specific
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+build/
+pubspec.lock
+*.dill
+# Android-specific
+/android/.gradle/
+/android/app/*.keystore
+/android/key.properties
+.gradle/
+captures/
+local.properties
+*.apk
+*.aab
+
+# iOS-specific
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Flutter/Flutter.framework/
+ios/Flutter/App.framework/
+ios/Flutter/Generated.xcconfig
+
+# macOS-specific
+macos/Flutter/ephemeral/
+
+# Web-specific
+web/.dart_tool/
+web/build/
+
+# Linux/Windows
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Executables
+gradlew
+gradlew.bat
+
+# Keystore and signing
+**/*.jks
+**/*.keystore
+key.properties
+
+# Misc
+GeneratedPluginRegistrant.java
+
+# Additional safe guards for large binaries
+*.so
+*.exe
+*.zip
+*.tar
+*.jar
+
+# Flutter build
+.flutter-*
+
+# Debug symbols and native libs
+**/libflutter.so
+**/*.so
