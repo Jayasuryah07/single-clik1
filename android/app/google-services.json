@@ -1,0 +1,110 @@
+{
+  "project_info": {
+    "project_number": "885031020744",
+    "project_id": "singleclick-1597e",
+    "storage_bucket": "singleclick-1597e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885031020744:android:f6fe92687f9b2667069dfd",
+        "android_client_info": {
+          "package_name": "com.singleclick.agsolution"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "885031020744-0si3qbpdv5fkm2dl1acmfk6g8g6s8j67.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "61e19ed390293659f8d91561b50eb448293212dc"
+          }
+        },
+        {
+          "client_id": "885031020744-7l6ebhs9k0rv3kbmgl7uq9g4m0leidkj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "e11bf38ba28bacd197f71be2c4288ba339cff999"
+          }
+        },
+        {
+          "client_id": "885031020744-k0vs5m081734n9l8n1era6su31ukcsbt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "80bdc539bb062c2d87864f82d5f4d9b0113c5711"
+          }
+        },
+        {
+          "client_id": "885031020744-nntd83cf0jjmr86vtl3pq78l1c6ra8hl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "9062b6cd6bb4d2f3fb7971c7ca9efa1b170f4b51"
+          }
+        },
+        {
+          "client_id": "885031020744-p6a8mholq8dgvvokgu0vbc94r5m82c9e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "6a2bb6038e6f846543113b4a14f88f2d895142d6"
+          }
+        },
+        {
+          "client_id": "885031020744-t70pirva1qa7gg50uv4ek95h8s4kpn9q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "c4b498cea1cd7b6b093f426062de2d910db3ff61"
+          }
+        },
+        {
+          "client_id": "885031020744-t8d8vtqim9caco5ma92ai1d618aefacv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "0324ded2bb64b9ac4a040a8d89475389ebeee992"
+          }
+        },
+        {
+          "client_id": "885031020744-u99plnd6kgjcicurilvg69j26gaifprq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.singleclick.agsolution",
+            "certificate_hash": "85b8167a9e967660f1d5e9697170cf56a0d27ea4"
+          }
+        },
+        {
+          "client_id": "885031020744-2u2d8qb7o3g850u9dcsk27am7ffmston.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAagp4grWmcovP2y6AiZhZJUHN0EmKQ-JA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "885031020744-2u2d8qb7o3g850u9dcsk27am7ffmston.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "885031020744-1utr09u2gb6ptrrb8kgj1qguvcc35ee7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.singleclick.agsolution"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
