@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -9,65 +10,79 @@ import '../../utils/shar_preferences.dart';
 
 class NotificationController extends GetxController {
   final isLoading = false.obs;
+  final isAutoRefreshing = false.obs;
   RxList notificationDataList = [].obs;
 
-  Future<void> getAllNotifications() async {
+  late Timer timer;
+  bool _isDisposed = false;
+
+  void getNotificationTimer() {
+    const period = Duration(seconds: 15);
+    timer = Timer.periodic(
+      period,
+      (Timer timer) {
+        if (!_isDisposed) {
+          getAllNotifications(isAutoRefresh: true);
+        }
+      },
+    );
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    getAllNotifications();
+    getNotificationTimer();
+  }
+
+  Future<void> getAllNotifications({bool isAutoRefresh = false}) async {
+    if (_isDisposed) return;
     try {
-      isLoading.value = true;
+      if (!isAutoRefresh) {
+        isLoading.value = true;
+      } else {
+        isAutoRefreshing.value = true;
+      }
+      
       final request =
           http.MultipartRequest('POST', Uri.parse(API.notification));
       request.headers.addAll({
         'Authorization': 'Bearer ${await SharPreferences.getString(SharPreferences.token)}',
       });
-      // request.fields.addAll({'profile_type': profileType!});
 
-      var res = await request.send();
+      var res = await request.send().timeout(const Duration(seconds: 10));
       var responseDone = await http.Response.fromStream(res);
+
+      if (_isDisposed) return;
 
       if (res.statusCode == 200) {
         final responseData = json.decode(responseDone.body);
-        debugPrint(responseDone.body);
         if (responseData['code'] == 200) {
           notificationDataList.value = responseData['data'] ?? [];
-          isLoading.value = false;
         } else {
           notificationDataList.value = [];
-          isLoading.value = false;
-          // ShowToast.showToast(
-          //   responseData['msg'] ?? 'Something went wrong.',
-          //   showSuccess: false,
-          // );
         }
       } else {
         notificationDataList.value = [];
-        isLoading.value = false;
-        // ShowToast.showToast(
-        //   ConstantString.somethingWantWrongMsg,
-        //   showSuccess: false,
-        // );
       }
     }
-    // on TimeoutException catch (e) {
-    //   isLoading.value = false;
-    //   ShowToast.showToast(
-    //     e.message.toString(),
-    //     showSuccess: false,
-    //   );
-    // } on SocketException catch (e) {
-    //   isLoading.value = false;
-    //   ShowToast.showToast(
-    //     e.message.toString(),
-    //     showSuccess: false,
-    //   );
-    // }
     catch (e) {
-      notificationDataList.value = [];
-      isLoading.value = false;
-      // ShowToast.showToast(
-      //   'Something went wrong.',
-      //   showSuccess: false,
-      // );
-      debugPrint(e.toString());
+      debugPrint('Error fetching notifications: $e');
+    } finally {
+      if (!_isDisposed) {
+        if (!isAutoRefresh) {
+          isLoading.value = false;
+        } else {
+          isAutoRefreshing.value = false;
+        }
+      }
     }
+  }
+
+  @override
+  void onClose() {
+    _isDisposed = true;
+    timer.cancel();
+    super.onClose();
   }
 }

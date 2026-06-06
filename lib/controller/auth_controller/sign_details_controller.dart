@@ -17,6 +17,8 @@ import 'package:single_clik/services/api.dart';
 import '../../constants/constant_color.dart';
 import '../../constants/constant_string.dart';
 import '../../screens/auth_screens/otp_screen.dart';
+import '../../screens/home_tab_bar_screen.dart';
+import '../../utils/shar_preferences.dart';
 
 class SignDetailsController extends GetxController {
   final isLoading = false.obs;
@@ -129,13 +131,29 @@ class SignDetailsController extends GetxController {
     String mobileNumber
   ) async {
     try {
-      await FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
-      
+      // Bypassing / setting appVerificationDisabledForTesting to true causes verification to fail on real devices.
+      // We call verifyPhoneNumber directly to allow standard Play Integrity / reCAPTCHA fallback verification.
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: "+91$mobileNumber",
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          await FirebaseAuth.instance.signInWithCredential(credential);
+          try {
+            await FirebaseAuth.instance.signInWithCredential(credential);
+            // Auto-login successful
+            final response = await otpController.postLoginApi({
+              "mobile": mobileNumber,
+              "password": mobileNumberController.password.value,
+              "device_id": await SharPreferences.getString(SharPreferences.fcmToken) ?? "Unknown_Device",
+            });
+            if (response['code'] == 200) {
+              ShowToast.showToast("Login Successful!", showSuccess: true);
+              Get.offAll(() => const HomeTabBarScreen());
+            } else {
+              ShowToast.showToast(response['msg'] ?? "Login failed", showSuccess: false);
+            }
+          } catch (e) {
+            debugPrint('Auto verification error: $e');
+          }
         },
         verificationFailed: (FirebaseAuthException e) {
           debugPrint('Verification Failed: ${e.code} - ${e.message}');

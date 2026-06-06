@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -16,37 +17,79 @@ class EnquiriesSentScreen extends StatefulWidget {
 }
 
 class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
-
   EnquiriesSentController enquiriesSentController = Get.put(EnquiriesSentController());
   HomeController homeController = Get.put(HomeController());
+  
+  Timer? _autoRefreshTimer;
+  String _currentStatus = "1";
+  bool _isRefreshing = false;
 
   @override
   void initState() {
-    // TODO: implement initState
-    if (enquiriesSentController.tabController.index == 0) {
-      getData('1');
-    }
-    else {
-      getData('2');
-    }
     super.initState();
+    
+    // Start auto-refresh timer
+    _startAutoRefresh();
+    
+    // Listen to tab changes
+    enquiriesSentController.tabController.addListener(_handleTabChange);
+  }
+  
+  void _handleTabChange() {
+    if (!enquiriesSentController.tabController.indexIsChanging) {
+      if (enquiriesSentController.tabController.index == 0) {
+        _currentStatus = "1";
+      } else {
+        _currentStatus = "2";
+      }
+    }
+  }
+  
+  void _startAutoRefresh() {
+    // Auto-refresh every 3 seconds
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted && !_isRefreshing && !enquiriesSentController.isAutoRefreshing.value) {
+        _autoRefreshData();
+      }
+    });
+  }
+  
+  Future<void> _autoRefreshData() async {
+    if (_isRefreshing) return;
+    
+    _isRefreshing = true;
+    try {
+      // Silently refresh both tabs data
+      await Future.wait([
+        enquiriesSentController.postSentApi("1", isAutoRefresh: true),
+        enquiriesSentController.postSentApi("2", isAutoRefresh: true),
+      ]);
+      
+      // Update home controller unread count
+      await homeController.getSentEnquiriesUnreadCount("1");
+      
+    } catch (e) {
+      debugPrint('Auto-refresh error: $e');
+    } finally {
+      _isRefreshing = false;
+    }
   }
 
-  Future<void> getData(String status) async {
-    await enquiriesSentController.postSentApi(status);
-    await homeController
-        .getSentEnquiriesUnreadCount("1");
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    enquiriesSentController.tabController.removeListener(_handleTabChange);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-
     double height = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: ConstantColor.bgColor,
       body: Obx(
-            () => Column(
+        () => Column(
           children: [
             Container(
               color: ConstantColor.primary,
@@ -57,17 +100,54 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
                 indicatorWeight: 4,
                 onTap: (value) async {
                   if (value == 0) {
-                    await enquiriesSentController.postSentApi("1");
+                    _currentStatus = "1";
+                    await enquiriesSentController.postSentApi("1", isAutoRefresh: false);
                     await homeController.getSentEnquiriesUnreadCount("1");
                   } else if (value == 1) {
-                    await enquiriesSentController.postSentApi("2");
-                    await homeController.getSentEnquiriesUnreadCount("1");
+                    _currentStatus = "2";
+                    await enquiriesSentController.postSentApi("2", isAutoRefresh: false);
                   }
                 },
                 tabs: [
                   Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Open",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            color: ConstantColor.whiteColor,
+                          ),
+                        ),
+                        // Show unread count badge
+                        if (enquiriesSentController.getUnreadCount() > 0)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              enquiriesSentController.getUnreadCount().toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Tab(
                     child: Text(
-                      "Open",
+                      "Closed",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w500,
@@ -75,460 +155,369 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
                       ),
                     ),
                   ),
-                  Tab(
-                    child: Text(
-                      "Closed",
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: ConstantColor.whiteColor),
-                    ),
-                  ),
                 ],
               ),
             ),
             Expanded(
-              child: enquiriesSentController.isLoading.value
+              child: (enquiriesSentController.isLoading.value && 
+                     enquiriesSentController.openSentList.isEmpty && 
+                     enquiriesSentController.closeSentList.isEmpty)
                   ? const Center(
-                child: CircularProgressIndicator(),
-              )
-                  : TabBarView(
-                controller: enquiriesSentController.tabController,
-                children: [
-                  RefreshIndicator(
-                    onRefresh: () async {
-                      await enquiriesSentController.postSentApi("1");
-                      await homeController
-                          .getSentEnquiriesUnreadCount("1");
-                    },
-                    backgroundColor: ConstantColor.whiteColor,
-                    color: ConstantColor.primary,
-                    child: enquiriesSentController.openSentList.isEmpty
-                        ? ListView(
-                      children: [
-                        SizedBox(
-                          height: Get.height / 2.8,
-                        ),
-                        Center(
-                          child: Text(
-                            ConstantString.dataNotFoundLabel,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: ConstantColor.blackColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+                      child: CircularProgressIndicator(),
                     )
-                        : ListView.builder(
-                      itemCount: enquiriesSentController.openSentList.length,
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        // List categoryDataList = homeController.categoryList.where((element) => element['id'].toString() == controller.openSentList[index]['category'].toString(),).toList();
-                        // Map categoryData = categoryDataList.isEmpty ? {} : categoryDataList.first;
-                        // String categoryName = categoryData['category'] ?? '';
-                        debugPrint(
-                            'Enquiries Sent ${enquiriesSentController.openSentList[index]}');
-                        return GestureDetector(
-                          onTap: () async {
-                            await Get.to(
-                                    () => EnquiriesSentGroupScreen(
-                                    userData: enquiriesSentController
-                                        .openSentList[index],
-                                    isChat: true),
-                                arguments: {
-                                  'enquiryId': enquiriesSentController
-                                      .openSentList[index]['id']
-                                      .toString()
-                                })?.then((value) async {
-                              await enquiriesSentController.postSentApi('1');
-                              await homeController
-                                  .getSentEnquiriesUnreadCount(
-                                  "1");
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 15),
-                            decoration: BoxDecoration(
-                                color: ConstantColor.whiteColor,
-                                borderRadius:
-                                BorderRadius.circular(8)),
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                  MainAxisAlignment
-                                      .spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        "${enquiriesSentController.openSentList[index]['category'] == null || enquiriesSentController.openSentList[index]['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiriesSentController.openSentList[index]['category']} (${enquiriesSentController.openSentList[index]['subcategory'] == null || enquiriesSentController.openSentList[index]['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiriesSentController.openSentList[index]['subcategory']})",
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight:
-                                          FontWeight.w600,
-                                          color: ConstantColor
-                                              .blackColor,
-                                        ),
-                                      ),
-
-                                    ),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        Dialogs.dialogs
-                                            .areYouSureAlertDialog(
-                                            context:
-                                            context,
-                                            title:
-                                            'Close Enquire?',
-                                            description:
-                                            'Do you want to close this enquire?',
-                                            onPressed:
-                                                () async {
-                                              Get.back();
-                                              await enquiriesSentController.postCloseSentApi(enquiriesSentController
-                                                  .openSentList[
-                                              index]
-                                              ['id']
-                                                  .toString());
-
-                                              await homeController
-                                                  .getSentEnquiriesUnreadCount(
-                                                  "1");
-                                            });
-                                      },
-                                      child: const SizedBox(
-                                        height: 30,
-                                        width: 30,
-                                        child: Icon(
-                                          Icons.close,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                    height: enquiriesSentController.openSentList[
-                                    index][
-                                    'enq_text'] ==
-                                        null ||
-                                        enquiriesSentController
-                                            .openSentList[
-                                        index]
-                                        ['enq_text']
-                                            .toString()
-                                            .trim()
-                                            .isEmpty
-                                        ? 0
-                                        : height * 0.01),
-                                enquiriesSentController.openSentList[index]
-                                ['enq_text'] ==
-                                    null ||
-                                    enquiriesSentController
-                                        .openSentList[index]
-                                    ['enq_text']
-                                        .toString()
-                                        .trim()
-                                        .isEmpty
-                                    ? const SizedBox()
-                                    : Text(
-                                  enquiriesSentController.openSentList[
-                                  index]
-                                  ['enq_text'] ??
-                                      "",
-                                  style: TextStyle(
-                                    color: ConstantColor
-                                        .blackColor,
-                                    fontSize: 13,
-                                    fontWeight:
-                                    FontWeight.w400,
-                                  ),
-                                ),
-                                SizedBox(height: height * 0.01),
-                                Row(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                  MainAxisAlignment
-                                      .spaceBetween,
-                                  children: [
-                                    Text(
-                                      enquiriesSentController.openSentList[
-                                      index]
-                                      ['status'] ??
-                                          "",
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight:
-                                        FontWeight.w400,
-                                        color: ConstantColor
-                                            .grayColor,
-                                      ),
-                                    ),
-                                    Row(
-                                      mainAxisSize:
-                                      MainAxisSize.min,
-                                      children: [
-                                        enquiriesSentController.openSentList[
-                                        index]
-                                        [
-                                        'unread_reply_count'] ==
-                                            null ||
-                                            enquiriesSentController
-                                                .openSentList[
-                                            index][
-                                            'unread_reply_count']
-                                                .toString()
-                                                .trim()
-                                                .isEmpty ||
-                                            enquiriesSentController.openSentList[
-                                            index]
-                                            [
-                                            'unread_reply_count'] ==
-                                                0
-                                            ? const SizedBox()
-                                            : Container(
-                                          decoration:
-                                          BoxDecoration(
-                                            color: ConstantColor
-                                                .greenColor,
-                                            shape: BoxShape
-                                                .circle,
-                                          ),
-                                          padding:
-                                          EdgeInsets.all(
-                                              Get.width /
-                                                  60),
-                                          margin:
-                                          EdgeInsets
-                                              .only(
-                                            right:
-                                            Get.width /
-                                                60,
-                                          ),
-                                          child: Text(
-                                            enquiriesSentController
-                                                .openSentList[
-                                            index]
-                                            [
-                                            'unread_reply_count']
-                                                .toString(),
-                                            style:
-                                            TextStyle(
-                                              fontSize:
-                                              12,
-                                              fontWeight:
-                                              FontWeight
-                                                  .w400,
-                                              color: ConstantColor
-                                                  .whiteColor,
-                                            ),
-                                          ),
-                                        ),
-                                        Text(
-                                          DateFormat(
-                                              'dd-MM-yyyy')
-                                              .format(DateTime.parse(
-                                              enquiriesSentController.openSentList[
-                                              index]
-                                              [
-                                              'created_at'] ??
-                                                  DateTime
-                                                      .now())),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight:
-                                            FontWeight.w400,
-                                            color: ConstantColor
-                                                .grayColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  RefreshIndicator(
-                    onRefresh: () async {
-                      await enquiriesSentController.postSentApi("2");
-                      await homeController
-                          .getSentEnquiriesUnreadCount("1");
-                    },
-                    backgroundColor: ConstantColor.whiteColor,
-                    color: ConstantColor.primary,
-                    child: enquiriesSentController.closeSentList.isEmpty
-                        ? ListView(
+                  : Stack(
                       children: [
-                        SizedBox(
-                          height: Get.height / 2.8,
+                        TabBarView(
+                          controller: enquiriesSentController.tabController,
+                          children: [
+                            _buildOpenTab(height),
+                            _buildClosedTab(height),
+                          ],
                         ),
-                        Center(
-                          child: Text(
-                            ConstantString.dataNotFoundLabel,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: ConstantColor.blackColor,
-                              fontWeight: FontWeight.w600,
+                        // Auto-refresh indicator
+                        if (enquiriesSentController.isAutoRefreshing.value)
+                          Positioned(
+                            bottom: 16,
+                            right: 16,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: ConstantColor.primary,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
                       ],
-                    )
-                        : ListView.builder(
-                      itemCount:
-                      enquiriesSentController.closeSentList.length,
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        // List categoryDataList = homeController.categoryList.where((element) => element['id'].toString() == controller.closeSentList[index]['category'].toString(),).toList();
-                        // Map categoryData = categoryDataList.isEmpty ? {} : categoryDataList.first;
-                        // String categoryName = categoryData['category'] ?? '';
-                        return GestureDetector(
-                          onTap: () async {
-                            await Get.to(
-                                    () => EnquiriesSentGroupScreen(
-                                    userData: enquiriesSentController
-                                        .closeSentList[index],
-                                    isChat: false),
-                                arguments: {
-                                  'enquiryId': enquiriesSentController
-                                      .closeSentList[index]
-                                  ['id']
-                                      .toString()
-                                })?.then((value) async {
-                              await enquiriesSentController.postSentApi('2');
-                              await homeController
-                                  .getSentEnquiriesUnreadCount(
-                                  "1");
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 15),
-                            decoration: BoxDecoration(
-                                color: ConstantColor.whiteColor,
-                                borderRadius:
-                                BorderRadius.circular(8)),
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "${enquiriesSentController.closeSentList[index]['category'] == null || enquiriesSentController.closeSentList[index]['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiriesSentController.closeSentList[index]['category']} (${enquiriesSentController.closeSentList[index]['subcategory'] == null || enquiriesSentController.closeSentList[index]['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiriesSentController.closeSentList[index]['subcategory']})",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: ConstantColor
-                                        .blackColor,
-                                  ),
-                                ),
-
-                                SizedBox(
-                                    height: enquiriesSentController.closeSentList[
-                                    index][
-                                    'enq_text'] ==
-                                        null ||
-                                        enquiriesSentController
-                                            .closeSentList[
-                                        index]
-                                        ['enq_text']
-                                            .toString()
-                                            .trim()
-                                            .isEmpty
-                                        ? 0
-                                        : height * 0.01),
-                                enquiriesSentController.closeSentList[index]
-                                ['enq_text'] ==
-                                    null ||
-                                    enquiriesSentController
-                                        .closeSentList[
-                                    index]
-                                    ['enq_text']
-                                        .toString()
-                                        .trim()
-                                        .isEmpty
-                                    ? const SizedBox()
-                                    : Text(
-                                  enquiriesSentController.closeSentList[
-                                  index]
-                                  ['enq_text'] ??
-                                      "",
-                                  style: TextStyle(
-                                    color: ConstantColor
-                                        .blackColor,
-                                    fontSize: 13,
-                                    fontWeight:
-                                    FontWeight.w400,
-                                  ),
-                                ),
-                                SizedBox(height: height * 0.01),
-                                Row(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                  MainAxisAlignment
-                                      .spaceBetween,
-                                  children: [
-                                    Text(
-                                      enquiriesSentController.closeSentList[
-                                      index]
-                                      ['status'] ??
-                                          "",
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight:
-                                        FontWeight.w400,
-                                        color: ConstantColor
-                                            .grayColor,
-                                      ),
-                                    ),
-                                    Text(
-                                      DateFormat('dd-MM-yyyy')
-                                          .format(DateTime.parse(
-                                          enquiriesSentController.closeSentList[
-                                          index]
-                                          [
-                                          'created_at'] ??
-                                              DateTime
-                                                  .now())),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight:
-                                        FontWeight.w400,
-                                        color: ConstantColor
-                                            .grayColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
                     ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
       ),
+    );
+  }
+  
+  Widget _buildOpenTab(double height) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await enquiriesSentController.postSentApi("1", isAutoRefresh: false);
+        await homeController.getSentEnquiriesUnreadCount("1");
+      },
+      backgroundColor: ConstantColor.whiteColor,
+      color: ConstantColor.primary,
+      child: enquiriesSentController.openSentList.isEmpty
+          ? ListView(
+              children: [
+                SizedBox(
+                  height: Get.height / 2.8,
+                ),
+                Center(
+                  child: Text(
+                    ConstantString.dataNotFoundLabel,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: ConstantColor.blackColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : ListView.builder(
+              itemCount: enquiriesSentController.openSentList.length,
+              shrinkWrap: true,
+              itemBuilder: (context, index) {
+                final enquiry = enquiriesSentController.openSentList[index];
+                final hasUnread = (enquiry['unread_reply_count'] != null && 
+                                    enquiry['unread_reply_count'] > 0);
+                
+                return GestureDetector(
+                  onTap: () async {
+                    await Get.to(
+                      () => EnquiriesSentGroupScreen(
+                        userData: enquiry,
+                        isChat: true,
+                      ),
+                      arguments: {
+                        'enquiryId': enquiry['id'].toString(),
+                        'user_id': enquiry['user_id']?.toString() ?? '',
+                      },
+                    )?.then((value) async {
+                      // Refresh data when coming back
+                      await enquiriesSentController.postSentApi("1", isAutoRefresh: false);
+                      await homeController.getSentEnquiriesUnreadCount("1");
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20, 
+                      vertical: 12,
+                    ),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 8, 
+                      horizontal: 15,
+                    ),
+                    decoration: BoxDecoration(
+                      color: hasUnread 
+                          ? ConstantColor.primary.withOpacity(0.05)
+                          : ConstantColor.whiteColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: hasUnread
+                          ? Border.all(
+                              color: ConstantColor.primary,
+                              width: 1.5,
+                            )
+                          : null,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "${enquiry['category'] == null || enquiry['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiry['category']} (${enquiry['subcategory'] == null || enquiry['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiry['subcategory']})",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: ConstantColor.blackColor,
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                if (hasUnread)
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      enquiry['unread_reply_count'].toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                GestureDetector(
+                                  onTap: () async {
+                                    Dialogs.dialogs.areYouSureAlertDialog(
+                                      context: context,
+                                      title: 'Close Enquiry?',
+                                      description: 'Do you want to close this enquiry?',
+                                      onPressed: () async {
+                                        Get.back();
+                                        await enquiriesSentController.postCloseSentApi(
+                                          enquiry['id'].toString()
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: const SizedBox(
+                                    height: 30,
+                                    width: 30,
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        if (enquiry['enq_text'] != null && 
+                            enquiry['enq_text'].toString().trim().isNotEmpty) ...[
+                          SizedBox(height: height * 0.01),
+                          Text(
+                            enquiry['enq_text'] ?? "",
+                            style: TextStyle(
+                              color: ConstantColor.blackColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        SizedBox(height: height * 0.01),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              enquiry['status'] ?? "",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: enquiry['status'] == 'Open'
+                                    ? ConstantColor.greenColor
+                                    : ConstantColor.grayColor,
+                              ),
+                            ),
+                            Text(
+                              DateFormat('dd-MM-yyyy').format(
+                                DateTime.parse(
+                                  enquiry['created_at'] ?? DateTime.now().toString()
+                                )
+                              ),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: ConstantColor.grayColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+  
+  Widget _buildClosedTab(double height) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await enquiriesSentController.postSentApi("2", isAutoRefresh: false);
+      },
+      backgroundColor: ConstantColor.whiteColor,
+      color: ConstantColor.primary,
+      child: enquiriesSentController.closeSentList.isEmpty
+          ? ListView(
+              children: [
+                SizedBox(
+                  height: Get.height / 2.8,
+                ),
+                Center(
+                  child: Text(
+                    ConstantString.dataNotFoundLabel,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: ConstantColor.blackColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : ListView.builder(
+              itemCount: enquiriesSentController.closeSentList.length,
+              shrinkWrap: true,
+              itemBuilder: (context, index) {
+                final enquiry = enquiriesSentController.closeSentList[index];
+                
+                return GestureDetector(
+                  onTap: () async {
+                    await Get.to(
+                      () => EnquiriesSentGroupScreen(
+                        userData: enquiry,
+                        isChat: false,
+                      ),
+                      arguments: {
+                        'enquiryId': enquiry['id'].toString(),
+                        'user_id': enquiry['user_id']?.toString() ?? '',
+                      },
+                    )?.then((value) async {
+                      await enquiriesSentController.postSentApi("2", isAutoRefresh: false);
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20, 
+                      vertical: 12,
+                    ),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 8, 
+                      horizontal: 15,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ConstantColor.whiteColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${enquiry['category'] == null || enquiry['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiry['category']} (${enquiry['subcategory'] == null || enquiry['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiry['subcategory']})",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: ConstantColor.blackColor,
+                          ),
+                        ),
+                        if (enquiry['enq_text'] != null && 
+                            enquiry['enq_text'].toString().trim().isNotEmpty) ...[
+                          SizedBox(height: height * 0.01),
+                          Text(
+                            enquiry['enq_text'] ?? "",
+                            style: TextStyle(
+                              color: ConstantColor.blackColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        SizedBox(height: height * 0.01),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              enquiry['status'] ?? "",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: ConstantColor.grayColor,
+                              ),
+                            ),
+                            Text(
+                              DateFormat('dd-MM-yyyy').format(
+                                DateTime.parse(
+                                  enquiry['created_at'] ?? DateTime.now().toString()
+                                )
+                              ),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: ConstantColor.grayColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
