@@ -12,8 +12,10 @@ import 'package:single_clik/constants/constant_color.dart';
 import 'package:single_clik/services/api.dart';
 import 'package:single_clik/utils/shar_preferences.dart';
 
+import 'package:single_clik/constants/show_toast.dart';
+import 'package:single_clik/widget/app_image_assets.dart';
+
 import '../../constants/constant_string.dart';
-import '../../constants/network_to_file_image.dart';
 import 'home_controller.dart';
 
 class ProfileController extends GetxController {
@@ -41,16 +43,21 @@ class ProfileController extends GetxController {
         sourcePath: pickedFile.path,
         compressFormat: ImageCompressFormat.jpg,
         compressQuality: 50,
-
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         uiSettings: [
           AndroidUiSettings(
-              toolbarTitle: 'Cropper',
-              toolbarColor: ConstantColor.primaryDark,
-              toolbarWidgetColor: ConstantColor.primary,
-              initAspectRatio: CropAspectRatioPreset.original,
-              lockAspectRatio: false),
+            toolbarTitle: 'Crop Image',
+            toolbarColor: ConstantColor.primary,
+            toolbarWidgetColor: Colors.white,
+            statusBarColor: Colors.black,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
           IOSUiSettings(
-            title: 'Cropper',
+            title: 'Crop Image',
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+            aspectRatioPickerButtonHidden: true,
           ),
         ],
       );
@@ -59,6 +66,49 @@ class ProfileController extends GetxController {
       }
     }
     update();
+  }
+
+  Future<void> autoUploadProfilePhoto() async {
+    isButtonLoading.value = true;
+    try {
+      HomeController homeController = Get.find<HomeController>();
+      Map<String, String> bodyParams = {
+        'name': (profileMap['name'] ?? homeController.userData['name'] ?? '').toString().trim(),
+        'company_name': (profileMap['company_name'] ?? homeController.userData['company_name'] ?? '').toString().trim(),
+        'email': (profileMap['email'] ?? homeController.userData['email'] ?? '').toString().trim(),
+        'area': (areaController.value.text.isNotEmpty 
+            ? areaController.value.text 
+            : (profileMap['area'] ?? homeController.userData['area'] ?? '')).toString().trim(),
+        'referred_by_code': (profileMap['referred_by_code'] ?? homeController.userData['referred_by_code'] ?? '').toString().trim(),
+        'profile_type': (profileMap['profile_type'] ?? homeController.userData['profile_type'] ?? '0').toString(),
+        'category': (profileMap['category'] ?? homeController.userData['category'] ?? '0').toString(),
+        'sub_category': (profileMap['sub_category'] ?? homeController.userData['sub_category'] ?? '0').toString(),
+        'whatsapp': (profileMap['whatsapp'] ?? homeController.userData['whatsapp'] ?? '').toString(),
+        'website': (profileMap['website'] ?? homeController.userData['website'] ?? '').toString(),
+        'about_us': (profileMap['about_us'] ?? homeController.userData['about_us'] ?? '').toString(),
+      };
+
+      final value = await postUpdateProfileApi(
+        bodyParams,
+        croppedProfileFile!.value.path.trim(),
+      );
+
+      if (value != null && value['code'] == 200) {
+        await postFetchProfileApi();
+        await AppImageCacheManager.clearImageCache();
+        homeController.photoVersion.value++;
+        await homeController.postFetchProfileApi(forceRefresh: true);
+        ShowToast.showToast(
+          value['msg'] ?? ConstantString.dataUpdatedSuccessfullyMsg,
+          showSuccess: true,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error uploading profile photo: $e');
+      ShowToast.showToast('Failed to upload profile photo.', showSuccess: false);
+    } finally {
+      isButtonLoading.value = false;
+    }
   }
 
   Future postFetchProfileApi() async {
@@ -83,12 +133,9 @@ class ProfileController extends GetxController {
         log("assureds${responseData['data'][0].toString()}");
 
         profileMap.value =  homeController.userData['user_type'] != 2 ? responseData['data'][0] : responseData['data'];
-        String photoPath = await NetworkToFileImage.networkToFileImage
-            .getNetworkToFileImage(
-            url:
-            '${ConstantString.userImgUrlPath}${profileMap['photo'] ?? ""}');
-        filePath.value = photoPath;
-        beforeImgPath.value = photoPath;
+         filePath.value =
+            '${ConstantString.userImgUrlPath}${profileMap['photo'] ?? ""}';
+        beforeImgPath.value = filePath.value;
         homeController.userData['user_type'] != 2 ?  areaController.value.text =
             (profileMap['area'] ??
                 '')
@@ -120,7 +167,7 @@ class ProfileController extends GetxController {
         'Authorization': 'Bearer ${await SharPreferences.getString(SharPreferences.token)}',
       });
       request.fields.addAll(body);
-      photo == "" ? null:request.files.add(
+      (photo.isEmpty || photo.startsWith("http")) ? null : request.files.add(
         await http.MultipartFile.fromPath(
           'photo',
           photo,

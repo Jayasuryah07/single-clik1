@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:single_clik/constants/constant_color.dart';
 import 'package:single_clik/constants/show_toast.dart';
 import 'package:single_clik/controller/home_controller/update_profile_controller.dart';
+import 'package:single_clik/controller/home_controller/home_controller.dart';
 import 'package:single_clik/widget/app_button.dart';
 import 'package:single_clik/widget/app_image_assets.dart';
 import 'package:single_clik/widget/app_text_field.dart';
@@ -67,12 +68,9 @@ class UpdateProfileScreenState extends State<UpdateProfileScreen> {
     updateProfileController.areaController.value.text =
         widget.userData['area'] ?? "";
     debugPrint('User Photo ${widget.userData['photo'] ?? ""}');
-    String photoPath = await NetworkToFileImage.networkToFileImage
-        .getNetworkToFileImage(
-            url:
-                '${ConstantString.userImgUrlPath}${widget.userData['photo'] ?? ""}');
-    updateProfileController.filePath.value = photoPath;
-    beforeImgPath = photoPath;
+    updateProfileController.filePath.value =
+        '${ConstantString.userImgUrlPath}${widget.userData['photo'] ?? ""}';
+    beforeImgPath = updateProfileController.filePath.value;
   }
 
   String beforeImgPath = '';
@@ -83,7 +81,13 @@ class UpdateProfileScreenState extends State<UpdateProfileScreen> {
     double width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: ConstantColor.primary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: ConstantColor.primaryGradient,
+          ),
+        ),
         leading: GestureDetector(
           onTap: () {
             Get.back();
@@ -137,48 +141,22 @@ class UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                           borderRadius:
                                               BorderRadius.circular(7),
                                         ),
-                                        child: updateProfileController
-                                                    .croppedProfileFile!
-                                                    .value
-                                                    .path !=
-                                                ""
+                                        child: updateProfileController.filePath.value.isNotEmpty
                                             ? AppImageAsset(
-                                                image: updateProfileController
-                                                    .croppedProfileFile!
-                                                    .value
-                                                    .path,
-                                                isFile: updateProfileController
-                                                    .filePath
-                                                    .contains("cache"),
+                                                key: ValueKey('update_profile_photo_${Get.find<HomeController>().photoVersion.value}'),
+                                                image: updateProfileController.filePath.value,
+                                                isFile: !updateProfileController.filePath.value.startsWith("http"),
                                                 fit: BoxFit.cover,
                                                 height: 100,
                                                 width: 100,
                                               )
-                                            : updateProfileController
-                                                        .filePath.value !=
-                                                    ""
-                                                ? AppImageAsset(
-                                                    image: updateProfileController
-                                                            .filePath
-                                                            .contains("cache")
-                                                        ? updateProfileController
-                                                            .filePath.value
-                                                        : "${ConstantString.userImgUrlPath}${updateProfileController.filePath}",
-                                                    isFile:
-                                                        updateProfileController
-                                                            .filePath
-                                                            .contains("cache"),
-                                                    fit: BoxFit.cover,
-                                                    height: 100,
-                                                    width: 100,
-                                                  )
-                                                : Center(
-                                                    child: Image.asset(
-                                                      "assets/icons/icon_camera.png",
-                                                      height: 30,
-                                                      width: 30,
-                                                    ),
-                                                  ),
+                                            : Center(
+                                                child: Image.asset(
+                                                  "assets/icons/icon_camera.png",
+                                                  height: 30,
+                                                  width: 30,
+                                                ),
+                                              ),
                                       ),
                                     ),
                                   ),
@@ -193,12 +171,17 @@ class UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                             await picker.pickImage(
                                                 source: ImageSource.gallery);
                                         if (image != null) {
-                                          updateProfileController
+                                          await updateProfileController
                                               .cropImage(image);
-                                        }
-                                        if (image != null) {
-                                          updateProfileController
-                                              .filePath.value = image.path;
+                                          if (updateProfileController
+                                              .croppedProfileFile!.value.path
+                                              .isNotEmpty) {
+                                            updateProfileController.filePath.value =
+                                                updateProfileController
+                                                    .croppedProfileFile!.value.path;
+                                            await updateProfileController
+                                                .autoUploadProfilePhoto();
+                                          }
                                         }
                                       },
                                       child: Container(

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -37,16 +36,21 @@ class SignDetailsController extends GetxController {
         sourcePath: pickedFile.path,
         compressFormat: ImageCompressFormat.jpg,
         compressQuality: 50,
-
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         uiSettings: [
           AndroidUiSettings(
-              toolbarTitle: 'Cropper',
-              toolbarColor: ConstantColor.primaryDark,
-              toolbarWidgetColor: ConstantColor.primary,
-              initAspectRatio: CropAspectRatioPreset.original,
-              lockAspectRatio: false),
+            toolbarTitle: 'Crop Image',
+            toolbarColor: ConstantColor.primary,
+            toolbarWidgetColor: Colors.white,
+            statusBarColor: Colors.black,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
           IOSUiSettings(
-            title: 'Cropper',
+            title: 'Crop Image',
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+            aspectRatioPickerButtonHidden: true,
           ),
         ],
       );
@@ -64,7 +68,7 @@ class SignDetailsController extends GetxController {
       final request = http.MultipartRequest('POST', Uri.parse(API.signUp));
       request.fields.addAll(bodyParams);
       
-      if (photo.isNotEmpty) {
+      if (photo.isNotEmpty && !photo.startsWith("http")) {
         request.files.add(
           await http.MultipartFile.fromPath('photo', photo),
         );

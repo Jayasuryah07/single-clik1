@@ -3,9 +3,38 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:single_clik/constants/constant_color.dart';
+import 'package:shimmer/shimmer.dart';
+
+import 'package:get/get.dart';
+import 'package:single_clik/controller/home_controller/home_controller.dart';
 
 import '../constants/constant_string.dart';
+
+/// A singleton custom cache manager for app images.
+/// Caches up to 200 images, each valid for 30 days.
+class AppImageCacheManager extends CacheManager with ImageCacheManager {
+  static const key = 'singleClikImageCache';
+  static final AppImageCacheManager _instance = AppImageCacheManager._();
+  factory AppImageCacheManager() => _instance;
+
+  AppImageCacheManager._()
+      : super(
+          Config(
+            key,
+            stalePeriod: const Duration(days: 30),
+            maxNrOfCacheObjects: 200,
+            repo: JsonCacheInfoRepository(databaseName: key),
+            fileService: HttpFileService(),
+          ),
+        );
+
+  /// Clears the entire image disk cache
+  static Future<void> clearImageCache() async {
+    await _instance.emptyCache();
+    await DefaultCacheManager().emptyCache();
+    debugPrint('✅ Image disk cache cleared');
+  }
+}
 
 class AppImageAsset extends StatelessWidget {
   final String? image;
@@ -14,6 +43,9 @@ class AppImageAsset extends StatelessWidget {
   final Color? color;
   final BoxFit? fit;
   final bool isFile;
+
+  // 'cache' param kept for backward compatibility — always caches network images now
+  // ignore: unused_element
   final bool cache;
 
   const AppImageAsset({
@@ -27,79 +59,130 @@ class AppImageAsset extends StatelessWidget {
     this.cache = false,
   });
 
-  Future<void> clearCache() async {
-    await DefaultCacheManager().emptyCache();
-  }
-
   @override
   Widget build(BuildContext context) {
-    if ((image!.contains('http') || image!.contains('https')) && cache) {
-      clearCache();
-    }
+    final img = image ?? '';
 
-    if (image!.contains('http') || image!.contains('https')) {
+    // ── Network image (http / https) ──────────────────────────────────────────
+    if (img.startsWith('http://') || img.startsWith('https://')) {
+      String resolvedUrl = img;
+      if (Get.isRegistered<HomeController>()) {
+        final hc = Get.find<HomeController>();
+        final version = hc.photoVersion.value;
+        resolvedUrl = img.contains('?') ? '$img&v=$version' : '$img?v=$version';
+      }
       return CachedNetworkImage(
-        imageUrl: image!,
+        imageUrl: resolvedUrl,
+        cacheManager: AppImageCacheManager(),
         height: height,
         width: width,
         fit: fit ?? BoxFit.cover,
         alignment: const Alignment(0, -0.5),
-        placeholder: (context, url) => Center(
-          child: CircularProgressIndicator(
-            color: ConstantColor.primary,
-            strokeWidth: 2,
-          ),
-        ),
-        errorWidget: (context, url, error) => AppImageAsset(
-          image: ConstantString.noImgUrlPath,
-          width: width,
+        // Shimmer placeholder while loading
+        placeholder: (context, url) => _ShimmerPlaceholder(
           height: height,
-          color: color,
+          width: width,
+        ),
+        // Friendly error fallback
+        errorWidget: (context, url, error) => _ErrorPlaceholder(
+          height: height,
+          width: width,
           fit: fit,
+          color: color,
           isFile: isFile,
         ),
       );
     }
 
+    // ── File image ────────────────────────────────────────────────────────────
     if (isFile) {
       final imageWidget = Image.file(
-        File(image!),
+        File(img),
         height: height,
         width: width,
         fit: fit,
       );
       return color != null
           ? ColorFiltered(
-        colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
-        child: imageWidget,
-      )
+              colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
+              child: imageWidget,
+            )
           : imageWidget;
     }
 
-    if (image!.isEmpty || image!.split('.').last != 'svg') {
+    // ── Asset image (PNG / JPG) ───────────────────────────────────────────────
+    if (img.isEmpty || !img.endsWith('.svg')) {
       final imageWidget = Image.asset(
-        image!,
+        img,
         height: height,
         width: width,
         fit: fit,
       );
       return color != null
           ? ColorFiltered(
-        colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
-        child: imageWidget,
-      )
+              colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
+              child: imageWidget,
+            )
           : imageWidget;
-    } else {
-      return SvgPicture.asset(
-        image!,
-        height: height,
-        width: width,
-        fit: fit ?? BoxFit.contain,
-        colorFilter:
-        color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
-      );
     }
 
+    // ── SVG asset ─────────────────────────────────────────────────────────────
+    return SvgPicture.asset(
+      img,
+      height: height,
+      width: width,
+      fit: fit ?? BoxFit.contain,
+      colorFilter:
+          color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
+    );
   }
+}
 
+/// Shimmer placeholder shown while the network image is loading
+class _ShimmerPlaceholder extends StatelessWidget {
+  final double? height;
+  final double? width;
+  const _ShimmerPlaceholder({this.height, this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade200,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        height: height,
+        width: width,
+        color: Colors.white,
+      ),
+    );
+  }
+}
+
+/// Error fallback: tries the default no-image asset
+class _ErrorPlaceholder extends StatelessWidget {
+  final double? height;
+  final double? width;
+  final BoxFit? fit;
+  final Color? color;
+  final bool isFile;
+
+  const _ErrorPlaceholder({
+    this.height,
+    this.width,
+    this.fit,
+    this.color,
+    this.isFile = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppImageAsset(
+      image: ConstantString.noImgUrlPath,
+      width: width,
+      height: height,
+      color: color,
+      fit: fit,
+      isFile: isFile,
+    );
+  }
 }

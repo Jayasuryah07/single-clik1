@@ -38,9 +38,9 @@ class HomeTabBarScreen extends StatefulWidget {
 class HomeTabBarScreenState extends State<HomeTabBarScreen> {
 
   List homeTabBarList = [
-    {"title": "Home", "image": "assets/icons/icon_home.png"},
-    {"title": "Received", "image": "assets/icons/recevied_dr_icon.png"},
-    {"title": "My Enquiries", "image": "assets/icons/my_enquiries_dr_icon.png"},
+    {"title": "Home", "image": "assets/icons/hm1.png"},
+    {"title": "Received", "image": "assets/icons/rec.png"},
+    {"title": "My Enquiries", "image": "assets/icons/sen.png"},
   ];
 
   HomeController homeController = Get.put(HomeController());
@@ -54,15 +54,38 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
   ];
   @override
   void initState() {
-    homeController.selectTab.value = 0;
-    if (homeController.userData.isNotEmpty && homeController.userData['user_type'] != 2) {
-      homeTabBarList[1] = {
-        "title": "Join as",
-        "image": "assets/icons/logo (1).png"
-      };
-    }
-    getUserData();
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        homeController.selectTab.value = widget.selectTab ?? 0;
+      }
+    });
+    if (homeController.userData.isNotEmpty) {
+      if (homeController.userData['user_type'] != 2) {
+        homeTabBarList[1] = {
+          "title": "Join as",
+          "image": "assets/icons/logo (1).png"
+        };
+        homeTabBarList[2] = {
+          "title": "My Enquiries",
+          "image": "assets/icons/sen.png"
+        };
+      } else {
+        homeTabBarList[1] = {
+          "title": "Received",
+          "image": "assets/icons/rec.png"
+        };
+        homeTabBarList[2] = {
+          "title": "Send Enquiry",
+          "image": "assets/icons/sen.png"
+        };
+      }
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        getUserData();
+      }
+    });
   }
 
   Future<void> getUserData() async {
@@ -76,6 +99,10 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                 "title": "Join as",
                 "image": "assets/icons/logo (1).png"
               };
+              homeTabBarList[2] = {
+                "title": "My Enquiries",
+                "image": "assets/icons/sen.png"
+              };
             });
           }
         } else {
@@ -83,7 +110,11 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
             setState(() {
               homeTabBarList[1] = {
                 "title": "Received",
-                "image": "assets/icons/recevied_dr_icon.png"
+                "image": "assets/icons/rec.png"
+              };
+              homeTabBarList[2] = {
+                "title": "Send Enquiry",
+                "image": "assets/icons/sen.png"
               };
             });
           }
@@ -154,13 +185,17 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                           height: Get.height / 1.2,
                           child: GestureDetector(
                             onTap: () async {
-                              Uri url = Uri.parse(
-                                  (homeController.allAdvPopUpSliderList[0]
-                                              ['slider_url'] ??
-                                          '')
-                                      .toString());
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url);
+                              final rawUrl = (homeController.allAdvPopUpSliderList[0]['slider_url'] ?? '').toString().trim();
+                              if (rawUrl.isNotEmpty) {
+                                Uri url = Uri.parse(rawUrl);
+                                try {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                } catch (e) {
+                                  ShowToast.showToast(
+                                    'Could not launch URL',
+                                    showSuccess: false,
+                                  );
+                                }
                               } else {
                                 ShowToast.showToast(
                                   'Url ${ConstantString.notAvailableLabel}',
@@ -193,13 +228,17 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                             homeController.allAdvPopUpSliderList.length,
                             (index) => GestureDetector(
                               onTap: () async {
-                                Uri url = Uri.parse(
-                                    (homeController.allAdvPopUpSliderList[index]
-                                                ['slider_url'] ??
-                                            '')
-                                        .toString());
-                                if (await canLaunchUrl(url)) {
-                                  await launchUrl(url);
+                                final rawUrl = (homeController.allAdvPopUpSliderList[index]['slider_url'] ?? '').toString().trim();
+                                if (rawUrl.isNotEmpty) {
+                                  Uri url = Uri.parse(rawUrl);
+                                  try {
+                                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                                  } catch (e) {
+                                    ShowToast.showToast(
+                                      'Could not launch URL',
+                                      showSuccess: false,
+                                    );
+                                  }
                                 } else {
                                   ShowToast.showToast(
                                     'Url ${ConstantString.notAvailableLabel}',
@@ -287,8 +326,17 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
           () => screenList[homeController.selectTab.value],
         ),
         drawer: const AppDrawer(),
-        appBar: AppBar(
-          backgroundColor: ConstantColor.primary,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight + 48),
+          child: Obx(() {
+            return AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  gradient: ConstantColor.primaryGradient,
+                ),
+              ),
           leading: GestureDetector(
             onTap: () {
               homeController.scaffoldKey.currentState!.openDrawer();
@@ -302,6 +350,31 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
             ),
           ),
           actions: [
+            // ── Refresh button (all tabs, both user & business) ──────────────
+            Obx(() {
+              final spinning = homeController.isFullRefreshing.value;
+              return Tooltip(
+                message: 'Refresh App',
+                child: IconButton(
+                  icon: AnimatedRotation(
+                    turns: spinning ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 800),
+                    child: Icon(
+                      Icons.refresh_rounded,
+                      color: spinning
+                          ? Colors.white54
+                          : Colors.white,
+                    ),
+                  ),
+                  onPressed: spinning
+                      ? null
+                      : () async {
+                          await homeController.fullAppRefresh();
+                        },
+                ),
+              );
+            }),
+            // ── Search button (home tab only) ─────────────────────────────────
             Obx(() => homeController.selectTab.value == 0 &&
                     homeController.tabIndex.value == 0 &&
                     !homeController.isLoading.value
@@ -400,12 +473,14 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                     ),
                   ),
           ),
-          elevation: 0,
-        ),
+          bottom: _buildTabBarForCurrentTab(),
+        );
+      }),
+    ),
         bottomNavigationBar: Container(
           height: 65,
           decoration: BoxDecoration(
-            color: Colors.white,
+            gradient: ConstantColor.primaryGradient,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(15),
               topRight: Radius.circular(15),
@@ -533,6 +608,8 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                                  await getUserData();
                               }
                             } else {
+                              // Business user tapping Received tab — mark as seen
+                              enquiriesReceivedController.markOpenEnquiriesAsSeen();
                               homeController.selectTab.value = index;
                               // setState(() {});
                             }
@@ -551,42 +628,46 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                           child: Column(
                             children: [
                               index == 1 && homeController.userData['user_type'] == 2
-                                  ? homeController.receivedUnreadCount.value.toString() == "0"
-                                      ? SizedBox(
-                                          height: 25,
-                                          width: 25,
-                                          child: Image.asset(
-                                            homeTabBarList[index]['image'],
-                                            color: homeController
-                                                        .selectTab.value ==
-                                                    index
-                                                ? ConstantColor.primary
-                                                : ConstantColor.grayColor,
-                                          ),
-                                        )
-                                      : Obx(() => badges.Badge(
-                                            badgeContent: Text(
-                                              homeController
-                                                  .receivedUnreadCount.value
-                                                  .toString(),
-                                              style: TextStyle(
-                                                color: ConstantColor.whiteColor,
-                                                fontSize: 10,
-                                              ),
-                                            ),
-                                            child: SizedBox(
+                                  ? Obx(() {
+                                      final newCount = enquiriesReceivedController.newOpenCount.value;
+                                      final unreadCount = homeController.receivedUnreadCount.value;
+                                      // Show badge if either new enquiries arrived or there are unread
+                                      final badgeCount = newCount > 0 ? newCount : unreadCount;
+                                      return badgeCount == 0
+                                          ? SizedBox(
                                               height: 25,
                                               width: 25,
                                               child: Image.asset(
                                                 homeTabBarList[index]['image'],
-                                                color: homeController
-                                                            .selectTab.value ==
-                                                        index
-                                                    ? ConstantColor.primary
-                                                    : ConstantColor.grayColor,
+                                                color: homeController.selectTab.value == index
+                                                    ? Colors.white
+                                                    : Colors.white.withOpacity(0.6),
                                               ),
-                                            ),
-                                          ))
+                                            )
+                                          : badges.Badge(
+                                              badgeContent: Text(
+                                                badgeCount.toString(),
+                                                style: TextStyle(
+                                                  color: ConstantColor.whiteColor,
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                              badgeStyle: const badges.BadgeStyle(
+                                                badgeColor: Colors.red,
+                                                padding: EdgeInsets.all(5),
+                                              ),
+                                              child: SizedBox(
+                                                height: 25,
+                                                width: 25,
+                                                child: Image.asset(
+                                                  homeTabBarList[index]['image'],
+                                                  color: homeController.selectTab.value == index
+                                                      ? Colors.white
+                                                      : Colors.white.withOpacity(0.6),
+                                                ),
+                                              ),
+                                            );
+                                    })
                                   : index == 2
                                       ? homeController.pendingOpenInquiriesCount
                                                   .value
@@ -600,8 +681,8 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                                                 color: homeController
                                                             .selectTab.value ==
                                                         index
-                                                    ? ConstantColor.primary
-                                                    : ConstantColor.grayColor,
+                                                    ? Colors.white
+                                                    : Colors.white.withOpacity(0.6),
                                               ),
                                             )
                                           : badges.Badge(
@@ -628,8 +709,8 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                                                               .selectTab
                                                               .value ==
                                                           index
-                                                      ? ConstantColor.primary
-                                                      : ConstantColor.grayColor,
+                                                      ? Colors.white
+                                                      : Colors.white.withOpacity(0.6),
                                                 ),
                                               ),
                                             )
@@ -646,8 +727,8 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                                                 : homeController
                                                             .selectTab.value ==
                                                         index
-                                                    ? ConstantColor.primary
-                                                    : ConstantColor.grayColor,
+                                                    ? Colors.white
+                                                    : Colors.white.withOpacity(0.6),
                                           ),
                                         ),
                               const SizedBox(height: 2),
@@ -657,8 +738,8 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: homeController.selectTab.value == index
-                                      ? ConstantColor.primary
-                                      : ConstantColor.grayColor,
+                                      ? Colors.white
+                                      : Colors.white.withOpacity(0.6),
                                 ),
                               ),
                             ],
@@ -675,6 +756,162 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
       ),
 
     );
+  }
+
+  PreferredSizeWidget _buildTabBarForCurrentTab() {
+    final int selectTab = homeController.selectTab.value;
+    if (selectTab == 0) {
+      return TabBar(
+        controller: homeController.tabController,
+        indicatorColor: ConstantColor.whiteColor,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicatorWeight: 4,
+        onTap: (value) async {
+          homeController.tabIndex.value = value;
+          homeController.isSearchOpen.value = false;
+          if (value == 0) {
+            await homeController.getSentEnquiriesUnreadCount("1");
+          } else if (value == 1) {
+            await homeController.getSentEnquiriesUnreadCount("1");
+          } else if (value == 2) {
+            await homeController.getSentEnquiriesUnreadCount("1");
+          }
+        },
+        tabs: [
+          Tab(
+            child: Text(
+              "All",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+                color: ConstantColor.whiteColor,
+              ),
+            ),
+          ),
+          Tab(
+            child: Text(
+              "Business",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: ConstantColor.whiteColor),
+            ),
+          ),
+          Tab(
+            child: Text(
+              "Services",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: ConstantColor.whiteColor),
+            ),
+          ),
+        ],
+      );
+    } else if (selectTab == 1) {
+      return TabBar(
+        controller: enquiriesReceivedController.tabController,
+        indicatorColor: ConstantColor.whiteColor,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicatorWeight: 4,
+        onTap: (value) async {
+          if (value == 0) {
+            await enquiriesReceivedController.postReceivedApi("1");
+            await homeController.getSentEnquiriesUnreadCount("1");
+          } else if (value == 1) {
+            await enquiriesReceivedController.postReceivedApi("2");
+            await homeController.getSentEnquiriesUnreadCount("1");
+          }
+        },
+        tabs: [
+          Tab(
+            child: Text(
+              "Open",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+                color: ConstantColor.whiteColor,
+              ),
+            ),
+          ),
+          Tab(
+            child: Text(
+              "Closed",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: ConstantColor.whiteColor),
+            ),
+          ),
+        ],
+      );
+    } else {
+      return TabBar(
+        controller: enquiriesSentController.tabController,
+        indicatorColor: ConstantColor.whiteColor,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicatorWeight: 4,
+        onTap: (value) async {
+          if (value == 0) {
+            await enquiriesSentController.postSentApi("1", isAutoRefresh: false);
+            await homeController.getSentEnquiriesUnreadCount("1");
+          } else if (value == 1) {
+            await enquiriesSentController.postSentApi("2", isAutoRefresh: false);
+          }
+        },
+        tabs: [
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Open",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: ConstantColor.whiteColor,
+                  ),
+                ),
+                Obx(() {
+                  if (enquiriesSentController.getUnreadCount() > 0) {
+                    return Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        enquiriesSentController.getUnreadCount().toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox();
+                }),
+              ],
+            ),
+          ),
+          Tab(
+            child: Text(
+              "Closed",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+                color: ConstantColor.whiteColor,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
   }
 
 }

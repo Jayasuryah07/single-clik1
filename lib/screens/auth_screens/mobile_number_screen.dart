@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:single_clik/constants/constant_color.dart';
 import 'package:single_clik/constants/constant_string.dart';
@@ -249,8 +248,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
 
-    return KeyboardVisibilityBuilder(
-        builder: (p0, isKeyboardVisible) => Scaffold(
+    return Scaffold(
           backgroundColor: ConstantColor.whiteColor,
           body: Obx(
             () => mobileNumberController.isLoading.value
@@ -572,6 +570,6 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
               ),
             ),
           ),
-        ));
+        );
   }
 }

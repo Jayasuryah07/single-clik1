@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:single_clik/constants/constant_color.dart';
 import 'package:single_clik/constants/constant_string.dart';
 import 'package:single_clik/controller/home_controller/home_controller.dart';
@@ -13,7 +12,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../constants/show_toast.dart';
 import '../../../../controller/home_controller/update_profile_controller.dart';
-import '../../../../widget/app_text_field.dart';
 import '../../../../widget/drawer.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -24,1077 +22,590 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  HomeController homeController = Get.put(HomeController());
-  ProfileController profileController = Get.put(ProfileController());
-  UpdateProfileController updateProfileController = Get.put(UpdateProfileController());
+  final HomeController homeController = Get.put(HomeController());
+  final ProfileController profileController = Get.put(ProfileController());
+  final UpdateProfileController updateProfileController = Get.put(UpdateProfileController());
 
   RxBool businessLogin = true.obs;
 
   @override
   void initState() {
-    // TODO: implement initState
-    businessLogin.value = homeController.userData['user_type'] == 2;
-    debugPrint(businessLogin.value.toString());
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      businessLogin.value = homeController.userData['user_type'] == 2;
+      profileController.postFetchProfileApi();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      backgroundColor: const Color(0xffF8F9FA),
       appBar: AppBar(
-        backgroundColor: ConstantColor.primary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: ConstantColor.primaryGradient,
+          ),
+        ),
         leading: GestureDetector(
-          onTap: () {
-            Get.back();
-          },
-          child: Center(
+          onTap: () => Get.back(),
+          child: const Center(
             child: Icon(
               Icons.arrow_back_outlined,
-              color: ConstantColor.whiteColor,
+              color: Colors.white,
             ),
           ),
         ),
-        title: Text(
+        title: const Text(
           "Profile",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: ConstantColor.whiteColor,
+            color: Colors.white,
           ),
         ),
       ),
-      // bottomNavigationBar: Padding(
-      //   padding: const EdgeInsets.all(15.0),
-      //   child:
-      // ),
-      body: Obx(
-        () => profileController.isLoading.value
-            ? const Center(
-          child: CircularProgressIndicator(),
-        )
-            : SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: height * 0.03),
-                !businessLogin.value
-                    ? SizedBox(
-                  height: Get.width / 2,
-                  width: Get.width,
-                  child: Stack(
-                    children: [
-                      Center(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(7),
-                          child: Container(
-                            height: Get.width / 2.5,
-                            width: Get.width / 2.5,
+      body: Obx(() {
+        if (profileController.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        final profileData = profileController.profileMap;
+        final name = (profileData['name'] ?? '').toString();
+        final companyName = (profileData['company_name'] ?? '').toString();
+
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              // ── Header Profile Photo Section ──
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[200]!),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    Center(
+                      child: Stack(
+                        children: [
+                          Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xffFFF0E9),
-                              borderRadius:
-                              BorderRadius.circular(7),
+                              border: Border.all(
+                                color: ConstantColor.primary,
+                                width: 3,
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
                             ),
-                            child: profileController
-                                .croppedProfileFile!.value.path !=
-                                ""
-                                ? AppImageAsset(
-                              image: profileController
-                                  .croppedProfileFile!.value.path
-                                  .contains("cache")
-                                  ? profileController
-                                  .croppedProfileFile!.value.path
-                                  : "${ConstantString.userImgUrlPath}${profileController.filePath}",
-                              isFile: profileController
-                                  .croppedProfileFile!.value.path
-                                  .contains("cache"),
-                              fit: BoxFit.cover,
-                              height: 100,
-                              width: 100,
-                            )
-                                : Center(
-                              child: Image.asset(
-                                "assets/icons/icon_camera.png",
-                                height: 30,
-                                width: 30,
+                            child: ClipOval(
+                              child: AppImageAsset(
+                                key: ValueKey('profile_photo_${homeController.photoVersion.value}'),
+                                image: profileController.filePath.value,
+                                isFile: !profileController.filePath.value.startsWith("http"),
+                                fit: BoxFit.cover,
+                                height: Get.width / 3,
+                                width: Get.width / 3,
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: GestureDetector(
-                          onTap: () async {
-                            final ImagePicker picker = ImagePicker();
-
-                            final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                            if(image != null){
-                              profileController.cropImage(image);
-
-                            }
-
-                          },
-                          child: Container(
-                            height: Get.width / 10,
-                            width: Get.width / 1.8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: ConstantColor.primary,
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.photo_rounded,
-                              color: ConstantColor.whiteColor,
-                              size: Get.width / 15,
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ) : Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: ConstantColor.primary,
-                        width: 4,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    // padding: EdgeInsets.all(Get.width / 100),
-                    child: ClipOval(
-                      // borderRadius: BorderRadius.circular(1000),
-                      child: AppImageAsset(
-                        image:
-                        "${ConstantString.userImgUrlPath}${profileController.profileMap['photo']}",
-                        isFile: false,
-                        cache: true,
-                        fit: BoxFit.cover,
-                        height: Get.width / 3,
-                        width: Get.width / 3,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.01),
-                Center(
-                  child: Text(
-                    "${profileController.profileMap['name'] != null && profileController.profileMap['name'].toString().trim().isNotEmpty ? profileController.profileMap['name'] : 'Name ${ConstantString.notAvailableLabel}'}",
-                    style: TextStyle(
-                      fontSize: Get.width*0.055,
-                      fontWeight: FontWeight.w600,
-                      color: ConstantColor.primary,
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.01),
-                Row(
-                  children: [
-                    !businessLogin.value
-                        ? const SizedBox()
-                        : Expanded(
-                      child: SizedBox(
-                        //height: Get.height*0.04,
-                        child: AppButton(
-                          borderRadius: BorderRadius.circular(0),
-                          onTap: () {
-                            if (homeController.userData['user_type'] == 1) {
-                              if (homeController.userData['category'] != null &&
-                                  homeController.userData['category'].toString().trim().isNotEmpty) {
-                                // EasyLoading.showError(
-                                //     ConstantString.alreadyJoinAsMsg);
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return Dialog(
-                                      insetPadding:
-                                      EdgeInsets.symmetric(
-                                        horizontal: Get.width / 30,
-                                      ),
-                                      child: Padding(
-                                        padding:
-                                        EdgeInsets.all(width / 30),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                          mainAxisSize:
-                                          MainAxisSize.min,
-                                          children: [
-                                            Center(
-                                              child: Text(
-                                                ConstantString
-                                                    .alreadyJoinAsMsg,
-                                                textAlign:
-                                                TextAlign.center,
-                                                style: TextStyle(
-                                                  color: ConstantColor
-                                                      .primary,
-                                                  fontSize: 16,
-                                                  fontWeight:
-                                                  FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(
-                                                height: height * 0.06),
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: AppButton(
-                                                    title: "Cancel",
-                                                    borderRadius:
-                                                    BorderRadius
-                                                        .circular(
-                                                        3),
-                                                    onTap: () =>
-                                                        Get.back(),
-                                                    buttonColor:
-                                                    ConstantColor
-                                                        .whiteColor,
-                                                    buttonTextColor:
-                                                    ConstantColor
-                                                        .primary,
-                                                    arrowShow: false,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                    width:
-                                                    width * 0.03),
-                                                Expanded(
-                                                  child: Obx(
-                                                        () => AppButton(
-                                                      title: "Call us",
-                                                      onTap: () async {
-                                                        profileController
-                                                            .isButtonLoading
-                                                            .value = true;
-                                                        await profileController
-                                                            .postDeveloperApi()
-                                                            .then(
-                                                                (value) async {
-                                                              if (value[
-                                                              'code'] ==
-                                                                  200) {
-                                                                Uri url = Uri
-                                                                    .parse(
-                                                                    'tel:+${value['data']['company_mobile'] ?? ''}');
-                                                                if (await canLaunchUrl(
-                                                                    url)) {
-                                                                  profileController
-                                                                      .isButtonLoading
-                                                                      .value = false;
-                                                                  Get.back();
-                                                                  await launchUrl(
-                                                                      url);
-                                                                } else {
-                                                                  profileController
-                                                                      .isButtonLoading
-                                                                      .value = false;
-                                                                  Get.back();
-                                                                  ShowToast
-                                                                      .showToast(
-                                                                    ConstantString
-                                                                        .somethingWantWrongMsg,
-                                                                    showSuccess:
-                                                                    false,
-                                                                  );
-                                                                }
-                                                              } else {
-                                                                profileController
-                                                                    .isButtonLoading
-                                                                    .value = false;
-                                                                Get.back();
-                                                                ShowToast
-                                                                    .showToast(
-                                                                  value['msg'] ??
-                                                                      ConstantString
-                                                                          .somethingWantWrongMsg,
-                                                                  showSuccess:
-                                                                  false,
-                                                                );
-                                                              }
-                                                            }).catchError(
-                                                                (error) {
-                                                              debugPrint('Error: $error');
-                                                              profileController
-                                                                  .isButtonLoading
-                                                                  .value = false;
-                                                              Get.back();
-                                                              ShowToast
-                                                                  .showToast(
-                                                                error
-                                                                    .toString(),
-                                                                showSuccess:
-                                                                false,
-                                                              );
-                                                            });
-                                                      },
-                                                      arrowShow: false,
-                                                      borderRadius:
-                                                      BorderRadius
-                                                          .circular(
-                                                          3),
-                                                      buttonColor:
-                                                      ConstantColor
-                                                          .primary,
-                                                      buttonTextColor:
-                                                      ConstantColor
-                                                          .whiteColor,
-                                                      isLoading: profileController
-                                                          .isButtonLoading
-                                                          .value,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              } else {
-                                profileController.nameController.value.text =
-                                    (profileController.profileMap['name'] ??
-                                        '')
-                                        .toString();
-                                profileController.emailController.value.text =
-                                    (profileController.profileMap['email'] ??
-                                        '')
-                                        .toString();
-                                profileController.areaController.value.text =
-                                    (profileController.profileMap['area'] ??
-                                        '')
-                                        .toString();
-                                profileController.referredCodeController.value
-                                    .text = (profileController.profileMap[
-                                'referred_by_code'] ??
-                                    '')
-                                    .toString();
-                                profileController.filePath.value =
-                                    (profileController.profileMap['photo'] ??
-                                        '')
-                                        .toString();
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return Dialog(
-                                      insetPadding:
-                                      EdgeInsets.symmetric(
-                                        horizontal: Get.width / 30,
-                                      ),
-                                      child: Padding(
-                                        padding:
-                                        EdgeInsets.all(width / 30),
-                                        child: SingleChildScrollView(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment
-                                                .start,
-                                            mainAxisSize:
-                                            MainAxisSize.min,
-                                            children: [
-                                              Center(
-                                                child: Text(
-                                                  "Edit Profile",
-                                                  style: TextStyle(
-                                                    fontSize: 25,
-                                                    color: ConstantColor
-                                                        .blackColor,
-                                                    fontWeight:
-                                                    FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                  height:
-                                                  height * 0.02),
-                                              Center(
-                                                child: SizedBox(
-                                                  height:
-                                                  Get.width / 2.5,
-                                                  width:
-                                                  Get.width / 2.5,
-                                                  child: Stack(
-                                                    children: [
-                                                      Center(
-                                                        child:
-                                                        ClipRRect(
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                              7),
-                                                          child:
-                                                          Container(
-                                                            height:
-                                                            Get.width /
-                                                                3,
-                                                            width:
-                                                            Get.width /
-                                                                3,
-                                                            decoration:
-                                                            BoxDecoration(
-                                                              color: const Color(
-                                                                  0xffFFF0E9),
-                                                              borderRadius:
-                                                              BorderRadius.circular(
-                                                                  7),
-                                                            ),
-                                                            child: profileController.filePath.value !=
-                                                                ""
-                                                                ? AppImageAsset(
-                                                              image: profileController.filePath.contains("cache")
-                                                                  ? profileController.filePath.value
-                                                                  : "${ConstantString.userImgUrlPath}${profileController.filePath}",
-                                                              cache: true,
-                                                              isFile:
-                                                              profileController.filePath.contains("cache"),
-                                                              // fit: BoxFit.cover,
-                                                              // height: 100,
-                                                              // width: 100,
-                                                            )
-                                                            // Image.file(
-                                                            //         File(
-                                                            //             businessSignUpController
-                                                            //                 .filePath.value),
-                                                            //         width: width,
-                                                            //         height: height,
-                                                            //         fit: BoxFit.fill,
-                                                            //       )
-                                                                : Center(
-                                                              child:
-                                                              Image.asset(
-                                                                "assets/icons/icon_camera.png",
-                                                                height: 30,
-                                                                width: 30,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Align(
-                                                        alignment: Alignment
-                                                            .bottomRight,
-                                                        child:
-                                                        GestureDetector(
-                                                          onTap:
-                                                              () async {
-                                                            final ImagePicker
-                                                            picker =
-                                                            ImagePicker();
-
-                                                            final XFile?
-                                                            image =
-                                                            await picker.pickImage(
-                                                                source:
-                                                                ImageSource.gallery);
-                                                            if (image !=
-                                                                null) {
-                                                              profileController
-                                                                  .filePath
-                                                                  .value = image.path;
-                                                            }
-                                                          },
-                                                          child:
-                                                          Container(
-                                                            height:
-                                                            Get.width /
-                                                                10,
-                                                            width:
-                                                            Get.width /
-                                                                10,
-                                                            decoration:
-                                                            BoxDecoration(
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              color: ConstantColor
-                                                                  .primary,
-                                                            ),
-                                                            alignment:
-                                                            Alignment
-                                                                .center,
-                                                            child: Icon(
-                                                              Icons
-                                                                  .photo_rounded,
-                                                              color: ConstantColor
-                                                                  .whiteColor,
-                                                              size:
-                                                              Get.width /
-                                                                  15,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                  height:
-                                                  height * 0.02),
-                                              Text(
-                                                "Name",
-                                                style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: ConstantColor
-                                                      .grayColor,
-                                                  fontWeight:
-                                                  FontWeight.w400,
-                                                ),
-                                              ),
-                                              // SizedBox(height: height * 0.02),
-                                              appTextFormField(
-                                                keyboardType:
-                                                TextInputType.name,
-                                                hintText:
-                                                "Enter your full name",
-                                                textInputAction:
-                                                TextInputAction
-                                                    .done,
-                                                contentPadding:
-                                                const EdgeInsets
-                                                    .symmetric(
-                                                    horizontal: 0,
-                                                    vertical: 5),
-                                                controller: profileController
-                                                    .nameController
-                                                    .value,
-                                              ),
-                                              SizedBox(
-                                                  height:
-                                                  height * 0.03),
-                                              Text(
-                                                "Email ID",
-                                                style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: ConstantColor
-                                                      .grayColor,
-                                                  fontWeight:
-                                                  FontWeight.w400,
-                                                ),
-                                              ),
-                                              // SizedBox(height: height * 0.02),
-                                              appTextFormField(
-                                                keyboardType:
-                                                TextInputType.name,
-                                                hintText:
-                                                "Enter your email id",
-                                                textInputAction:
-                                                TextInputAction
-                                                    .done,
-                                                contentPadding:
-                                                const EdgeInsets
-                                                    .symmetric(
-                                                    horizontal: 0,
-                                                    vertical: 5),
-                                                controller: profileController
-                                                    .emailController
-                                                    .value,
-                                              ),
-                                              SizedBox(
-                                                  height:
-                                                  height * 0.03),
-                                              Text(
-                                                "Area",
-                                                style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: ConstantColor
-                                                      .grayColor,
-                                                  fontWeight:
-                                                  FontWeight.w400,
-                                                ),
-                                              ),
-                                              // SizedBox(height: height * 0.02),
-                                              appTextFormField(
-                                                keyboardType:
-                                                TextInputType.name,
-                                                hintText:
-                                                "Enter your area",
-                                                textInputAction:
-                                                TextInputAction
-                                                    .done,
-                                                contentPadding:
-                                                const EdgeInsets
-                                                    .symmetric(
-                                                    horizontal: 0,
-                                                    vertical: 5),
-                                                controller: profileController
-                                                    .areaController
-                                                    .value,
-                                              ),
-                                              SizedBox(
-                                                  height:
-                                                  height * 0.03),
-                                              Text(
-                                                "Referred Code",
-                                                style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: ConstantColor
-                                                      .grayColor,
-                                                  fontWeight:
-                                                  FontWeight.w400,
-                                                ),
-                                              ),
-                                              // SizedBox(height: height * 0.02),
-                                              appTextFormField(
-                                                keyboardType:
-                                                TextInputType.name,
-                                                hintText:
-                                                "Enter your referred code",
-                                                textInputAction:
-                                                TextInputAction
-                                                    .done,
-                                                contentPadding:
-                                                const EdgeInsets
-                                                    .symmetric(
-                                                    horizontal: 0,
-                                                    vertical: 5),
-                                                controller: profileController
-                                                    .referredCodeController
-                                                    .value,
-                                              ),
-                                              SizedBox(
-                                                  height:
-                                                  height * 0.06),
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: AppButton(
-                                                      title: "Cancel",
-                                                      borderRadius:
-                                                      BorderRadius
-                                                          .circular(
-                                                          3),
-                                                      onTap: () =>
-                                                          Get.back(),
-                                                      buttonColor:
-                                                      ConstantColor
-                                                          .whiteColor,
-                                                      buttonTextColor:
-                                                      ConstantColor
-                                                          .primary,
-                                                      arrowShow: false,
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                      width:
-                                                      width * 0.03),
-                                                  Expanded(
-                                                    child: Obx(
-                                                          () => AppButton(
-                                                        title: "Submit",
-                                                        onTap:
-                                                            () async {
-                                                          profileController
-                                                              .isButtonLoading
-                                                              .value = true;
-                                                          Map<String,
-                                                              String>
-                                                          bodyParams =
-                                                          {
-                                                            'name': profileController
-                                                                .nameController
-                                                                .value
-                                                                .text
-                                                                .trim(),
-                                                            'email': profileController
-                                                                .emailController
-                                                                .value
-                                                                .text
-                                                                .trim(),
-                                                            'area': profileController
-                                                                .areaController
-                                                                .value
-                                                                .text
-                                                                .trim(),
-                                                            'referred_by_code': profileController
-                                                                .referredCodeController
-                                                                .value
-                                                                .text
-                                                                .trim(),
-                                                            'profile_type':
-                                                            (profileController.profileMap['profile_type'] ??
-                                                                '0')
-                                                                .toString(),
-                                                          };
-                                                          await profileController
-                                                              .postUpdateProfileApi(
-                                                              bodyParams,
-                                                              profileController
-                                                                  .filePath
-                                                                  .value
-                                                                  .trim())
-                                                              .then(
-                                                                  (value) async {
-                                                                debugPrint('Value $value');
-                                                                if (value[
-                                                                'code'] ==
-                                                                    200) {
-                                                                  await profileController
-                                                                      .postFetchProfileApi()
-                                                                      .then(
-                                                                          (_) {
-                                                                        profileController
-                                                                            .isButtonLoading
-                                                                            .value = false;
-                                                                        Get.back();
-                                                                        ShowToast
-                                                                            .showToast(
-                                                                          value['msg'] ??
-                                                                              ConstantString.dataUpdatedSuccessfullyMsg,
-                                                                          showSuccess:
-                                                                          true,
-                                                                        );
-                                                                      });
-                                                                } else {
-                                                                  profileController
-                                                                      .isButtonLoading
-                                                                      .value = false;
-                                                                  Get.back();
-                                                                  ShowToast
-                                                                      .showToast(
-                                                                    value['msg'] ??
-                                                                        ConstantString.somethingWantWrongMsg,
-                                                                    showSuccess:
-                                                                    false,
-                                                                  );
-                                                                }
-                                                              }).catchError(
-                                                                  (error) {
-                                                                debugPrint('Error: $error');
-                                                                profileController
-                                                                    .isButtonLoading
-                                                                    .value = false;
-                                                                Get.back();
-                                                                ShowToast
-                                                                    .showToast(
-                                                                  error
-                                                                      .toString(),
-                                                                  showSuccess:
-                                                                  false,
-                                                                );
-                                                              });
-                                                        },
-                                                        arrowShow:
-                                                        false,
-                                                        borderRadius:
-                                                        BorderRadius
-                                                            .circular(
-                                                            3),
-                                                        buttonColor:
-                                                        ConstantColor
-                                                            .primary,
-                                                        buttonTextColor:
-                                                        ConstantColor
-                                                            .whiteColor,
-                                                        isLoading:
-                                                        profileController
-                                                            .isButtonLoading
-                                                            .value,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              }
-                            } else {
-                              Get.to(() => UpdateProfileScreen(
-                                  userData: Map<String, dynamic>.from(profileController.profileMap)
-                              ))!.then((value) {
-                                if (value == true) {
-                                  profileController.postFetchProfileApi();
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () async {
+                                final ImagePicker picker = ImagePicker();
+                                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                                if (image != null) {
+                                  await profileController.cropImage(image);
+                                  if (profileController.croppedProfileFile!.value.path.isNotEmpty) {
+                                    profileController.filePath.value = profileController.croppedProfileFile!.value.path;
+                                    await profileController.autoUploadProfilePhoto();
+                                  }
                                 }
-                              });
-                            }
-                          },
-                          title: "Edit Profile",
-                          arrowShow: false,
+                              },
+                              child: Container(
+                                height: 36,
+                                width: 36,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: ConstantColor.primary,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      businessLogin.value
+                          ? (companyName.isNotEmpty ? companyName : "Company Name")
+                          : (name.isNotEmpty ? name : "Username"),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: ConstantColor.blackColor,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: ConstantColor.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        businessLogin.value ? "Business Account" : "User Account",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: ConstantColor.primary,
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
 
+              // ── Details Card ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    children: businessLogin.value
+                        ? [
+                            _buildInfoRow(Icons.business_rounded, "Company Name", companyName),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.phone_iphone_rounded, "Mobile", (profileData['mobile'] ?? '').toString()),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.chat_bubble_outline_rounded, "Whatsapp", (profileData['whatsapp'] ?? '').toString()),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.email_outlined, "Email", (profileData['email'] ?? '').toString()),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.language_rounded, "Website", (profileData['website'] ?? '').toString()),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.category_outlined, "Category", "IT Company, Event Planner"),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.dashboard_customize_outlined, "Sub Category", "Mobile Apps, Web Developer, Event Planner"),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.info_outline_rounded, "About Us", (profileData['about_us'] ?? '').toString()),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.location_on_outlined, "Area", (profileData['area'] ?? '').toString()),
+                          ]
+                        : [
+                            _buildInfoRow(Icons.person_outline_rounded, "Name", name),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.phone_iphone_rounded, "Mobile", (profileData['mobile'] ?? '').toString()),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.email_outlined, "Email ID", (profileData['email'] ?? '').toString()),
+                            const Divider(height: 1),
+                            _buildInfoRow(Icons.location_on_outlined, "Area", (profileData['area'] ?? '').toString()),
+                          ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
-                    SizedBox(
-                        width: !businessLogin.value ? 0 : width * 0.03),
-                    !businessLogin.value
-                        ? const SizedBox()
-                        : Expanded(
-                      child: SizedBox(
-                        //height: 60,
-                        child: AppButton(
-                          borderRadius: BorderRadius.circular(0),
-                          buttonColor: ConstantColor.grayColor,
-                          title: "Add Product",
-                          fontSize: 19.1,
-                          arrowShow: false,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                !businessLogin.value
-                    ? const SizedBox()
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // ── Actions Buttons ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
                   children: [
-                    SizedBox(height: height * 0.03),
-                    Text(
-                      "Company Name",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      "${profileController.profileMap['company_name'] != null && profileController.profileMap['company_name'].toString().trim().isNotEmpty ? profileController.profileMap['company_name'] : ConstantString.naLabel}",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                SizedBox(height: height * 0.01),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Mobile",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      "${profileController.profileMap['mobile'] != null && profileController.profileMap['mobile'].toString().trim().isNotEmpty ? profileController.profileMap['mobile'] : ConstantString.naLabel}",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                !businessLogin.value
-                    ? const SizedBox()
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: height * 0.01),
-                    Text(
-                      "Whatsapp",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      "${profileController.profileMap['whatsapp'] != null && profileController.profileMap['whatsapp'].toString().trim().isNotEmpty ? profileController.profileMap['whatsapp'] : ConstantString.naLabel}",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                SizedBox(height: height * 0.01),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Email",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      "${profileController.profileMap['email'] != null && profileController.profileMap['email'].toString().trim().isNotEmpty ? profileController.profileMap['email'] : ConstantString.naLabel}",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                !businessLogin.value
-                    ? const SizedBox()
-                    :  SizedBox(height: height * 0.01),
-                !businessLogin.value
-                    ? const SizedBox()
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Website",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      "${profileController.profileMap['website'] != null && profileController.profileMap['website'].toString().trim().isNotEmpty ? profileController.profileMap['website'] : ConstantString.naLabel}",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                !businessLogin.value
-                    ? const SizedBox()
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: height * 0.01),
-                    Text(
-                      "Category",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      // "${profileController.profileMap['category'] != null && profileController.profileMap['category'].toString().trim().isNotEmpty ? profileController.profileMap['category'] : ConstantString.naLabel}",
-                      "IT Company, Event Planner",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                !businessLogin.value
-                    ? const SizedBox()
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: height * 0.01),
-                    Text(
-                      "Sub Category",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      // "${profileController.profileMap['subcategory'] != null && profileController.profileMap['subcategory'].toString().trim().isNotEmpty ? profileController.profileMap['subcategory'] : ConstantString.naLabel}",
-                      "Mobile Apps, Web Developer, Event Planner",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                !businessLogin.value
-                    ? const SizedBox()
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: height * 0.01),
-                    Text(
-                      "About Us",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      "${profileController.profileMap['about_us'] != null && profileController.profileMap['about_us'].toString().trim().isNotEmpty ? profileController.profileMap['about_us'] : ConstantString.naLabel}",
-                      style: valueTextStyle,
-                    ),
-                  ],
-                ),
-                SizedBox(height: height * 0.01),
-                !businessLogin.value ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Area",
-                      style: headingTextStyle,
-                    ),
-                    // SizedBox(height: height * 0.02),
-                    appTextFormField(
-                      keyboardType:
-                      TextInputType.name,
-                      hintText:
-                      "Enter your area",
-                      textInputAction:
-                      TextInputAction
-                          .done,
-                      suffixIcon: GestureDetector(
+                    Expanded(
+                      child: AppButton(
+                        borderRadius: BorderRadius.circular(8),
                         onTap: () {
-                          updateProfileController.postUpdateProfileApi(
-                            {
-                              'name': "${profileController.profileMap['name'] != null && profileController.profileMap['name'].toString().trim().isNotEmpty ? profileController.profileMap['name'] : 'Name ${ConstantString.notAvailableLabel}'}",
-                              'company_name': "",
-                              'email': profileController.profileMap['email'] != null && profileController.profileMap['email'].toString().trim().isNotEmpty ? profileController.profileMap['email'] : ConstantString.naLabel,
-                              'profile_type': "0",
-                              'category': "0",
-                              'sub_category': "0",
-                              'whatsapp': "",
-                              'website': "",
-                              'about_us': "",
-                              'area': profileController
-                                  .areaController.value.text,
-                            },
-                            profileController.croppedProfileFile!.value.path.trim(),
-                          );
-                      },
-                        child: Container(
-                          width: Get.width / 4.2,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: ConstantColor.primary
-                          ),
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.only(
-                            left: 15,
-                            right: 15,
-                            top: 8
-                          ),
-                          child: updateProfileController.isButtonLoading.value ? LoadingAnimationWidget.staggeredDotsWave(
-                            color: Colors.white,
-                            size: 26,
-                          ): const Text("Update",style: TextStyle(color: Colors.white,fontSize: 16),),
+                          if (homeController.userData['user_type'] == 1) {
+                            if (homeController.userData['category'] != null &&
+                                homeController.userData['category'].toString().trim().isNotEmpty) {
+                              _showAlreadyJoinedDialog(context, width, height);
+                            } else {
+                              _showEditProfileBottomSheet(context);
+                            }
+                          } else {
+                            Get.to(() => UpdateProfileScreen(
+                                userData: Map<String, dynamic>.from(profileController.profileMap)
+                            ))!.then((value) {
+                              if (value == true) {
+                                profileController.postFetchProfileApi();
+                              }
+                            });
+                          }
+                        },
+                        title: "Edit Profile",
+                        arrowShow: false,
+                      ),
+                    ),
+                    if (businessLogin.value) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppButton(
+                          borderRadius: BorderRadius.circular(8),
+                          buttonColor: Colors.grey[400]!,
+                          title: "Add Product",
+                          arrowShow: false,
+                          onTap: () {},
                         ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 0,
-                          vertical: 5),
-                      controller: profileController.areaController.value,
-                    ),
-                  ],
-                ):Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Area",
-                      style: headingTextStyle,
-                    ),
-                    Text(
-                      "${profileController.profileMap['area'] != null && profileController.profileMap['area'].toString().trim().isNotEmpty ? profileController.profileMap['area'] : ConstantString.naLabel}",
-                      style: valueTextStyle,
-                    ),
+                    ],
                   ],
                 ),
-                // SizedBox(height: height * 0.01),
-                // Column(
-                //   crossAxisAlignment: CrossAxisAlignment.start,
-                //   children: [
-                //     Text(
-                //       "Referred Code",
-                //       style: headingTextStyle,
-                //     ),
-                //     Text(
-                //       "${controller.profileMap['referred_by_code'] != null && controller.profileMap['referred_by_code'].toString().trim().isNotEmpty ? controller.profileMap['referred_by_code'] : ConstantString.naLabel}",
-                //       style: valueTextStyle,
-                //     ),
-                //   ],
-                // ),
-                SizedBox(height: height * 0.02),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        deleteDialog(context, height, width);
-                      },
-                      child: const Text("Delete Account",style: TextStyle(decoration: TextDecoration.underline,color:  Colors.red),),),
+              ),
+              const SizedBox(height: 20),
 
-                  /*  ElevatedButton(
-                      onPressed: () =>deleteDialog(context, height, width),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text("Delete Account"),
-                    ),*/
-                  ],
+              // ── Delete Account Option ──
+              InkWell(
+                onTap: () => deleteDialog(context, height, width),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  child: Text(
+                    "Delete Account",
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      color: Colors.red,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-                SizedBox(height: height * 0.04),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: ConstantColor.primary,
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value.trim().isEmpty ? ConstantString.naLabel : value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: ConstantColor.blackColor,
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  TextStyle headingTextStyle = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: ConstantColor.blackColor.withAlpha(204),
-  );
+  void _showAlreadyJoinedDialog(BuildContext context, double width, double height) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          insetPadding: EdgeInsets.symmetric(horizontal: Get.width / 20),
+          child: Padding(
+            padding: EdgeInsets.all(width / 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Text(
+                    ConstantString.alreadyJoinAsMsg,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: ConstantColor.primary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                SizedBox(height: height * 0.04),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        title: "Cancel",
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => Get.back(),
+                        buttonColor: Colors.white,
+                        buttonTextColor: ConstantColor.primary,
+                        arrowShow: false,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Obx(() => AppButton(
+                        title: "Call us",
+                        onTap: () async {
+                          profileController.isButtonLoading.value = true;
+                          await profileController.postDeveloperApi().then((value) async {
+                            if (value['code'] == 200) {
+                              Uri url = Uri.parse('tel:+${value['data']['company_mobile'] ?? ''}');
+                              if (await canLaunchUrl(url)) {
+                                profileController.isButtonLoading.value = false;
+                                Get.back();
+                                await launchUrl(url);
+                              } else {
+                                profileController.isButtonLoading.value = false;
+                                Get.back();
+                                ShowToast.showToast(
+                                  ConstantString.somethingWantWrongMsg,
+                                  showSuccess: false,
+                                );
+                              }
+                            } else {
+                              profileController.isButtonLoading.value = false;
+                              Get.back();
+                              ShowToast.showToast(
+                                value['msg'] ?? ConstantString.somethingWantWrongMsg,
+                                showSuccess: false,
+                              );
+                            }
+                          }).catchError((error) {
+                            debugPrint('Error: $error');
+                            profileController.isButtonLoading.value = false;
+                            Get.back();
+                            ShowToast.showToast(error.toString(), showSuccess: false);
+                          });
+                        },
+                        arrowShow: false,
+                        borderRadius: BorderRadius.circular(8),
+                        buttonTextColor: Colors.white,
+                        isLoading: profileController.isButtonLoading.value,
+                      )),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-  TextStyle valueTextStyle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    color: ConstantColor.blackColor,
-  );
+  void _showEditProfileBottomSheet(BuildContext context) {
+    profileController.nameController.value.text = (profileController.profileMap['name'] ?? '').toString();
+    profileController.emailController.value.text = (profileController.profileMap['email'] ?? '').toString();
+    profileController.areaController.value.text = (profileController.profileMap['area'] ?? '').toString();
+    profileController.referredCodeController.value.text = (profileController.profileMap['referred_by_code'] ?? '').toString();
 
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    height: 5,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Edit Profile Details",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: ConstantColor.primary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildSheetTextField("Full Name", profileController.nameController.value, TextInputType.name),
+                const SizedBox(height: 15),
+                _buildSheetTextField("Email Address", profileController.emailController.value, TextInputType.emailAddress),
+                const SizedBox(height: 15),
+                _buildSheetTextField("Area / Location", profileController.areaController.value, TextInputType.text),
+                const SizedBox(height: 15),
+                _buildSheetTextField("Referred By Code (Optional)", profileController.referredCodeController.value, TextInputType.text),
+                const SizedBox(height: 25),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey[600],
+                          side: BorderSide(color: Colors.grey[300]!),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text("Cancel"),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Obx(() => ElevatedButton(
+                        onPressed: profileController.isButtonLoading.value
+                            ? null
+                            : () async {
+                                profileController.isButtonLoading.value = true;
+                                Map<String, String> bodyParams = {
+                                  'name': profileController.nameController.value.text.trim(),
+                                  'email': profileController.emailController.value.text.trim(),
+                                  'area': profileController.areaController.value.text.trim(),
+                                  'referred_by_code': profileController.referredCodeController.value.text.trim(),
+                                  'profile_type': (profileController.profileMap['profile_type'] ?? '0').toString(),
+                                };
+                                await profileController
+                                    .postUpdateProfileApi(
+                                        bodyParams,
+                                        profileController.filePath.value.contains("cache") 
+                                            ? profileController.filePath.value.trim() 
+                                            : "")
+                                    .then((value) async {
+                                  if (value != null && value['code'] == 200) {
+                                    await profileController.postFetchProfileApi();
+                                    await AppImageCacheManager.clearImageCache();
+                                    homeController.photoVersion.value++;
+                                    homeController.postFetchProfileApi(forceRefresh: true);
+                                    Get.back();
+                                    ShowToast.showToast(
+                                      value['msg'] ?? ConstantString.dataUpdatedSuccessfullyMsg,
+                                      showSuccess: true,
+                                    );
+                                  } else {
+                                    ShowToast.showToast(
+                                      value['msg'] ?? ConstantString.somethingWantWrongMsg,
+                                      showSuccess: false,
+                                    );
+                                  }
+                                }).catchError((error) {
+                                  debugPrint('Error: $error');
+                                  ShowToast.showToast(error.toString(), showSuccess: false);
+                                }).whenComplete(() {
+                                  profileController.isButtonLoading.value = false;
+                                });
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ConstantColor.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: profileController.isButtonLoading.value
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Text("Save Changes"),
+                      )),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSheetTextField(String label, TextEditingController controller, TextInputType type) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: type,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: ConstantColor.primary, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

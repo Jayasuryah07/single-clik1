@@ -22,7 +22,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: ConstantColor.primary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: ConstantColor.primaryGradient,
+          ),
+        ),
         leading: GestureDetector(
           onTap: () {
             Get.back();

@@ -10,8 +10,10 @@ import 'package:single_clik/constants/constant_string.dart';
 import 'package:single_clik/constants/show_toast.dart';
 import 'package:single_clik/services/api.dart';
 import 'package:single_clik/utils/shar_preferences.dart';
+import 'package:single_clik/widget/app_image_assets.dart';
 
 import '../../constants/constant_color.dart';
+import 'home_controller.dart';
 
 class UpdateProfileController extends GetxController {
   final isLoading = false.obs;
@@ -44,15 +46,21 @@ class UpdateProfileController extends GetxController {
         sourcePath: pickedFile.path,
         compressFormat: ImageCompressFormat.jpg,
         compressQuality: 50,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         uiSettings: [
           AndroidUiSettings(
-              toolbarTitle: 'Cropper',
-              toolbarColor: ConstantColor.primaryDark,
-              toolbarWidgetColor: ConstantColor.primary,
-              initAspectRatio: CropAspectRatioPreset.original,
-              lockAspectRatio: false),
+            toolbarTitle: 'Crop Image',
+            toolbarColor: ConstantColor.primary,
+            toolbarWidgetColor: Colors.white,
+            statusBarColor: Colors.black,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
           IOSUiSettings(
-            title: 'Cropper',
+            title: 'Crop Image',
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+            aspectRatioPickerButtonHidden: true,
           ),
         ],
       );
@@ -61,6 +69,30 @@ class UpdateProfileController extends GetxController {
       }
     }
     update();
+  }
+
+  Future<void> autoUploadProfilePhoto() async {
+    isButtonLoading.value = true;
+    try {
+      Map<String, String> body = {
+        'name': nameController.value.text.trim(),
+        'company_name': companyNameController.value.text.trim(),
+        'email': emailNameController.value.text.trim(),
+        'profile_type': profileTypeSelect.join(","),
+        'category': categorySelect['id']?.toString() ?? "0",
+        'sub_category': subCategorySelect['id']?.toString() ?? "0",
+        'whatsapp': whatsappNumberController.value.text.trim(),
+        'website': webSiteController.value.text.trim(),
+        'about_us': aboutUsController.value.text.trim(),
+        'area': areaController.value.text.trim(),
+      };
+
+      await postUpdateProfileApi(body, croppedProfileFile!.value.path.trim());
+    } catch (e) {
+      debugPrint('Error auto-uploading profile photo: $e');
+    } finally {
+      isButtonLoading.value = false;
+    }
   }
 
   Future postUpdateProfileApi(Map<String, String> body, String photo) async {
@@ -73,7 +105,7 @@ class UpdateProfileController extends GetxController {
       });
       request.fields.addAll(body);
       debugPrint(photo);
-      photo == "" ? null:request.files.add(
+      (photo.isEmpty || photo.startsWith("http")) ? null : request.files.add(
         await http.MultipartFile.fromPath(
           'photo',
           photo,
@@ -94,6 +126,17 @@ class UpdateProfileController extends GetxController {
             responseData['msg'] ?? ConstantString.dataUpdatedSuccessfullyMsg,
             showSuccess: true,
           );
+          // ── Auto-refresh profile photo in drawer immediately ──────────────
+          // Clear image disk cache so the new photo is downloaded fresh
+          await AppImageCacheManager.clearImageCache();
+          // Bump photoVersion: forces all ValueKey'd image widgets to rebuild
+          if (Get.isRegistered<HomeController>()) {
+            final hc = Get.find<HomeController>();
+            hc.photoVersion.value++;
+            // Also refresh the profile data in homeController so name/photo update
+            hc.postFetchProfileApi(forceRefresh: true);
+          }
+          // ─────────────────────────────────────────────────────────────────
           Get.back(result: true);
           isButtonLoading.value = false;
         } else {

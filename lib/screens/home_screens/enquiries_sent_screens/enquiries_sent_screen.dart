@@ -89,83 +89,13 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
     return Scaffold(
       backgroundColor: ConstantColor.bgColor,
       body: Obx(
-        () => Column(
-          children: [
-            Container(
-              color: ConstantColor.primary,
-              child: TabBar(
-                controller: enquiriesSentController.tabController,
-                indicatorColor: ConstantColor.whiteColor,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorWeight: 4,
-                onTap: (value) async {
-                  if (value == 0) {
-                    _currentStatus = "1";
-                    await enquiriesSentController.postSentApi("1", isAutoRefresh: false);
-                    await homeController.getSentEnquiriesUnreadCount("1");
-                  } else if (value == 1) {
-                    _currentStatus = "2";
-                    await enquiriesSentController.postSentApi("2", isAutoRefresh: false);
-                  }
-                },
-                tabs: [
-                  Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Open",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            color: ConstantColor.whiteColor,
-                          ),
-                        ),
-                        // Show unread count badge
-                        if (enquiriesSentController.getUnreadCount() > 0)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              enquiriesSentController.getUnreadCount().toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Text(
-                      "Closed",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: ConstantColor.whiteColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: (enquiriesSentController.isLoading.value && 
-                     enquiriesSentController.openSentList.isEmpty && 
-                     enquiriesSentController.closeSentList.isEmpty)
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : Stack(
+        () => (enquiriesSentController.isLoading.value && 
+               enquiriesSentController.openSentList.isEmpty && 
+               enquiriesSentController.closeSentList.isEmpty)
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : Stack(
                       children: [
                         TabBarView(
                           controller: enquiriesSentController.tabController,
@@ -204,9 +134,6 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
                           ),
                       ],
                     ),
-            ),
-          ],
-        ),
       ),
     );
   }

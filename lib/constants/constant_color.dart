@@ -14,4 +14,10 @@ class ConstantColor {
   static Color cementColor = const Color(0xFFA7AEB5);
   static Color darkRedColor = const Color(0xFF820815);
   static Color lightBlackColor = const Color(0xFF3A3838);
+
+  static LinearGradient primaryGradient = LinearGradient(
+    colors: [primary, primaryDark],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }

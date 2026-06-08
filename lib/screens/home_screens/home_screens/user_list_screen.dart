@@ -39,23 +39,29 @@ class UserListScreenState extends State<UserListScreen> {
     return Scaffold(
       backgroundColor: ConstantColor.bgColor,
       appBar: AppBar(
-        backgroundColor: ConstantColor.bgColor,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: ConstantColor.primaryGradient,
+          ),
+        ),
         leading: GestureDetector(
           onTap: () {
             Get.back();
           },
-          child: Icon(
+          child: const Icon(
             Icons.arrow_back_outlined,
-            color: ConstantColor.blackColor,
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
         title: Text(
           widget.categoryName,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: ConstantColor.blackColor,
+            color: Colors.white,
           ),
         ),
       ),
