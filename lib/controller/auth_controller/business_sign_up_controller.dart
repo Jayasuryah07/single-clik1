@@ -38,7 +38,7 @@ class BusinessSignUpController extends GetxController {
   RxString filePath = "".obs;
 
   RxBool isButtonLoading = false.obs;
-  Rx<CroppedFile>? croppedProfileFile = CroppedFile("").obs;
+  Rx<CroppedFile?> croppedProfileFile = Rx<CroppedFile?>(null);
 
   Future<void> cropImage(XFile? pickedFile) async {
     if (pickedFile != null) {
@@ -68,12 +68,7 @@ class BusinessSignUpController extends GetxController {
 
   Future<List> getCategoryDataApi() async {
     try {
-      isButtonLoading.value = true;
       final request = http.MultipartRequest('POST', Uri.parse(API.categories));
-      // request.headers.addAll({
-      //   'Accept': 'application/json',
-      // });
-      // request.fields.addAll(bodyParams);
 
       var res = await request.send();
       var responseDone = await http.Response.fromStream(res);
@@ -97,9 +92,6 @@ class BusinessSignUpController extends GetxController {
     try {
       final request =
           http.MultipartRequest('POST', Uri.parse(API.subcategories));
-      // request.headers.addAll({
-      //   'Accept': 'application/json',
-      // });
       request.fields.addAll(parameters);
 
       var res = await request.send();
@@ -121,13 +113,10 @@ class BusinessSignUpController extends GetxController {
   Future<Map> postBusinessSignUpApi(
       Map<String, String> bodyParams, String photo) async {
     try {
+      isButtonLoading.value = true;
       final request =
           http.MultipartRequest('POST', Uri.parse(API.businessSignUp));
-      // request.headers.addAll({
-      //   'Accept': 'application/json',
-      // });
       request.fields.addAll(bodyParams);
-      // photo.trim().isEmpty ? null : request.files.add(await http.MultipartFile.fromPath('photo', photo,filename: photo.trim().split('/').isEmpty ? null : photo.trim().split('/').last));
 
       var res = await request.send();
       var responseDone = await http.Response.fromStream(res);
@@ -141,36 +130,29 @@ class BusinessSignUpController extends GetxController {
           throw '${responseData['msg'] ?? ConstantString.somethingWantWrongMsg}';
         }
       } else {
-        // isButtonLoading.value = false;
-        // ShowToast.showToast(responseData['msg'] ?? 'Something went wrong.',showSuccess: true,);
         throw ConstantString.somethingWantWrongMsg;
       }
     } on TimeoutException catch (e) {
-      // isButtonLoading.value = false;
-      // ShowToast.showToast(e.message.toString(),showSuccess: false,);
       throw e.message.toString();
     } on SocketException catch (e) {
-      // isButtonLoading.value = false;
-      // ShowToast.showToast(e.message.toString(),showSuccess: false,);
       throw e.message.toString();
     } on Error catch (e) {
-      // isButtonLoading.value = false;
-      // ShowToast.showToast('Something went wrong.',showSuccess: false,);
-      // debugPrint(e.toString());
       throw e.toString();
+    } finally {
+      isButtonLoading.value = false;
     }
   }
 
   Future postUpdateProfileApi(Map<String, String> body, String photo) async {
-    isButtonLoading.value = true;
     try {
+      isButtonLoading.value = true;
       final request =
           http.MultipartRequest('POST', Uri.parse(API.updateProfile));
       request.headers.addAll({
         'Authorization': 'Bearer ${await SharPreferences.getString(SharPreferences.token)}',
       });
       request.fields.addAll(body);
-      photo == "" ? null:request.files.add(
+      photo == "" ? null : request.files.add(
         await http.MultipartFile.fromPath(
           'photo',
           photo,
@@ -188,23 +170,16 @@ class BusinessSignUpController extends GetxController {
           throw '${responseData['msg'] ?? ConstantString.somethingWantWrongMsg}';
         }
       } else {
-        // isButtonLoading.value = false;
-        // ShowToast.showToast(responseData['msg'] ?? 'Something went wrong.',showSuccess: true,);
         throw ConstantString.somethingWantWrongMsg;
       }
     } on TimeoutException catch (e) {
-      // isButtonLoading.value = false;
-      // ShowToast.showToast(e.message.toString(),showSuccess: false,);
       throw e.message.toString();
     } on SocketException catch (e) {
-      // isButtonLoading.value = false;
-      // ShowToast.showToast(e.message.toString(),showSuccess: false,);
       throw e.message.toString();
     } on Error catch (e) {
-      // isButtonLoading.value = false;
-      // ShowToast.showToast('Something went wrong.',showSuccess: false,);
-      // debugPrint(e.toString());
       throw e.toString();
+    } finally {
+      isButtonLoading.value = false;
     }
   }
 }

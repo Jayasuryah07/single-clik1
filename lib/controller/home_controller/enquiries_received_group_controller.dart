@@ -8,57 +8,74 @@ import 'package:single_clik/utils/shar_preferences.dart';
 
 class EnquiriesSentGroupController extends GetxController {
   final isLoading = false.obs;
+  final isAutoRefreshing = false.obs;
 
   final sentGroupList = [].obs;
 
-  Future postGroupSentApi(String? enquiryId) async {
+  late Timer timer;
+  bool _isDisposed = false;
+  bool _isTimerStarted = false;
+
+  Future postGroupSentApi(String? enquiryId, {bool isAutoRefresh = false}) async {
+    if (_isDisposed) return;
+    if (enquiryId == null || enquiryId.isEmpty) return;
+
+    // Start background polling timer if it's the first load
+    if (!_isTimerStarted && !isAutoRefresh) {
+      _isTimerStarted = true;
+      timer = Timer.periodic(const Duration(seconds: 8), (t) {
+        if (!_isDisposed) {
+          postGroupSentApi(enquiryId, isAutoRefresh: true);
+        }
+      });
+    }
+
     try {
-      isLoading.value = true;
+      if (!isAutoRefresh) {
+        isLoading.value = true;
+      } else {
+        isAutoRefreshing.value = true;
+      }
+      
       final request = http.MultipartRequest('POST', Uri.parse(API.groupSent));
       request.headers.addAll({
         'Authorization': 'Bearer ${await SharPreferences.getString(SharPreferences.token)}',
       });
       debugPrint('EnquiryId : $enquiryId');
-      request.fields.addAll({'enquiry_id': enquiryId!});
+      request.fields.addAll({'enquiry_id': enquiryId});
 
-      var res = await request.send();
+      var res = await request.send().timeout(const Duration(seconds: 10));
       var responseDone = await http.Response.fromStream(res);
-      debugPrint(responseDone.body);
+      
+      if (_isDisposed) return;
 
       if (res.statusCode == 200) {
         final responseData = json.decode(responseDone.body);
-        debugPrint(responseDone.body);
-        sentGroupList.value = responseData['data'];
-        debugPrint('SenderGroupList ${sentGroupList.length}');
-        isLoading.value = false;
-      } else {
-        isLoading.value = false;
-        // ShowToast.showToast(
-        //   responseData['msg'] ?? 'Something went wrong.',
-        //   showSuccess: false,
-        // );
+        if (responseData['data'] != null) {
+          sentGroupList.value = responseData['data'];
+          debugPrint('SenderGroupList updated: ${sentGroupList.length} items');
+        }
       }
     }
-    // on TimeoutException catch (e) {
-    //   isLoading.value = false;
-    //   ShowToast.showToast(
-    //     e.message.toString(),
-    //     showSuccess: false,
-    //   );
-    // } on SocketException catch (e) {
-    //   isLoading.value = false;
-    //   ShowToast.showToast(
-    //     e.message.toString(),
-    //     showSuccess: false,
-    //   );
-    // }
     catch (e) {
-      isLoading.value = false;
-      // ShowToast.showToast(
-      //   'Something went wrong.',
-      //   showSuccess: false,
-      // );
-      debugPrint(e.toString());
+      debugPrint('Error in postGroupSentApi: $e');
+    } finally {
+      if (!_isDisposed) {
+        if (!isAutoRefresh) {
+          isLoading.value = false;
+        } else {
+          isAutoRefreshing.value = false;
+        }
+      }
     }
+  }
+
+  @override
+  void onClose() {
+    _isDisposed = true;
+    if (_isTimerStarted) {
+      timer.cancel();
+    }
+    super.onClose();
   }
 }

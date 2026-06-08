@@ -6,7 +6,6 @@ import 'package:single_clik/constants/constant_color.dart';
 import 'package:single_clik/constants/constant_string.dart';
 import 'package:single_clik/constants/show_toast.dart';
 import 'package:single_clik/controller/home_controller/home_controller.dart';
-
 import 'package:single_clik/screens/home_screens/home_screens/user_details_screen.dart';
 import 'package:single_clik/screens/home_screens/home_screens/user_list_screen.dart';
 import 'package:single_clik/widget/app_button.dart';
@@ -23,17 +22,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late Animation<double> animation;
-  late AnimationController controller;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
     const quick = Duration(milliseconds: 1000);
     final scaleTween = Tween(begin: 0.0, end: 1.0);
-    controller = AnimationController(duration: quick, vsync: this);
+    _animationController = AnimationController(duration: quick, vsync: this);
     animation = scaleTween.animate(
       CurvedAnimation(
-        parent: controller,
+        parent: _animationController,
         curve: Curves.fastLinearToSlowEaseIn,
       ),
     )..addListener(() {
@@ -42,19 +41,21 @@ class _HomeScreenState extends State<HomeScreen>
 
     getData();
     getServices();
-    // _animate();
+    
+    // Start animation
+    _animationController.forward();
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
- Future<void> getServices() async {
-  await homeController.postBusinessDashboardApi("0");
-  await homeController.postBusinessDashboardApi("1");
- }
+  Future<void> getServices() async {
+    await homeController.postBusinessDashboardApi("0");
+    await homeController.postBusinessDashboardApi("1");
+  }
 
   RxDouble scale = 1.0.obs;
 
@@ -79,10 +80,8 @@ class _HomeScreenState extends State<HomeScreen>
       backgroundColor: ConstantColor.bgColor,
       floatingActionButton: SizedBox(
         width: Get.width,
-        // color: Colors.red,
         child: Row(
           children: [
-
             const Spacer(),
             Obx(
               () => Transform.scale(
@@ -95,12 +94,20 @@ class _HomeScreenState extends State<HomeScreen>
                     decoration: BoxDecoration(
                       color: ConstantColor.primary,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: ConstantColor.primary.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     padding: const EdgeInsets.all(15),
                     child: Image.asset(
                       "assets/icons/icon_add.png",
                       height: 25,
                       width: 25,
+                      color: ConstantColor.whiteColor,
                     ),
                   ),
                 ),
@@ -123,18 +130,12 @@ class _HomeScreenState extends State<HomeScreen>
                   homeController.tabIndex.value = value;
                   homeController.isSearchOpen.value = false;
                   if (value == 0) {
-                    // homeController.postDashboardApi("");
-                    // homeController.postDashboardSliderApi("");
-                    // homeController.postDashboardAdvSliderApi();
                     await homeController.getSentEnquiriesUnreadCount("1");
                   } else if (value == 1) {
-                   // homeController.postBusinessDashboardApi("0");
                     await homeController.getSentEnquiriesUnreadCount("1");
                   } else if (value == 2) {
-                    //omeController.postBusinessDashboardApi("1");
                     await homeController.getSentEnquiriesUnreadCount("1");
                   }
-                  // await homeController.getSentEnquiriesUnreadCount("1");
                 },
                 tabs: [
                   Tab(
@@ -205,98 +206,9 @@ class _HomeScreenState extends State<HomeScreen>
                                   ],
                                 )
                               : SingleChildScrollView(
-                                  physics: BouncingScrollPhysics(decelerationRate: ScrollDecelerationRate.normal),
+                                  physics: const BouncingScrollPhysics(decelerationRate: ScrollDecelerationRate.normal),
                                   child: Column(
                                     children: [
-                                      // Obx(
-                                      //   () => !searchClick.value
-                                      //       ? const SizedBox()
-                                      //       : Padding(
-                                      //           padding:
-                                      //               const EdgeInsets.all(10.0),
-                                      //           child: SizedBox(
-                                      //             height: 50,
-                                      //             child: TextFormField(
-                                      //               controller: controller
-                                      //                   .searchController.value,
-                                      //               focusNode: controller
-                                      //                   .searchFocusNode,
-                                      //               onChanged: (value) {
-                                      //                 controller
-                                      //                     .searchProduct(value);
-                                      //               },
-                                      //               textInputAction:
-                                      //                   TextInputAction.search,
-                                      //               style: TextStyle(
-                                      //                 fontSize: 20,
-                                      //                 color: ConstantColor
-                                      //                     .blackColor,
-                                      //                 fontWeight: FontWeight.w500,
-                                      //               ),
-                                      //               keyboardType:
-                                      //                   TextInputType.text,
-                                      //               cursorColor:
-                                      //                   ConstantColor.blackColor,
-                                      //               decoration: InputDecoration(
-                                      //                 fillColor: Colors.white,
-                                      //                 contentPadding:
-                                      //                     const EdgeInsets
-                                      //                         .symmetric(
-                                      //                         vertical: 10,
-                                      //                         horizontal: 15),
-                                      //                 hintText: "Search",
-                                      //                 hintStyle: TextStyle(
-                                      //                     fontSize: 18,
-                                      //                     color: ConstantColor
-                                      //                         .grayColor,
-                                      //                     fontWeight:
-                                      //                         FontWeight.w400),
-                                      //                 filled: true,
-                                      //                 border: OutlineInputBorder(
-                                      //                   borderRadius:
-                                      //                       BorderRadius.circular(
-                                      //                           100.0),
-                                      //                 ),
-                                      //                 focusedBorder:
-                                      //                     OutlineInputBorder(
-                                      //                   borderRadius:
-                                      //                       BorderRadius.circular(
-                                      //                           100.0),
-                                      //                 ),
-                                      //                 disabledBorder:
-                                      //                     OutlineInputBorder(
-                                      //                   borderRadius:
-                                      //                       BorderRadius.circular(
-                                      //                           100.0),
-                                      //                 ),
-                                      //                 enabledBorder:
-                                      //                     OutlineInputBorder(
-                                      //                   borderRadius:
-                                      //                       BorderRadius.circular(
-                                      //                           100.0),
-                                      //                 ),
-                                      //                 suffixIcon: IconButton(
-                                      //                   onPressed: () {
-                                      //                     searchClick.value =
-                                      //                         false;
-                                      //                     controller
-                                      //                         .searchFocusNode
-                                      //                         .unfocus();
-                                      //                     controller
-                                      //                         .searchProduct('');
-                                      //                   },
-                                      //                   icon: Icon(
-                                      //                     Icons.close,
-                                      //                     color: ConstantColor
-                                      //                         .blackColor,
-                                      //                     size: Get.width / 18,
-                                      //                   ),
-                                      //                 ),
-                                      //               ),
-                                      //             ),
-                                      //           ),
-                                      //         ),
-                                      // ),
                                       ListView.separated(
                                         itemCount:
                                             homeController.allList.length,
@@ -442,86 +354,6 @@ class _HomeScreenState extends State<HomeScreen>
                                                               ),
                                                             ),
                                                           ),
-                                                          // SingleChildScrollView(
-                                                          //   scrollDirection:
-                                                          //       Axis.horizontal,
-                                                          //   child: Padding(
-                                                          //     padding:
-                                                          //         EdgeInsets
-                                                          //             .all(
-                                                          //       width / 30,
-                                                          //     ),
-                                                          //     child: Row(
-                                                          //         crossAxisAlignment:
-                                                          //             CrossAxisAlignment
-                                                          //                 .start,
-                                                          //         children:
-                                                          //             List.generate(
-                                                          //           controller
-                                                          //               .allSliderList
-                                                          //               .length,
-                                                          //           (index) =>
-                                                          //               Padding(
-                                                          //             padding:
-                                                          //                 EdgeInsets.only(
-                                                          //               left: index == 0
-                                                          //                   ? 0
-                                                          //                   : width / 60,
-                                                          //             ),
-                                                          //             child:
-                                                          //                 SizedBox(
-                                                          //               width:
-                                                          //                   width / 3.5,
-                                                          //               child:
-                                                          //                   Column(
-                                                          //                 crossAxisAlignment: CrossAxisAlignment.center,
-                                                          //                 children: [
-                                                          //                   GestureDetector(
-                                                          //                     onTap: () {
-                                                          //                       Get.to(() => UserDetailsScreen(
-                                                          //                             id: homeController.allSliderList[index]['id'].toString(),
-                                                          //                           ));
-                                                          //                     },
-                                                          //                     child: Container(
-                                                          //                       decoration: BoxDecoration(
-                                                          //                         border: Border.all(
-                                                          //                           color: ConstantColor.primary,
-                                                          //                           width: 2,
-                                                          //                         ),
-                                                          //                         shape: BoxShape.circle,
-                                                          //                       ),
-                                                          //                       child: ClipOval(
-                                                          //                         child: AppImageAsset(
-                                                          //                           image: "${ConstantString.userImgUrlPath}${homeController.allSliderList[index]['photo']}",
-                                                          //                           isFile: false,
-                                                          //                           height: width / 4,
-                                                          //                           width: width / 4,
-                                                          //                           fit: BoxFit.cover,
-                                                          //                         ),
-                                                          //                       ),
-                                                          //                     ),
-                                                          //                   ),
-                                                          //                   SizedBox(height: height * 0.01),
-                                                          //                   Text(
-                                                          //                     homeController.allSliderList[index]['name'] ?? "",
-                                                          //                     style: TextStyle(
-                                                          //                       fontSize: 12,
-                                                          //                       fontWeight: FontWeight.w500,
-                                                          //                       color: ConstantColor.primary,
-                                                          //                     ),
-                                                          //                     // overflow:
-                                                          //                     //     TextOverflow
-                                                          //                     //         .ellipsis,
-                                                          //                     textAlign: TextAlign.center,
-                                                          //                     maxLines: 2,
-                                                          //                   ),
-                                                          //                 ],
-                                                          //               ),
-                                                          //             ),
-                                                          //           ),
-                                                          //         )),
-                                                          //   ),
-                                                          // ),
                                                         ],
                                                       )
                                                 : index == 8
@@ -542,8 +374,6 @@ class _HomeScreenState extends State<HomeScreen>
                                                               CarouselSlider(
                                                                 options:
                                                                     CarouselOptions(
-                                                                  // height: width /
-                                                                  //     2.5,
                                                                   autoPlay:
                                                                       true,
                                                                   initialPage:
@@ -579,17 +409,8 @@ class _HomeScreenState extends State<HomeScreen>
                                                                             Uri url = Uri.parse(homeController.allAdvSliderList[index]['slider_url'] ?? '');
                                                                             debugPrint('slider_url $url');
                                                                             if (await canLaunchUrl(url)) {
-                                                                              await launchUrl(url);
-                                                                            } else {
-                                                                              // ShowToast.showToast(
-                                                                              //   'Url ${ConstantString.notAvailableLabel}',
-                                                                              //   showSuccess: false,
-                                                                              // );
+                                                                              await launchUrl(url, mode: LaunchMode.externalApplication);
                                                                             }
-                                                                            // Get.to(() =>
-                                                                            //     UserDetailsScreen(
-                                                                            //       id: controller.allAdvSliderList[index]['id'].toString(),
-                                                                            //     ));
                                                                           },
                                                                           child:
                                                                               Container(
@@ -612,41 +433,15 @@ class _HomeScreenState extends State<HomeScreen>
                                                                             ),
                                                                           ),
                                                                         ),
-                                                                        // SizedBox(
-                                                                        //     height:
-                                                                        //         height * 0.01),
-                                                                        // Text(
-                                                                        //   homeController.allAdvSliderList[index]['name'] ??
-                                                                        //       "",
-                                                                        //   style:
-                                                                        //       TextStyle(
-                                                                        //     fontSize:
-                                                                        //         12,
-                                                                        //     fontWeight:
-                                                                        //         FontWeight.w500,
-                                                                        //     color:
-                                                                        //         ConstantColor.primary,
-                                                                        //   ),
-                                                                        //   // overflow:
-                                                                        //   //     TextOverflow
-                                                                        //   //         .ellipsis,
-                                                                        //   textAlign:
-                                                                        //       TextAlign.center,
-                                                                        //   maxLines:
-                                                                        //       2,
-                                                                        // ),
                                                                       ],
                                                                     ),
                                                                   ),
                                                                 ),
                                                               ),
-
                                                             ],
                                                           )
                                                     : const SizedBox(),
                                         itemBuilder: (context, index) {
-                                          debugPrint('data : ${homeController.allList[index]}');
-
                                           return GestureDetector(
                                             onTap: () {
                                               debugPrint('Id: ${homeController.allList[index]['id']}');
@@ -710,28 +505,10 @@ class _HomeScreenState extends State<HomeScreen>
                                                             color: ConstantColor
                                                                 .primary,
                                                           ),
-                                                          // maxLines: 1,
-                                                          // overflow:
-                                                          //     TextOverflow.ellipsis,
                                                         ),
                                                         SizedBox(
                                                           height: width / 90,
                                                         ),
-                                                        // Text(
-                                                        //   "Company",
-                                                        //   style: TextStyle(
-                                                        //     fontSize: 12,
-                                                        //     fontWeight:
-                                                        //         FontWeight
-                                                        //             .w400,
-                                                        //     color: ConstantColor
-                                                        //         .grayColor,
-                                                        //   ),
-                                                        //   // maxLines: 1,
-                                                        //   overflow:
-                                                        //       TextOverflow
-                                                        //           .ellipsis,
-                                                        // ),
                                                         Text(
                                                           homeController.allList[
                                                                       index][
@@ -751,21 +528,6 @@ class _HomeScreenState extends State<HomeScreen>
                                                         SizedBox(
                                                           height: width / 90,
                                                         ),
-                                                        // Text(
-                                                        //   "Services",
-                                                        //   style: TextStyle(
-                                                        //     fontSize: 12,
-                                                        //     fontWeight:
-                                                        //         FontWeight
-                                                        //             .w400,
-                                                        //     color: ConstantColor
-                                                        //         .grayColor,
-                                                        //   ),
-                                                        //   maxLines: 1,
-                                                        //   overflow:
-                                                        //       TextOverflow
-                                                        //           .ellipsis,
-                                                        // ),
                                                         Container(
                                                           width: width,
                                                           margin:
@@ -775,7 +537,6 @@ class _HomeScreenState extends State<HomeScreen>
                                                           ),
                                                           decoration:
                                                               BoxDecoration(
-                                                            // color: ConstantColor.primary.withOpacity(0.3),
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
@@ -805,21 +566,6 @@ class _HomeScreenState extends State<HomeScreen>
                                                             width / 90,
                                                           ),
                                                           child: Text(
-                                                            // categoryData
-                                                            //         .isEmpty
-                                                            //     ? (controller.allList[index]['category'] ??
-                                                            //         "N/A")
-                                                            //     : categoryData
-                                                            //             .first[
-                                                            //                 'category']
-                                                            //             .toString()
-                                                            //             .trim()
-                                                            //             .isEmpty
-                                                            //         ? 'N/A'
-                                                            //         : controller.allList[index]
-                                                            //                 [
-                                                            //                 'category'] ??
-                                                            //             "N/A",
                                                             homeController.allList[index]
                                                                             [
                                                                             'category'] ==
@@ -848,31 +594,12 @@ class _HomeScreenState extends State<HomeScreen>
                                                                     .deepOrange,
                                                                 letterSpacing:
                                                                     2),
-                                                            // maxLines: 1,
-                                                            // overflow:
-                                                            //     TextOverflow
-                                                            //         .ellipsis,
                                                           ),
                                                         ),
                                                         SizedBox(
                                                           height: width / 90,
                                                         ),
                                                         Text(
-                                                          // categoryData
-                                                          //         .isEmpty
-                                                          //     ? (homeController.allList[index]['category'] ??
-                                                          //         "N/A")
-                                                          //     : categoryData
-                                                          //             .first[
-                                                          //                 'category']
-                                                          //             .toString()
-                                                          //             .trim()
-                                                          //             .isEmpty
-                                                          //         ? 'N/A'
-                                                          //         : homeController.allList[index]
-                                                          //                 [
-                                                          //                 'category'] ??
-                                                          //             "N/A",
                                                           homeController.allList[
                                                                               index]
                                                                           [
@@ -899,10 +626,6 @@ class _HomeScreenState extends State<HomeScreen>
                                                             color: Colors
                                                                 .grey.shade600,
                                                           ),
-                                                          // maxLines: 1,
-                                                          // overflow:
-                                                          //     TextOverflow
-                                                          //         .ellipsis,
                                                         ),
                                                       ],
                                                     ),
@@ -949,8 +672,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     crossAxisCount: 3,
                                     crossAxisSpacing: 10,
                                     mainAxisSpacing: 10,
+                                    childAspectRatio: 0.8,
                                   ),
-                                  padding: const EdgeInsets.only(bottom: 80),
+                                  padding: const EdgeInsets.only(bottom: 80, top: 10),
                                   itemCount: homeController.businessList.length,
                                   shrinkWrap: true,
                                   itemBuilder: (context, index) =>
@@ -984,50 +708,41 @@ class _HomeScreenState extends State<HomeScreen>
                                       }
                                     },
                                     child: Container(
-                                      height: 280.0,
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 5),
+                                          horizontal: 10, vertical: 5),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Expanded(
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                    color:
-                                                        const Color(0xffF6F5FA),
-                                                    width: 2,
-                                                  ),
-                                                  shape: BoxShape.circle),
+                                          Container(
+                                            height: 80,
+                                            width: 80,
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: const Color(0xffF6F5FA),
+                                                width: 2,
+                                              ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: ClipOval(
                                               child: AppImageAsset(
                                                 image:
                                                     "${ConstantString.categoriesImgUrlPath}${homeController.businessList[index]['category_image']}",
                                                 isFile: false,
                                                 fit: BoxFit.cover,
                                                 height: 80,
-                                                // color: (homeController.businessList[
-                                                // index]['member_count'] ==
-                                                //     null ||
-                                                //     homeController.businessList[
-                                                //     index][
-                                                //     'member_count'] ==
-                                                //         0)
-                                                //     ? ConstantColor
-                                                //         .grayColor
-                                                //     : null,
-                                                // width: 80,
+                                                width: 80,
                                               ),
                                             ),
                                           ),
+                                          const SizedBox(height: 8),
                                           Text(
                                             homeController.businessList[index]
                                                     ['category'] ??
                                                 "",
                                             style: TextStyle(
-                                              fontSize: 15,
+                                              fontSize: 14,
                                               fontWeight: FontWeight.w500,
                                               color: (homeController.businessList[
                                                                   index][
@@ -1041,7 +756,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                   : ConstantColor.primary,
                                             ),
                                             textAlign: TextAlign.center,
-                                            maxLines: 1,
+                                            maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
@@ -1082,17 +797,14 @@ class _HomeScreenState extends State<HomeScreen>
                                     crossAxisCount: 3,
                                     crossAxisSpacing: 10,
                                     mainAxisSpacing: 10,
+                                    childAspectRatio: 0.8,
                                   ),
                                   itemCount: homeController.servicesList.length,
-                                  padding: const EdgeInsets.only(bottom: 80),
+                                  padding: const EdgeInsets.only(bottom: 80, top: 10),
                                   shrinkWrap: true,
                                   itemBuilder: (context, index) =>
                                       GestureDetector(
                                     onTap: () {
-                                      // Get.to(() => ServicesScreen(
-                                      //       categoryId: homeController.servicesList[index]['id'].toString(),
-                                      //       title: homeController.servicesList[index]['category'].toString(),
-                                      //     ));
                                       if (homeController.servicesList[index]
                                                   ['member_count'] ==
                                               null ||
@@ -1119,48 +831,41 @@ class _HomeScreenState extends State<HomeScreen>
                                       }
                                     },
                                     child: Container(
-                                      height: 280.0,
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 5),
+                                          horizontal: 10, vertical: 5),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Expanded(
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                    color:
-                                                        const Color(0xffF6F5FA),
-                                                    width: 2,
-                                                  ),
-                                                  shape: BoxShape.circle),
+                                          Container(
+                                            height: 80,
+                                            width: 80,
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: const Color(0xffF6F5FA),
+                                                width: 2,
+                                              ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: ClipOval(
                                               child: AppImageAsset(
                                                 image:
                                                     "${ConstantString.categoriesImgUrlPath}${homeController.servicesList[index]['category_image']}",
                                                 isFile: false,
                                                 fit: BoxFit.cover,
                                                 height: 80,
-                                                // color: homeController.servicesList[
-                                                //                 index][
-                                                //             'member_count'] ==
-                                                //         0
-                                                //     ? ConstantColor
-                                                //         .grayColor
-                                                //         .withOpacity(0.1)
-                                                //     : null,
-                                                // width: 80,
+                                                width: 80,
                                               ),
                                             ),
                                           ),
+                                          const SizedBox(height: 8),
                                           Text(
                                             homeController.servicesList[index]
                                                     ['category'] ??
                                                 "",
                                             style: TextStyle(
-                                              fontSize: 12,
+                                              fontSize: 14,
                                               fontWeight: FontWeight.w500,
                                               color: (homeController.servicesList[
                                                                   index][
@@ -1174,7 +879,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                   : ConstantColor.primary,
                                             ),
                                             textAlign: TextAlign.center,
-                                            maxLines: 1,
+                                            maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
@@ -1193,422 +898,464 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> raiseInquiryDialog(BuildContext context,
-      HomeController controller,
-      double height,
-      double width) async {
+    HomeController controller,
+    double height,
+    double width) async {
 
-    await controller.postCategoriesApi();
-    controller.categorySelect.value = {};
-    controller.subCategorySelect.value = {};
-    controller.priorityTypeSelect.value = "";
-    controller.subCategoryList.value = [];
-    controller.inquiryController.value.clear();
-    List categoryList = List.from(controller.categoryList);
+  await controller.postCategoriesApi();
+  controller.categorySelect.value = {};
+  controller.subCategorySelect.value = {};
+  controller.priorityTypeSelect.value = "";
+  controller.subCategoryList.value = [];
+  controller.inquiryController.value.clear();
+  
+  List categoryList = List.from(controller.categoryList);
 
-    categoryList.removeWhere(
-      (element) =>
-          element['category'].toString().trim().toLowerCase() ==
-          'Not in List'.trim().toLowerCase(),
-    );
+  categoryList.removeWhere(
+    (element) =>
+        element['category'].toString().trim().toLowerCase() ==
+        'Not in List'.trim().toLowerCase(),
+  );
 
-    if (!context.mounted) return;
-    final dialogContext = context;
+  if (!context.mounted) return;
+  final dialogContext = context;
 
-    return showDialog(
-      context: dialogContext,
-      builder: (context) => Obx(
-        () => Dialog(
-          backgroundColor: ConstantColor.whiteColor,
-          surfaceTintColor: ConstantColor.whiteColor,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-          child: SingleChildScrollView(
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Get.back();
-                        },
-                        child: Image.asset(
-                          "assets/icons/icon_close.png",
-                          height: 25,
-                          width: 25,
-                        ),
-                      )
-                    ],
-                  ),
-                  Text(
-                    "Raise Inquiry",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: ConstantColor.blackColor,
-                    ),
-                  ),
-                  SizedBox(height: height * 0.05),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Category",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: ConstantColor.blackColor,
-                        ),
-                      ),
-                      SizedBox(height: height * 0.01),
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                            color: ConstantColor.bgColor,
-                            borderRadius: BorderRadius.circular(7),
-                            border: Border.all(
-                              color: const Color(0xffDDDDDD),
-                            )),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 0,
-                          horizontal: 10,
-                        ),
-                        child: DropdownButton(
-                          dropdownColor: ConstantColor.bgColor,
-                          value:
-                              controller.categorySelect['category'] == null ||
-                                      controller.categorySelect['category']
-                                          .toString()
-                                          .trim()
-                                          .isEmpty
-                                  ? null
-                                  : controller.categorySelect['category']
-                                      .toString(),
-                          padding: EdgeInsets.zero,
-                          onChanged: (dynamic newValue) {
-                            for (int i = 0; i < categoryList.length; i++) {
-                              if (categoryList[i]['category'] == newValue) {
-                                debugPrint('Data: ${categoryList[i]}');
-                                controller.categorySelect.value =
-                                    categoryList[i] ?? {};
-                                controller.postSubCategoriesApi(
-                                    controller.categorySelect['id'].toString());
-                              }
-                            }
-                            controller.isAddLoading.value = true;
-                          },
-                          isExpanded: true,
-                          items: categoryList.map(
-                            (val) {
-                              return DropdownMenuItem(
-                                value: val['category'] ?? {},
-                                child: Text(
-                                  val['category'] ?? "",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: ConstantColor.blackColor,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 1,
-                                ),
-                              );
-                            },
-                          ).toList(),
-                          underline: const SizedBox(),
-                          hint: Text(
-                            "Select Category",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: ConstantColor.grayColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          icon: Icon(
-                            Icons.arrow_drop_down_sharp,
-                            size: 25,
-                            color: ConstantColor.blackColor,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: height * 0.03),
-                      Text(
-                        "Sub-Category",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: ConstantColor.blackColor,
-                        ),
-                      ),
-                      SizedBox(height: height * 0.01),
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                            color: ConstantColor.bgColor,
-                            borderRadius: BorderRadius.circular(7),
-                            border: Border.all(
-                              color: const Color(0xffDDDDDD),
-                            )),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 0,
-                          horizontal: 10,
-                        ),
-                        child: DropdownButton(
-                          dropdownColor: ConstantColor.bgColor,
-                          value: controller.subCategorySelect['subcategory'] ==
-                                      null ||
-                                  controller.subCategorySelect['subcategory']
-                                      .toString()
-                                      .trim()
-                                      .isEmpty
-                              ? null
-                              : controller.subCategorySelect['subcategory']
-                                  .toString(),
-                          padding: EdgeInsets.zero,
-                          isExpanded: true,
-                          onChanged: (dynamic newValue) {
-                            for (int i = 0;
-                                i < controller.subCategoryList.length;
-                                i++) {
-                              if (controller.subCategoryList[i]
-                                      ['subcategory'] ==
-                                  newValue) {
-                                debugPrint('subCategoryList : ${controller.subCategoryList[i]}');
-                                controller.subCategorySelect.value =
-                                    controller.subCategoryList[i] ?? {};
-                              }
-                            }
-                          },
-                          hint: Text(
-                            "Select SubCategory",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: ConstantColor.grayColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          items: controller.subCategoryList.map(
-                            (val) {
-                              return DropdownMenuItem(
-                                value: val['subcategory'] ?? "",
-                                child: Text(
-                                  val['subcategory'] ?? "",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: ConstantColor.blackColor,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 1,
-                                ),
-                              );
-                            },
-                          ).toList(),
-                          underline: const SizedBox(),
-                          icon: Icon(
-                            Icons.arrow_drop_down_sharp,
-                            size: 25,
-                            color: ConstantColor.blackColor,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: height * 0.03),
-                      Text(
-                        "Priority type",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: ConstantColor.blackColor,
-                        ),
-                      ),
-                      SizedBox(height: height * 0.01),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                controller.priorityTypeSelect.value = "Urgent";
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: const Color(0xffABAAAF),
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10, horizontal: 10),
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      controller.priorityTypeSelect.value ==
-                                              "Urgent"
-                                          ? "assets/icons/icon_select_radio.png"
-                                          : "assets/icons/icon_unselect_radio.png",
-                                      height: 20,
-                                      width: 20,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      "Urgent",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: controller
-                                                    .priorityTypeSelect.value ==
-                                                "Urgent"
-                                            ? ConstantColor.blackColor
-                                            : ConstantColor.grayColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: width * 0.02),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                controller.priorityTypeSelect.value = "General";
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: const Color(0xffABAAAF),
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10, horizontal: 10),
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      controller.priorityTypeSelect.value ==
-                                              "General"
-                                          ? "assets/icons/icon_select_radio.png"
-                                          : "assets/icons/icon_unselect_radio.png",
-                                      height: 20,
-                                      width: 20,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      "General",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: controller
-                                                    .priorityTypeSelect.value ==
-                                                "General"
-                                            ? ConstantColor.blackColor
-                                            : ConstantColor.grayColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: height * 0.03),
-                      SizedBox(
-                        height: 130,
-                        child: TextFormField(
-                          controller: controller.inquiryController.value,
-                          onChanged: (value) {},
-                          textInputAction: TextInputAction.newline,
-                          maxLines: 5,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: ConstantColor.blackColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          keyboardType: TextInputType.multiline,
-                          cursorColor: ConstantColor.blackColor,
-                          decoration: InputDecoration(
-                            fillColor: ConstantColor.bgColor,
-                            contentPadding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 15),
-                            hintText: "Other inquiry type here (optional)",
-                            hintStyle: TextStyle(
-                                fontSize: 16,
-                                color: ConstantColor.grayColor,
-                                fontWeight: FontWeight.w400),
-                            filled: true,
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(7.0),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffDDDDDD),
-                                )),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(7.0),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffDDDDDD),
-                                )),
-                            disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(7.0),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffDDDDDD),
-                                )),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(7.0),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffDDDDDD),
-                                )),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                  SizedBox(height: height * 0.02),
-                  Center(
-                    child: AppButton(
+  return showDialog(
+    context: dialogContext,
+    barrierDismissible: false,
+    builder: (context) => Obx(
+      () => Dialog(
+        backgroundColor: ConstantColor.whiteColor,
+        surfaceTintColor: ConstantColor.whiteColor,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
                       onTap: () {
-                        if (controller.categorySelect.isEmpty) {
-                          ShowToast.showToast(
-                            'Please Select Category',
-                            showSuccess: false,
-                          );
-                        } else if (controller.subCategorySelect.isEmpty) {
-                          ShowToast.showToast(
-                            'Please Select Sub-Category',
-                            showSuccess: false,
-                          );
-                        } else if (controller.priorityTypeSelect.isEmpty) {
-                          ShowToast.showToast(
-                            'Please Select Priority Type',
-                            showSuccess: false,
-                          );
-                        } else {
-                          var bodyParams = {
-                            'category':
-                                controller.categorySelect['id'].toString(),
-                            'sub_category':
-                                controller.subCategorySelect['id'].toString(),
-                            'type':
-                                controller.priorityTypeSelect.value == "Urgent"
-                                    ? "0"
-                                    : "1",
-                            'enq_text': controller.inquiryController.value.text,
-                          };
-                          debugPrint('bodyParams $bodyParams');
-                          controller.postCreateEnquiryApi(bodyParams);
+                        if (!controller.isButtonLoading.value) {
+                          Get.back();
                         }
                       },
-                      isLoading: controller.isButtonLoading.value,
-                      title: "Submit",
-                      myWidth: Get.width / 2,
-                      arrowShow: false,
-                    ),
+                      child: Image.asset(
+                        "assets/icons/icon_close.png",
+                        height: 25,
+                        width: 25,
+                      ),
+                    )
+                  ],
+                ),
+                Text(
+                  "Raise Inquiry",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: ConstantColor.blackColor,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Category *",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: ConstantColor.blackColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                          color: ConstantColor.bgColor,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xffDDDDDD),
+                          )),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 15,
+                      ),
+                      child: DropdownButton(
+                        dropdownColor: ConstantColor.bgColor,
+                        value: controller.categorySelect['category'] == null ||
+                                controller.categorySelect['category']
+                                    .toString()
+                                    .trim()
+                                    .isEmpty
+                            ? null
+                            : controller.categorySelect['category']
+                                .toString(),
+                        padding: EdgeInsets.zero,
+                        isExpanded: true,
+                        onChanged: (dynamic newValue) {
+                          for (int i = 0; i < categoryList.length; i++) {
+                            if (categoryList[i]['category'].toString() == newValue.toString()) {
+                              debugPrint('Selected Category Data: ${categoryList[i]}');
+                              controller.categorySelect.value = categoryList[i] ?? {};
+                              debugPrint('Category ID: ${controller.categorySelect['id']}');
+                              controller.postSubCategoriesApi(
+                                  controller.categorySelect['id'].toString());
+                            }
+                          }
+                        },
+                        items: categoryList.map(
+                          (val) {
+                            return DropdownMenuItem(
+                              value: val['category']?.toString() ?? "",
+                              child: Text(
+                                val['category']?.toString() ?? "",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: ConstantColor.blackColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          },
+                        ).toList(),
+                        underline: const SizedBox(),
+                        hint: Text(
+                          "Select Category",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: ConstantColor.grayColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        icon: Icon(
+                          Icons.arrow_drop_down_sharp,
+                          size: 25,
+                          color: ConstantColor.blackColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Sub-Category *",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: ConstantColor.blackColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                          color: ConstantColor.bgColor,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xffDDDDDD),
+                          )),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 15,
+                      ),
+                      child: DropdownButton(
+                        dropdownColor: ConstantColor.bgColor,
+                        value: controller.subCategorySelect['subcategory'] == null ||
+                                controller.subCategorySelect['subcategory']
+                                    .toString()
+                                    .trim()
+                                    .isEmpty
+                            ? null
+                            : controller.subCategorySelect['subcategory']
+                                .toString(),
+                        padding: EdgeInsets.zero,
+                        isExpanded: true,
+                        onChanged: (dynamic newValue) {
+                          for (int i = 0; i < controller.subCategoryList.length; i++) {
+                            if (controller.subCategoryList[i]['subcategory'].toString() == newValue.toString()) {
+                              debugPrint('Selected SubCategory Data: ${controller.subCategoryList[i]}');
+                              controller.subCategorySelect.value = controller.subCategoryList[i] ?? {};
+                              debugPrint('SubCategory ID: ${controller.subCategorySelect['id']}');
+                            }
+                          }
+                        },
+                        hint: Text(
+                          "Select SubCategory",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: ConstantColor.grayColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        items: controller.subCategoryList.map(
+                          (val) {
+                            return DropdownMenuItem(
+                              value: val['subcategory']?.toString() ?? "",
+                              child: Text(
+                                val['subcategory']?.toString() ?? "",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: ConstantColor.blackColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          },
+                        ).toList(),
+                        underline: const SizedBox(),
+                        icon: Icon(
+                          Icons.arrow_drop_down_sharp,
+                          size: 25,
+                          color: ConstantColor.blackColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Priority Type *",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: ConstantColor.blackColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              controller.priorityTypeSelect.value = "Urgent";
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: controller.priorityTypeSelect.value == "Urgent"
+                                      ? ConstantColor.primary
+                                      : const Color(0xffABAAAF),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 10),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    controller.priorityTypeSelect.value == "Urgent"
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: controller.priorityTypeSelect.value == "Urgent"
+                                        ? ConstantColor.primary
+                                        : ConstantColor.grayColor,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "Urgent",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: controller
+                                                  .priorityTypeSelect.value ==
+                                              "Urgent"
+                                          ? ConstantColor.primary
+                                          : ConstantColor.grayColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              controller.priorityTypeSelect.value = "General";
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: controller.priorityTypeSelect.value == "General"
+                                      ? ConstantColor.primary
+                                      : const Color(0xffABAAAF),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 10),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    controller.priorityTypeSelect.value == "General"
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: controller.priorityTypeSelect.value == "General"
+                                        ? ConstantColor.primary
+                                        : ConstantColor.grayColor,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "General",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: controller
+                                                  .priorityTypeSelect.value ==
+                                              "General"
+                                          ? ConstantColor.primary
+                                          : ConstantColor.grayColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Inquiry Details",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: ConstantColor.blackColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: ConstantColor.bgColor,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xffDDDDDD),
+                        ),
+                      ),
+                      child: TextFormField(
+                        controller: controller.inquiryController.value,
+                        onChanged: (value) {},
+                        textInputAction: TextInputAction.newline,
+                        maxLines: 5,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: ConstantColor.blackColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        keyboardType: TextInputType.multiline,
+                        cursorColor: ConstantColor.blackColor,
+                        decoration: InputDecoration(
+                          fillColor: ConstantColor.bgColor,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15, horizontal: 15),
+                          hintText: "Enter your inquiry details here...",
+                          hintStyle: TextStyle(
+                              fontSize: 14,
+                              color: ConstantColor.grayColor,
+                              fontWeight: FontWeight.w400),
+                          filled: true,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 25),
+                SizedBox(
+                  width: double.infinity,
+                  child: AppButton(
+                    onTap: () async {
+                      // ========== REPLACE THIS ENTIRE onTap FUNCTION ==========
+                      
+                      // Validate selections
+                      if (controller.categorySelect.isEmpty) {
+                        ShowToast.showToast('Please Select Category', showSuccess: false);
+                        return;
+                      }
+                      
+                      if (controller.subCategorySelect.isEmpty) {
+                        ShowToast.showToast('Please Select Sub-Category', showSuccess: false);
+                        return;
+                      }
+                      
+                      if (controller.priorityTypeSelect.value.isEmpty) {
+                        ShowToast.showToast('Please Select Priority Type', showSuccess: false);
+                        return;
+                      }
+                      
+                      // Get IDs safely
+                      String categoryId = controller.categorySelect['id']?.toString() ?? '';
+                      String subCategoryId = controller.subCategorySelect['id']?.toString() ?? '';
+                      String priorityType = controller.priorityTypeSelect.value == "Urgent" ? "0" : "1";
+                      String inquiryText = controller.inquiryController.value.text.trim();
+                      
+                      // Validate IDs
+                      if (categoryId.isEmpty) {
+                        ShowToast.showToast('Invalid Category selected', showSuccess: false);
+                        debugPrint('Category Select Data: ${controller.categorySelect}');
+                        return;
+                      }
+                      
+                      if (subCategoryId.isEmpty) {
+                        ShowToast.showToast('Invalid Sub-Category selected', showSuccess: false);
+                        debugPrint('SubCategory Select Data: ${controller.subCategorySelect}');
+                        return;
+                      }
+                      
+                      var bodyParams = {
+                        'category': categoryId,
+                        'sub_category': subCategoryId,
+                        'type': priorityType,
+                        'enq_text': inquiryText,
+                      };
+                      
+                      debugPrint('Sending Inquiry with params: $bodyParams');
+                      debugPrint('Category ID: $categoryId');
+                      debugPrint('SubCategory ID: $subCategoryId');
+                      
+                      // Call API
+                      bool success = await controller.postCreateEnquiryApi(bodyParams);
+                      
+                      if (success) {
+                        // Only close dialog on explicit success
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      } else {
+                        // Don't close dialog, let user try again or check
+                        debugPrint('Enquiry creation returned false - dialog stays open');
+                      }
+                      
+                      // ========== END OF REPLACEMENT ==========
+                    },
+                    isLoading: controller.isButtonLoading.value,
+                    title: "Submit Inquiry",
+                    myWidth: double.infinity,
+                    arrowShow: false,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
 }

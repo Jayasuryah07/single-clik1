@@ -52,9 +52,18 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
-    falseIsButtonLoading();
     super.initState();
+    // Load categories when page initializes
+    loadCategories();
+  }
+
+  Future<void> loadCategories() async {
+    try {
+      final categories = await businessSignUpController.getCategoryDataApi();
+      businessSignUpController.categoryDataList.value = categories;
+    } catch (error) {
+      debugPrint('Error loading categories: $error');
+    }
   }
 
   @override
@@ -79,24 +88,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Text(
-                              //   "Welcome to",
-                              //   style: TextStyle(
-                              //     fontSize: 23,
-                              //     color: ConstantColor.blackColor,
-                              //     fontWeight: FontWeight.w400,
-                              //     height: 0,
-                              //   ),
-                              // ),
-                              // Text(
-                              //   "Single Clik",
-                              //   style: TextStyle(
-                              //     fontSize: 38,
-                              //     color: ConstantColor.primary,
-                              //     fontWeight: FontWeight.w400,
-                              //     height: 0,
-                              //   ),
-                              // ),
                               Text(
                                 "WELCOME TO",
                                 style: TextStyle(
@@ -140,18 +131,10 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                       ],
                     ),
                     SizedBox(height: height * 0.02),
-                    // Text(
-                    //   "Hello!👋",
-                    //   style: TextStyle(
-                    //     fontSize: 24,
-                    //     color: ConstantColor.primary,
-                    //     fontWeight: FontWeight.w400,
-                    //     height: 0,
-                    //   ),
-                    // ),
                     Text(
                       widget.newAccount == true
-                          ? "Create your Business Account":"Add My Business / Services",
+                          ? "Create your Business Account"
+                          : "Add My Business / Services",
                       style: TextStyle(
                         fontSize: 24,
                         color: ConstantColor.blackColor,
@@ -169,16 +152,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   children: [
                                     TextSpan(
                                       text: "Full Name",
-                                      style: textFieldLabelTextStyle, // Style for "Full Name"
+                                      style: textFieldLabelTextStyle,
                                     ),
                                     TextSpan(
                                       text: "*",
-                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                     ),
                                   ],
                                 ),
                               ),
-                              // SizedBox(height: height * 0.005),
                               TextFormField(
                                 controller:
                                     businessSignUpController.txtFullName.value,
@@ -203,7 +185,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                 "Company Name",
                                 style: textFieldLabelTextStyle,
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller: businessSignUpController
                                     .txtCompanyName.value,
@@ -222,16 +203,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   children: [
                                     TextSpan(
                                       text: "Mobile Number",
-                                      style: textFieldLabelTextStyle, // Style for "Full Name"
+                                      style: textFieldLabelTextStyle,
                                     ),
                                     TextSpan(
                                       text: "*",
-                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                     ),
                                   ],
                                 ),
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller:
                                     businessSignUpController.txtMobileNo.value,
@@ -274,16 +254,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   children: [
                                     TextSpan(
                                       text: "Email ID",
-                                      style: textFieldLabelTextStyle, // Style for "Full Name"
+                                      style: textFieldLabelTextStyle,
                                     ),
                                     TextSpan(
                                       text: "*",
-                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                     ),
                                   ],
                                 ),
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller:
                                     businessSignUpController.txtEmailId.value,
@@ -308,23 +287,21 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                               ),
 
                               /// Drop Down Start
-
                               SizedBox(height: height * 0.03),
                               Text.rich(
                                 TextSpan(
                                   children: [
                                     TextSpan(
                                       text: "Profile Type",
-                                      style: textFieldLabelTextStyle, // Style for "Full Name"
+                                      style: textFieldLabelTextStyle,
                                     ),
                                     TextSpan(
                                       text: "*",
-                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                     ),
                                   ],
                                 ),
                               ),
-                              // SizedBox(height: height * 0.03),
                               InputDecorator(
                                 decoration: inputDecoration(
                                   hintText: "Select one",
@@ -377,16 +354,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                     children: [
                                       TextSpan(
                                         text: "Category",
-                                        style: textFieldLabelTextStyle, // Style for "Full Name"
+                                        style: textFieldLabelTextStyle,
                                       ),
                                       TextSpan(
                                         text: "*",
-                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                       ),
                                     ],
                                   ),
                                 ),
-                                // SizedBox(height: height * 0.03),
                                 InputDecorator(
                                   decoration: inputDecoration(
                                     hintText: "Select one",
@@ -414,18 +390,14 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                           )
                                           .toList(),
                                       value: businessSignUpController
-                                                          .selectedCategory[
-                                                      'category'] ==
-                                                  null ||
-                                              businessSignUpController
-                                                  .selectedCategory['category']
-                                                  .toString()
-                                                  .trim()
-                                                  .isEmpty
+                                                      .selectedCategory.isEmpty ||
+                                                  businessSignUpController
+                                                      .selectedCategory['id'] ==
+                                                      null
                                           ? null
-                                          : businessSignUpController.selectedCategory['category_id'],
+                                          : businessSignUpController
+                                              .selectedCategory.value,
                                       onChanged: (value) async {
-                                        // debugPrint('Value selected: $value');
                                         try {
                                           EasyLoading.show(
                                             status:
@@ -494,16 +466,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                     children: [
                                       TextSpan(
                                         text: "Sub Category",
-                                        style: textFieldLabelTextStyle, // Style for "Full Name"
+                                        style: textFieldLabelTextStyle,
                                       ),
                                       TextSpan(
                                         text: "*",
-                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                       ),
                                     ],
                                   ),
                                 ),
-                                // SizedBox(height: height * 0.03),
                                 (businessSignUpController.selectedCategory[
                                                     'category'] !=
                                                 null &&
@@ -548,61 +519,7 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                           return null;
                                         },
                                       )
-                                    :
-                                    // InputDecorator(
-                                    //         decoration: inputDecoration(
-                                    //           hintText: "Select one",
-                                    //           hintTextStyle: textFieldHintTextStyle,
-                                    //         ),
-                                    //         child: DropdownButtonHideUnderline(
-                                    //           child: DropdownButton(
-                                    //             dropdownColor:
-                                    //                 ConstantColor.whiteColor,
-                                    //             style: textFieldTextStyle,
-                                    //             hint: Text(
-                                    //               "Select one",
-                                    //               style: textFieldHintTextStyle,
-                                    //             ),
-                                    //             isExpanded: true,
-                                    //             items: businessSignUpController
-                                    //                 .subCategoryDataList
-                                    //                 .map(
-                                    //                   (element) => DropdownMenuItem(
-                                    //                     value: element,
-                                    //                     child: Text(
-                                    //                       element['subcategory']
-                                    //                           .toString(),
-                                    //                       style: textFieldTextStyle,
-                                    //                     ),
-                                    //                   ),
-                                    //                 )
-                                    //                 .toList(),
-                                    //             value: businessSignUpController
-                                    //                                 .selectedSubCategory[
-                                    //                             'subcategory'] ==
-                                    //                         null ||
-                                    //                     businessSignUpController
-                                    //                         .selectedSubCategory[
-                                    //                             'subcategory']
-                                    //                         .toString()
-                                    //                         .trim()
-                                    //                         .isEmpty
-                                    //                 ? null
-                                    //                 : businessSignUpController
-                                    //                     .selectedSubCategory.value,
-                                    //             onChanged: (value) {
-                                    //               businessSignUpController
-                                    //                       .selectedSubCategory
-                                    //                       .value =
-                                    //                   (value ??
-                                    //                       businessSignUpController
-                                    //                           .selectedSubCategory
-                                    //                           .value) as Map;
-                                    //             },
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    MultiDropdown<Map>(
+                                    : MultiDropdown<Map>(
                                         items: businessSignUpController
                                             .subCategoryDataList
                                             .map(
@@ -643,7 +560,8 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                           ),
                                           selectedTextColor:
                                               ConstantColor.whiteColor,
-                                          backgroundColor: ConstantColor.primary
+                                          backgroundColor: ConstantColor
+                                              .primary
                                               .withAlpha(77),
                                           selectedBackgroundColor: ConstantColor
                                               .primary
@@ -659,7 +577,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                             ),
                                           ),
                                         ),
-                                        // controller: multiSelectController,
                                       ),
                               ] else ...[
                                 SizedBox(height: height * 0.03),
@@ -668,16 +585,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                     children: [
                                       TextSpan(
                                         text: "Category",
-                                        style: textFieldLabelTextStyle, // Style for "Full Name"
+                                        style: textFieldLabelTextStyle,
                                       ),
                                       TextSpan(
                                         text: "*",
-                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                       ),
                                     ],
                                   ),
                                 ),
-                                // SizedBox(height: height * 0.03),
                                 TextFormField(
                                   controller: businessSignUpController
                                       .txtOtherCategory.value,
@@ -706,16 +622,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                     children: [
                                       TextSpan(
                                         text: "Sub Category",
-                                        style: textFieldLabelTextStyle, // Style for "Full Name"
+                                        style: textFieldLabelTextStyle,
                                       ),
                                       TextSpan(
                                         text: "*",
-                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                        style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                       ),
                                     ],
                                   ),
                                 ),
-                                // SizedBox(height: height * 0.03),
                                 TextFormField(
                                   controller: businessSignUpController
                                       .txtOtherSubCategory.value,
@@ -748,16 +663,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   children: [
                                     TextSpan(
                                       text: "Whatsapp Number",
-                                      style: textFieldLabelTextStyle, // Style for "Full Name"
+                                      style: textFieldLabelTextStyle,
                                     ),
                                     TextSpan(
                                       text: "*",
-                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                     ),
                                   ],
                                 ),
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller: businessSignUpController
                                     .txtWhatsappNo.value,
@@ -799,7 +713,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                 "Website",
                                 style: textFieldLabelTextStyle,
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller:
                                     businessSignUpController.txtWebsite.value,
@@ -818,16 +731,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   children: [
                                     TextSpan(
                                       text: "About",
-                                      style: textFieldLabelTextStyle, // Style for "Full Name"
+                                      style: textFieldLabelTextStyle,
                                     ),
                                     TextSpan(
                                       text: "*",
-                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                     ),
                                   ],
                                 ),
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller:
                                     businessSignUpController.txtAbout.value,
@@ -853,16 +765,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   children: [
                                     TextSpan(
                                       text: "Area",
-                                      style: textFieldLabelTextStyle, // Style for "Full Name"
+                                      style: textFieldLabelTextStyle,
                                     ),
                                     TextSpan(
                                       text: "*",
-                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                      style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                     ),
                                   ],
                                 ),
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller:
                                     businessSignUpController.txtArea.value,
@@ -887,7 +798,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                 "Referred Code",
                                 style: textFieldLabelTextStyle,
                               ),
-                              // SizedBox(height: height * 0.03),
                               TextFormField(
                                 controller: businessSignUpController
                                     .txtReferredCode.value,
@@ -921,14 +831,9 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
 
                                         final XFile? image =
                                             await picker.pickImage(source: ImageSource.gallery);
-                                        if(image != null){
+                                        if (image != null) {
                                           businessSignUpController.cropImage(image);
-
                                         }
-                                        // if (image != null) {
-                                        //   businessSignUpController
-                                        //       .filePath.value = image.path;
-                                        // }
                                       },
                                       child: Container(
                                         height: 160,
@@ -939,30 +844,23 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                               BorderRadius.circular(7),
                                         ),
                                         child: businessSignUpController
-                                                    .croppedProfileFile!.value.path !=
-                                                ""
+                                                    .croppedProfileFile?.value?.path !=
+                                                null &&
+                                            businessSignUpController
+                                                .croppedProfileFile!.value!.path
+                                                .isNotEmpty
                                             ? AppImageAsset(
                                                 image: businessSignUpController
-                                                    .croppedProfileFile!.value.path
+                                                    .croppedProfileFile!.value!.path
                                                         .contains("cache")
                                                     ? businessSignUpController
-                                                    .croppedProfileFile!.value.path
+                                                        .croppedProfileFile!.value!.path
                                                     : "${businessSignUpController
-                                                    .croppedProfileFile!.value}",
+                                                        .croppedProfileFile!.value!}",
                                                 isFile: businessSignUpController
-                                                    .croppedProfileFile!.value.path
+                                                    .croppedProfileFile!.value!.path
                                                     .contains("cache"),
-                                                // fit: BoxFit.cover,
-                                                // height: 100,
-                                                // width: 100,
                                               )
-                                            // Image.file(
-                                            //         File(businessSignUpController
-                                            //             .filePath.value),
-                                            //         width: width,
-                                            //         height: height,
-                                            //         fit: BoxFit.fill,
-                                            //       )
                                             : Center(
                                                 child: Image.asset(
                                                   "assets/icons/icon_camera.png",
@@ -1016,18 +914,7 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                                               .filePath
                                                               .contains(
                                                                   "cache"),
-                                                      // fit: BoxFit.cover,
-                                                      // height: 100,
-                                                      // width: 100,
                                                     )
-                                                  // Image.file(
-                                                  //         File(
-                                                  //             businessSignUpController
-                                                  //                 .filePath.value),
-                                                  //         width: width,
-                                                  //         height: height,
-                                                  //         fit: BoxFit.fill,
-                                                  //       )
                                                   : Center(
                                                       child: Image.asset(
                                                         "assets/icons/icon_camera.png",
@@ -1185,7 +1072,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                     "Company Name",
                                     style: textFieldLabelTextStyle,
                                   ),
-                                  // SizedBox(height: height * 0.03),
                                   TextFormField(
                                     controller: businessSignUpController
                                         .txtCompanyName.value,
@@ -1201,23 +1087,21 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   ),
 
                                   /// Drop Down Start
-
                                   SizedBox(height: height * 0.03),
                                   Text.rich(
                                     TextSpan(
                                       children: [
                                         TextSpan(
                                           text: "Profile Type",
-                                          style: textFieldLabelTextStyle, // Style for "Full Name"
+                                          style: textFieldLabelTextStyle,
                                         ),
                                         TextSpan(
                                           text: "*",
-                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  // SizedBox(height: height * 0.03),
                                   InputDecorator(
                                     decoration: inputDecoration(
                                       hintText: "Select one",
@@ -1271,16 +1155,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                         children: [
                                           TextSpan(
                                             text: "Category",
-                                            style: textFieldLabelTextStyle, // Style for "Full Name"
+                                            style: textFieldLabelTextStyle,
                                           ),
                                           TextSpan(
                                             text: "*",
-                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    // SizedBox(height: height * 0.03),
                                     InputDecorator(
                                       decoration: inputDecoration(
                                         hintText: "Select one",
@@ -1310,19 +1193,16 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                               )
                                               .toList(),
                                           value: businessSignUpController
-                                                              .selectedCategory[
-                                                          'category'] ==
-                                                      null ||
-                                                  businessSignUpController
-                                                      .selectedCategory[
-                                                          'category']
-                                                      .toString()
-                                                      .trim()
-                                                      .isEmpty
+                                                          .selectedCategory
+                                                          .isEmpty ||
+                                                      businessSignUpController
+                                                          .selectedCategory[
+                                                              'id'] ==
+                                                          null
                                               ? null
-                                              : businessSignUpController.selectedCategory['category_id'],
+                                              : businessSignUpController
+                                                  .selectedCategory.value,
                                           onChanged: (value) async {
-                                            // print('Value: $value');
                                             try {
                                               EasyLoading.show(
                                                 status: ConstantString
@@ -1394,16 +1274,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                         children: [
                                           TextSpan(
                                             text: "Sub Category",
-                                            style: textFieldLabelTextStyle, // Style for "Full Name"
+                                            style: textFieldLabelTextStyle,
                                           ),
                                           TextSpan(
                                             text: "*",
-                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    // SizedBox(height: height * 0.03),
                                     (businessSignUpController.selectedCategory[
                                                         'category'] !=
                                                     null &&
@@ -1452,65 +1331,7 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                               return null;
                                             },
                                           )
-                                        :
-                                        // InputDecorator(
-                                        //         decoration: inputDecoration(
-                                        //           hintText: "Select one",
-                                        //           hintTextStyle:
-                                        //               textFieldHintTextStyle,
-                                        //         ),
-                                        //         child: DropdownButtonHideUnderline(
-                                        //           child: DropdownButton(
-                                        //             dropdownColor:
-                                        //                 ConstantColor.whiteColor,
-                                        //             style: textFieldTextStyle,
-                                        //             hint: Text(
-                                        //               "Select one",
-                                        //               style: textFieldHintTextStyle,
-                                        //             ),
-                                        //             isExpanded: true,
-                                        //             items: businessSignUpController
-                                        //                 .subCategoryDataList
-                                        //                 .map(
-                                        //                   (element) =>
-                                        //                       DropdownMenuItem(
-                                        //                     value: element,
-                                        //                     child: Text(
-                                        //                       element['subcategory']
-                                        //                           .toString(),
-                                        //                       style:
-                                        //                           textFieldTextStyle,
-                                        //                     ),
-                                        //                   ),
-                                        //                 )
-                                        //                 .toList(),
-                                        //             value: businessSignUpController
-                                        //                                 .selectedSubCategory[
-                                        //                             'subcategory'] ==
-                                        //                         null ||
-                                        //                     businessSignUpController
-                                        //                         .selectedSubCategory[
-                                        //                             'subcategory']
-                                        //                         .toString()
-                                        //                         .trim()
-                                        //                         .isEmpty
-                                        //                 ? null
-                                        //                 : businessSignUpController
-                                        //                     .selectedSubCategory
-                                        //                     .value,
-                                        //             onChanged: (value) {
-                                        //               businessSignUpController
-                                        //                       .selectedSubCategory
-                                        //                       .value =
-                                        //                   (value ??
-                                        //                       businessSignUpController
-                                        //                           .selectedSubCategory
-                                        //                           .value) as Map;
-                                        //             },
-                                        //           ),
-                                        //         ),
-                                        //       ),
-                                        MultiDropdown<Map>(
+                                        : MultiDropdown<Map>(
                                             items: businessSignUpController
                                                 .subCategoryDataList
                                                 .map(
@@ -1570,7 +1391,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                                 ),
                                               ),
                                             ),
-                                            // controller: multiSelectController,
                                           ),
                                   ] else ...[
                                     SizedBox(height: height * 0.03),
@@ -1579,16 +1399,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                         children: [
                                           TextSpan(
                                             text: "Category",
-                                            style: textFieldLabelTextStyle, // Style for "Full Name"
+                                            style: textFieldLabelTextStyle,
                                           ),
                                           TextSpan(
                                             text: "*",
-                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    // SizedBox(height: height * 0.03),
                                     TextFormField(
                                       controller: businessSignUpController
                                           .txtOtherCategory.value,
@@ -1618,16 +1437,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                         children: [
                                           TextSpan(
                                             text: "Sub Category",
-                                            style: textFieldLabelTextStyle, // Style for "Full Name"
+                                            style: textFieldLabelTextStyle,
                                           ),
                                           TextSpan(
                                             text: "*",
-                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                            style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    // SizedBox(height: height * 0.03),
                                     TextFormField(
                                       controller: businessSignUpController
                                           .txtOtherSubCategory.value,
@@ -1661,16 +1479,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                       children: [
                                         TextSpan(
                                           text: "Whatsapp Number",
-                                          style: textFieldLabelTextStyle, // Style for "Full Name"
+                                          style: textFieldLabelTextStyle,
                                         ),
                                         TextSpan(
                                           text: "*",
-                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  // SizedBox(height: height * 0.03),
                                   TextFormField(
                                     controller: businessSignUpController
                                         .txtWhatsappNo.value,
@@ -1713,7 +1530,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                     "Website",
                                     style: textFieldLabelTextStyle,
                                   ),
-                                  // SizedBox(height: height * 0.03),
                                   TextFormField(
                                     controller: businessSignUpController
                                         .txtWebsite.value,
@@ -1733,16 +1549,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                       children: [
                                         TextSpan(
                                           text: "About",
-                                          style: textFieldLabelTextStyle, // Style for "Full Name"
+                                          style: textFieldLabelTextStyle,
                                         ),
                                         TextSpan(
                                           text: "*",
-                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  // SizedBox(height: height * 0.03),
                                   TextFormField(
                                     controller:
                                         businessSignUpController.txtAbout.value,
@@ -1770,16 +1585,15 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                       children: [
                                         TextSpan(
                                           text: "Area",
-                                          style: textFieldLabelTextStyle, // Style for "Full Name"
+                                          style: textFieldLabelTextStyle,
                                         ),
                                         TextSpan(
                                           text: "*",
-                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red), // Red color for "*"
+                                          style: textFieldLabelTextStyle.copyWith(color: Colors.red),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  // SizedBox(height: height * 0.03),
                                   TextFormField(
                                     controller:
                                         businessSignUpController.txtArea.value,
@@ -1816,7 +1630,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                               onChanged: (value) =>
                               checkTermsCondition.value = value ?? false,
                             ),
-                            // SizedBox(width: width * 0.03,),
                             GestureDetector(
                               onTap: () {
                                 controller
@@ -1827,12 +1640,12 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                   context: context,
                                   builder: (context) {
                                     return AlertDialog(
-                                      titlePadding: EdgeInsets.only(top: 10,right: 10,bottom: 0),
+                                      titlePadding: EdgeInsets.only(top: 10, right: 10, bottom: 0),
                                       title: Row(
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           GestureDetector(
-                                            onTap: (){
+                                            onTap: () {
                                               Navigator.pop(context);
                                             },
                                             child: Container(
@@ -1841,23 +1654,18 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                                                     shape: BoxShape.circle,
                                                     color: ConstantColor.grayColor.withAlpha(128)
                                                 ),
-                                                child: Icon(Icons.close,color: ConstantColor.blackColor,)),
+                                                child: Icon(Icons.close, color: ConstantColor.blackColor)),
                                           ),
                                         ],
                                       ),
                                       contentPadding: EdgeInsets.all(0),
                                       content: SizedBox(
-                                        width: 430, // Adjust the width here
+                                        width: 430,
                                         child: WebViewWidget(controller: controller),
                                       ),
                                     );
                                   },
                                 );
-                                // Get.to(
-                                //   TermsAndConditionPage(
-                                //     url: ConstantString.businessTermsUrl,
-                                //   ),
-                                // );
                               },
                               child: Text.rich(
                                 TextSpan(
@@ -1891,14 +1699,127 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                     Center(
                       child: AppButton(
                         onTap: () async {
-                          // print(
-                          //     'SelectedItem ${multiSelectController.selectedItems.map((e) => e.value,)}');
-                          businessSignUpController.isButtonLoading.value = true;
-                          await Future.delayed(
-                            const Duration(
-                              milliseconds: 100,
-                            ),
-                          );
+                          // Validate form first
+                          if (!formKey.currentState!.validate()) {
+                            return;
+                          }
+                          
+                          // Check terms and conditions
+                          if (!checkTermsCondition.value) {
+                            ShowToast.showToast(
+                              "Please Accept our terms & conditions",
+                              showSuccess: false,
+                            );
+                            return;
+                          }
+                          
+                          // Check profile type
+                          if (businessSignUpController
+                              .selectedProfileType.value
+                              .trim()
+                              .isEmpty) {
+                            ShowToast.showToast(
+                              "Please Select Profile Type",
+                              showSuccess: false,
+                            );
+                            return;
+                          }
+                          
+                          // Check category
+                          if (businessSignUpController.categoryDataList.isEmpty &&
+                              businessSignUpController.txtOtherCategory.value.text
+                                  .trim()
+                                  .isEmpty) {
+                            formKey.currentState!.validate();
+                            categoryFocusNode.requestFocus();
+                            return;
+                          }
+                          
+                          // Check sub category
+                          if (businessSignUpController.categoryDataList.isEmpty &&
+                              businessSignUpController.txtOtherSubCategory.value.text
+                                  .trim()
+                                  .isEmpty) {
+                            formKey.currentState!.validate();
+                            subCategoryFocusNode.requestFocus();
+                            return;
+                          }
+                          
+                          if (businessSignUpController.categoryDataList.isNotEmpty &&
+                              (businessSignUpController.selectedCategory['category'] == null ||
+                                  businessSignUpController
+                                      .selectedCategory['category']
+                                      .toString()
+                                      .trim()
+                                      .isEmpty)) {
+                            ShowToast.showToast(
+                              "Please Select Category",
+                              showSuccess: false,
+                            );
+                            return;
+                          }
+                          
+                          // Check sub category selection
+                          if (businessSignUpController
+                                  .subCategoryDataList.isNotEmpty &&
+                              (multiSelectController.selectedItems.isEmpty)) {
+                            ShowToast.showToast(
+                              "Please Select Sub Category",
+                              showSuccess: false,
+                            );
+                            return;
+                          }
+                          
+                          if (businessSignUpController
+                                  .subCategoryDataList.isEmpty &&
+                              (businessSignUpController
+                                  .txtOtherSubCategory.value.text
+                                  .trim()
+                                  .isEmpty)) {
+                            formKey.currentState!.validate();
+                            subCategoryFocusNode.requestFocus();
+                            return;
+                          }
+                          
+                          // Check whatsapp number
+                          if (businessSignUpController
+                              .txtWhatsappNo.value.text
+                              .trim()
+                              .isEmpty) {
+                            formKey.currentState!.validate();
+                            whatsappNumberFocusNode.requestFocus();
+                            return;
+                          }
+                          
+                          if (businessSignUpController
+                                  .txtWhatsappNo.value.text
+                                  .trim()
+                                  .length !=
+                              10) {
+                            formKey.currentState!.validate();
+                            whatsappNumberFocusNode.requestFocus();
+                            return;
+                          }
+                          
+                          // Check about
+                          if (businessSignUpController.txtAbout.value.text
+                              .trim()
+                              .isEmpty) {
+                            formKey.currentState!.validate();
+                            aboutFocusNode.requestFocus();
+                            return;
+                          }
+                          
+                          // Check area
+                          if (businessSignUpController.txtArea.value.text
+                              .trim()
+                              .isEmpty) {
+                            formKey.currentState!.validate();
+                            areaFocusNode.requestFocus();
+                            return;
+                          }
+                          
+                          // Unfocus all
                           nameFocusNode.unfocus();
                           mobileNumberFocusNode.unfocus();
                           emailFocusNode.unfocus();
@@ -1907,401 +1828,180 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
                           whatsappNumberFocusNode.unfocus();
                           aboutFocusNode.unfocus();
                           areaFocusNode.unfocus();
-                          if ((widget.newAccount == true) &&
-                              businessSignUpController.txtFullName.value.text
-                                  .trim()
-                                  .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            nameFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Full Name",
-                            //   showSuccess: false,
-                            // );
-                          }
-                          // else if (businessSignUpController
-                          //     .txtCompanyName.value.text
-                          //     .trim()
-                          //     .isEmpty) {
-                          //   falseIsButtonLoading();
-                          //   ShowToast.showToast(
-                          //     "Please Enter Company Name",
-                          //     showSuccess: false,
-                          //   );
-                          // }
-                          else if ((widget.newAccount == true) &&
-                              businessSignUpController.txtMobileNo.value.text
-                                  .trim()
-                                  .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            mobileNumberFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Mobile Number",
-                            //   showSuccess: false,
-                            // );
-                          } else if ((widget.newAccount == true) &&
-                              businessSignUpController.txtMobileNo.value.text.trim().length !=
-                                  10) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            mobileNumberFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Valid Mobile Number",
-                            //   showSuccess: false,
-                            // );
-                          } else if ((widget.newAccount == true) &&
-                              businessSignUpController.txtEmailId.value.text
-                                  .trim()
-                                  .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            emailFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Email ID",
-                            //   showSuccess: false,
-                            // );
-                          } else if ((widget.newAccount == true) &&
-                              !RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-                                  .hasMatch(businessSignUpController
-                                      .txtEmailId.value.text
-                                      .trim())) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            emailFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Valid Email ID",
-                            //   showSuccess: false,
-                            // );
-                          } else if (businessSignUpController
-                              .selectedProfileType.value
-                              .trim()
-                              .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            ShowToast.showToast(
-                              "Please Select Profile Type",
-                              showSuccess: false,
-                            );
-                          } else if (businessSignUpController.categoryDataList.isEmpty &&
-                              businessSignUpController.txtOtherCategory.value.text
-                                  .trim()
-                                  .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            categoryFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Your Category",
-                            //   showSuccess: false,
-                            // );
-                          } else if (businessSignUpController.categoryDataList.isEmpty &&
-                              businessSignUpController.txtOtherSubCategory.value.text
-                                  .trim()
-                                  .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            subCategoryFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Your Sub Category",
-                            //   showSuccess: false,
-                            // );
-                          } else if (businessSignUpController.categoryDataList.isNotEmpty &&
-                              (businessSignUpController.selectedCategory['category'] == null ||
-                                  businessSignUpController
-                                      .selectedCategory['category']
+                          
+                          try {
+                            bool updateProfile = widget.newAccount != true;
+                            Map<String, String> bodyParams = {
+                              'name': updateProfile
+                                  ? (homeController.userData['name'] ?? '')
                                       .toString()
-                                      .trim()
-                                      .isEmpty)) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            ShowToast.showToast(
-                              "Please Select Category",
-                              showSuccess: false,
-                            );
-                          }
-                          // else if (businessSignUpController.subCategoryDataList.isNotEmpty && (businessSignUpController.selectedSubCategory['subcategory'] == null || businessSignUpController.selectedSubCategory['subcategory'].toString().trim().isEmpty))
-                          else if (businessSignUpController
-                                  .subCategoryDataList.isNotEmpty &&
-                              (multiSelectController.selectedItems.isEmpty)) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            ShowToast.showToast(
-                              "Please Select Sub Category",
-                              showSuccess: false,
-                            );
-                          } else if (businessSignUpController
-                                  .subCategoryDataList.isEmpty &&
-                              (businessSignUpController
-                                  .txtOtherSubCategory.value.text
-                                  .trim()
-                                  .isEmpty)) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            subCategoryFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Your Sub Category",
-                            //   showSuccess: false,
-                            // );
-                          } else if (businessSignUpController
-                              .txtWhatsappNo.value.text
-                              .trim()
-                              .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            whatsappNumberFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Whatsapp Number",
-                            //   showSuccess: false,
-                            // );
-                          } else if (businessSignUpController
+                                  : businessSignUpController
+                                      .txtFullName.value.text
+                                      .trim(),
+                              'company_name': businessSignUpController
+                                  .txtCompanyName.value.text
+                                  .trim(),
+                              'mobile': updateProfile
+                                  ? (homeController.userData['mobile'] ?? '')
+                                      .toString()
+                                  : businessSignUpController
+                                      .txtMobileNo.value.text
+                                      .trim(),
+                              'email': updateProfile
+                                  ? (homeController.userData['email'] ?? '')
+                                      .toString()
+                                  : businessSignUpController
+                                      .txtEmailId.value.text
+                                      .trim(),
+                              'profile_type': businessSignUpController
+                                          .selectedProfileType.value
+                                          .trim()
+                                          .toLowerCase() ==
+                                      'Business'.trim().toLowerCase()
+                                  ? '0'
+                                  : businessSignUpController
+                                              .selectedProfileType.value
+                                              .trim()
+                                              .toLowerCase() ==
+                                          'Service'.trim().toLowerCase()
+                                      ? '1'
+                                      : businessSignUpController
+                                                  .selectedProfileType.value
+                                                  .trim()
+                                                  .toLowerCase() ==
+                                              'Business/Service'
+                                                  .trim()
+                                                  .toLowerCase()
+                                          ? '0,1'
+                                          : '',
+                              'category': businessSignUpController
+                                      .categoryDataList.isEmpty
+                                  ? ''
+                                  : (businessSignUpController
+                                              .selectedCategory['id'] ??
+                                          '')
+                                      .toString(),
+                              'other_category': businessSignUpController
+                                      .categoryDataList.isNotEmpty
+                                  ? ''
+                                  : businessSignUpController
+                                      .txtOtherCategory.value.text
+                                      .trim(),
+                              'sub_category': businessSignUpController
+                                          .categoryDataList.isEmpty ||
+                                      businessSignUpController
+                                          .subCategoryDataList.isEmpty
+                                  ? ''
+                                  : (multiSelectController.selectedItems
+                                          .map(
+                                            (e) => e.value['id'] ?? '0',
+                                          )
+                                          .toList()
+                                          .join(','))
+                                      .toString(),
+                              'other_sub_category': businessSignUpController
+                                          .categoryDataList.isNotEmpty &&
+                                      businessSignUpController
+                                          .subCategoryDataList.isNotEmpty
+                                  ? ''
+                                  : businessSignUpController
+                                      .txtOtherSubCategory.value.text
+                                      .trim(),
+                              'whatsapp': businessSignUpController
                                   .txtWhatsappNo.value.text
-                                  .trim()
-                                  .length !=
-                              10) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            whatsappNumberFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Valid Whatsapp Number",
-                            //   showSuccess: false,
-                            // );
-                          }
-                          // else if (businessSignUpController.txtWebsite.value.text
-                          //     .trim()
-                          //     .isEmpty) {
-                          //   falseIsButtonLoading();
-                          //   ShowToast.showToast(
-                          //     "Please Enter Website",
-                          //     showSuccess: false,
-                          //   );
-                          // }
-                          else if (businessSignUpController.txtAbout.value.text
-                              .trim()
-                              .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            aboutFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter About",
-                            //   showSuccess: false,
-                            // );
-                          } else if (businessSignUpController.txtArea.value.text
-                              .trim()
-                              .isEmpty) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
-                            areaFocusNode.requestFocus();
-                            // ShowToast.showToast(
-                            //   "Please Enter Area",
-                            //   showSuccess: false,
-                            // );
-                          }
-                          // else if (businessSignUpController.filePath
-                          //     .trim()
-                          //     .isEmpty) {
-                          //   falseIsButtonLoading();
-                          //   ShowToast.showToast(
-                          //     "Please Upload Your Photo",
-                          //     showSuccess: false,
-                          //   );
-                          // }
-                          else if (!checkTermsCondition.value) {
-                            falseIsButtonLoading();
-                            formKey.currentState!.validate();
+                                  .trim(),
+                              'website': businessSignUpController
+                                  .txtWebsite.value.text
+                                  .trim(),
+                              'about_us': businessSignUpController
+                                  .txtAbout.value.text
+                                  .trim(),
+                              'area': updateProfile
+                                  ? (homeController.userData['area'] ?? '')
+                                      .toString()
+                                  : businessSignUpController
+                                      .txtArea.value.text
+                                      .trim(),
+                              'referred_by_code': updateProfile
+                                  ? (homeController
+                                              .userData['referred_by_code'] ??
+                                          '')
+                                      .toString()
+                                  : businessSignUpController
+                                      .txtReferredCode.value.text
+                                      .trim(),
+                            };
+                            debugPrint('Update Profile: -$updateProfile : $bodyParams');
+                            if (updateProfile) {
+                              await businessSignUpController
+                                  .postUpdateProfileApi(
+                                    bodyParams,
+                                    businessSignUpController.croppedProfileFile?.value?.path.trim() ?? "",
+                                  )
+                                  .then(
+                                (value) {
+                                  debugPrint('Value: $value');
+                                  if (value['code'] == 200) {
+                                    ShowToast.showToast(
+                                      value['msg'] ??
+                                          'Business Account Created Successfully.',
+                                      showSuccess: true,
+                                    );
+                                    Get.offAll(
+                                      HomeTabBarScreen(),
+                                    );
+                                  } else {
+                                    ShowToast.showToast(
+                                      value['msg'] ??
+                                          ConstantString
+                                              .somethingWantWrongMsg,
+                                      showSuccess: false,
+                                    );
+                                  }
+                                },
+                              ).catchError((error) {
+                                debugPrint('Error: $error');
+                                ShowToast.showToast(
+                                  error.toString(),
+                                  showSuccess: false,
+                                );
+                              });
+                            } else {
+                              await businessSignUpController
+                                  .postBusinessSignUpApi(
+                                      bodyParams,
+                                      businessSignUpController.filePath
+                                          .trim())
+                                  .then(
+                                (value) {
+                                  if (value['code'] == 200) {
+                                    ShowToast.showToast(
+                                      value['msg'] ??
+                                          'Business Account Created Successfully.',
+                                      showSuccess: true,
+                                    );
+                                    Get.back();
+                                  } else {
+                                    ShowToast.showToast(
+                                      value['msg'] ??
+                                          ConstantString
+                                              .somethingWantWrongMsg,
+                                      showSuccess: false,
+                                    );
+                                  }
+                                },
+                              ).catchError((error) {
+                                ShowToast.showToast(
+                                  error.toString(),
+                                  showSuccess: false,
+                                );
+                              });
+                            }
+                          } catch (error) {
                             ShowToast.showToast(
-                              "Please Accept our terms & conditions",
+                              error.toString(),
                               showSuccess: false,
                             );
-                          } else {
-                            try {
-                              bool updateProfile = widget.newAccount != true;
-                              Map<String, String> bodyParams = {
-                                'name': updateProfile
-                                    ? (homeController.userData['name'] ?? '')
-                                        .toString()
-                                    : businessSignUpController
-                                        .txtFullName.value.text
-                                        .trim(),
-                                'company_name': businessSignUpController
-                                    .txtCompanyName.value.text
-                                    .trim(),
-                                'mobile': updateProfile
-                                    ? (homeController.userData['mobile'] ?? '')
-                                        .toString()
-                                    : businessSignUpController
-                                        .txtMobileNo.value.text
-                                        .trim(),
-                                'email': updateProfile
-                                    ? (homeController.userData['email'] ?? '')
-                                        .toString()
-                                    : businessSignUpController
-                                        .txtEmailId.value.text
-                                        .trim(),
-                                'profile_type': businessSignUpController
-                                            .selectedProfileType.value
-                                            .trim()
-                                            .toLowerCase() ==
-                                        'Business'.trim().toLowerCase()
-                                    ? '0'
-                                    : businessSignUpController
-                                                .selectedProfileType.value
-                                                .trim()
-                                                .toLowerCase() ==
-                                            'Service'.trim().toLowerCase()
-                                        ? '1'
-                                        : businessSignUpController
-                                                    .selectedProfileType.value
-                                                    .trim()
-                                                    .toLowerCase() ==
-                                                'Business/Service'
-                                                    .trim()
-                                                    .toLowerCase()
-                                            ? '0,1'
-                                            : '',
-                                'category': businessSignUpController
-                                        .categoryDataList.isEmpty
-                                    ? ''
-                                    : (businessSignUpController
-                                                .selectedCategory['id'] ??
-                                            '')
-                                        .toString(),
-                                'other_category': businessSignUpController
-                                        .categoryDataList.isNotEmpty
-                                    ? ''
-                                    : businessSignUpController
-                                        .txtOtherCategory.value.text
-                                        .trim(),
-                                'sub_category': businessSignUpController
-                                            .categoryDataList.isEmpty ||
-                                        businessSignUpController
-                                            .subCategoryDataList.isEmpty
-                                    ? ''
-                                    : (multiSelectController.selectedItems
-                                            .map(
-                                              (e) => e.value['id'] ?? '0',
-                                            )
-                                            .toList()
-                                            .join(','))
-                                        .toString(),
-                                // (businessSignUpController
-                                //                 .selectedSubCategory['id'] ??
-                                //             '')
-                                //         .toString(),
-                                'other_sub_category': businessSignUpController
-                                            .categoryDataList.isNotEmpty &&
-                                        businessSignUpController
-                                            .subCategoryDataList.isNotEmpty
-                                    ? ''
-                                    : businessSignUpController
-                                        .txtOtherSubCategory.value.text
-                                        .trim(),
-                                'whatsapp': businessSignUpController
-                                    .txtWhatsappNo.value.text
-                                    .trim(),
-                                'website': businessSignUpController
-                                    .txtWebsite.value.text
-                                    .trim(),
-                                'about_us': businessSignUpController
-                                    .txtAbout.value.text
-                                    .trim(),
-                                'area': updateProfile
-                                    ? (homeController.userData['area'] ?? '')
-                                        .toString()
-                                    : businessSignUpController
-                                        .txtArea.value.text
-                                        .trim(),
-                                'referred_by_code': updateProfile
-                                    ? (homeController
-                                                .userData['referred_by_code'] ??
-                                            '')
-                                        .toString()
-                                    : businessSignUpController
-                                        .txtReferredCode.value.text
-                                        .trim(),
-                              };
-                              debugPrint('Update Profile: -$updateProfile : $bodyParams');
-                              if (updateProfile) {
-                                await businessSignUpController
-                                    .postUpdateProfileApi(
-                                  bodyParams,
-                                  businessSignUpController.croppedProfileFile!.value.path.trim(),
-                                )
-                                    .then(
-                                  (value) {
-                                    debugPrint('Value: $value');
-                                    if (value['code'] == 200) {
-                                      falseIsButtonLoading();
-                                      ShowToast.showToast(
-                                        value['msg'] ??
-                                            'Business Account Created Successfully.',
-                                        showSuccess: true,
-                                      );
-                                      Get.offAll(
-                                        HomeTabBarScreen(),
-                                      );
-                                    } else {
-                                      falseIsButtonLoading();
-                                      ShowToast.showToast(
-                                        value['msg'] ??
-                                            ConstantString
-                                                .somethingWantWrongMsg,
-                                        showSuccess: false,
-                                      );
-                                    }
-                                  },
-                                ).catchError((error) {
-                                  debugPrint('Error: $error');
-                                  falseIsButtonLoading();
-                                  ShowToast.showToast(
-                                    error.toString(),
-                                    showSuccess: false,
-                                  );
-                                });
-                              } else {
-                                await businessSignUpController
-                                    .postBusinessSignUpApi(
-                                        bodyParams,
-                                        businessSignUpController.filePath
-                                            .trim())
-                                    .then(
-                                  (value) {
-                                    if (value['code'] == 200) {
-                                      falseIsButtonLoading();
-                                      ShowToast.showToast(
-                                        value['msg'] ??
-                                            'Business Account Created Successfully.',
-                                        showSuccess: true,
-                                      );
-                                      Get.back();
-                                    } else {
-                                      falseIsButtonLoading();
-                                      ShowToast.showToast(
-                                        value['msg'] ??
-                                            ConstantString
-                                                .somethingWantWrongMsg,
-                                        showSuccess: false,
-                                      );
-                                    }
-                                  },
-                                ).catchError((error) {
-                                  falseIsButtonLoading();
-                                  ShowToast.showToast(
-                                    error.toString(),
-                                    showSuccess: false,
-                                  );
-                                });
-                              }
-                            } catch (error) {
-                              falseIsButtonLoading();
-                              ShowToast.showToast(
-                                error.toString(),
-                                showSuccess: false,
-                              );
-                            }
-                            // Get.to(() => SignDetailsScreen(
-                            //   name: controller.nameController.value.text,
-                            //   phoneNumber: phoneNumber,
-                            // ));
                           }
                         },
                         title: "Submit",
@@ -2321,9 +2021,6 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
     );
   }
 
-  void falseIsButtonLoading() =>
-      businessSignUpController.isButtonLoading.value = false;
-
   TextStyle textFieldLabelTextStyle = TextStyle(
     fontSize: 20,
     color: ConstantColor.blackColor,
@@ -2332,13 +2029,10 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
 
   TextStyle textFieldHintTextStyle = TextStyle(
     fontSize: 14,
-    // color: ConstantColor.grayColor,
-    // fontWeight: FontWeight.w400,
   );
   TextStyle textFieldTextStyle = TextStyle(
     fontSize: 21,
     color: ConstantColor.blackColor,
-    // fontWeight: FontWeight.w500,
   );
 
   TextStyle userConstHeadingTextStyle = TextStyle(

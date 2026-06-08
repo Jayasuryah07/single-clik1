@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -27,332 +28,385 @@ class ChatSentScreen extends StatefulWidget {
 }
 
 class _ChatSentScreenState extends State<ChatSentScreen> {
-  EnquiriesSentGroupController enquiriesSentGroupController =
-      Get.put(EnquiriesSentGroupController());
-  ChatSentController chatSentController = Get.put(ChatSentController());
-
+  late ChatSentController chatSentController;
+  final FocusNode _focusNode = FocusNode();
+  
   @override
   void initState() {
-    // TODO: implement initState
-    getUserId();
     super.initState();
+    // Initialize controller
+    chatSentController = Get.put(ChatSentController());
+    
+    // Set user ID immediately
+    _setUserId();
   }
-
-  Future<void> getUserId() async {
-    final userDataString = await SharPreferences.getString(SharPreferences.userData);
-
-    if (userDataString != null) {
-      final userData = jsonDecode(userDataString);
-      chatSentController.userId.value = userData['id'].toString();
-    } else {
-      debugPrint('No user data found in SharedPreferences');
-      chatSentController.userId.value = ''; // or handle gracefully
+  
+  Future<void> _setUserId() async {
+    try {
+      final userDataString = await SharPreferences.getString(SharPreferences.userData);
+      if (userDataString != null) {
+        final userData = jsonDecode(userDataString);
+        chatSentController.userId.value = userData['id'].toString();
+      }
+    } catch (e) {
+      debugPrint('Error getting user ID: $e');
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-        backgroundColor: ConstantColor.bgColor,
-        appBar: AppBar(
-          backgroundColor: ConstantColor.primary,
-          leading: GestureDetector(
-            onTap: () {
-              Get.back();
-            },
-            child: Center(
-              child: Icon(
-                Icons.arrow_back_outlined,
-                color: ConstantColor.whiteColor,
-              ),
+      backgroundColor: ConstantColor.bgColor,
+      appBar: AppBar(
+        backgroundColor: ConstantColor.primary,
+        leading: GestureDetector(
+          onTap: () {
+            Get.back();
+          },
+          child: Center(
+            child: Icon(
+              Icons.arrow_back_outlined,
+              color: ConstantColor.whiteColor,
             ),
           ),
-          title: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(1000),
-                child: AppImageAsset(
-                  image:
-                  "${ConstantString.userImgUrlPath}${widget.userData['photo']}",
-                  isFile: false,
-                  fit: BoxFit.cover,
-                  height: 40,
-                  width: 40,
-                ),
+        ),
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(1000),
+              child: AppImageAsset(
+                image: "${ConstantString.userImgUrlPath}${widget.userData['photo']}",
+                isFile: false,
+                fit: BoxFit.cover,
+                height: 40,
+                width: 40,
               ),
-              SizedBox(width: width * 0.03),
-              Text(
-                widget.userData['name'] ?? "",
+            ),
+            SizedBox(width: width * 0.03),
+            Expanded(
+              child: Text(
+                widget.userData['name'] ?? "User",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: ConstantColor.whiteColor,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        body: Obx(
-          () => chatSentController.isLoading.value
-              ? const Center(
-            child: CircularProgressIndicator(),
-          )
-              : Column(
+      ),
+      body: Obx(
+        () {
+          // Get messages instantly from cache
+          final messages = chatSentController.getDisplayMessages();
+          
+          // Show loading ONLY if no messages and still loading first time
+          if (chatSentController.isLoading.value && messages.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          
+          return Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  itemCount: chatSentController.chatList.length,
-                  controller: chatSentController.scrollController.value,
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0, vertical: 10),
-                  itemBuilder: (context, index) {
-                    return chatBubbles(
-                        context,
-                        chatSentController.chatList[index]['user_id']
-                            .toString() ==
-                            chatSentController.userId.value,
-                        chatSentController.chatList,
-                        index);
-                  },
-                ),
+                child: messages.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        reverse: true,
+                        itemCount: messages.length,
+                        controller: chatSentController.scrollController,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, 
+                          vertical: 10,
+                        ),
+                        itemBuilder: (context, index) {
+                          final chatItem = messages[messages.length - 1 - index];
+                          final isMe = chatItem['user_id']?.toString() == 
+                                      chatSentController.userId.value;
+                          final isOptimistic = chatItem['is_optimistic'] == true;
+                          
+                          return _buildChatBubble(
+                            context, 
+                            isMe, 
+                            chatItem,
+                            isOptimistic: isOptimistic,
+                          );
+                        },
+                      ),
               ),
-              widget.isChat
-                  ? Padding(
-                padding: const EdgeInsets.only(
-                    left: 15, right: 15, bottom: 15),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        // height: 60,
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                            BorderRadius.circular(100.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xff000000)
-                                    .withAlpha(48),
-                                blurRadius: 0,
-                                offset: const Offset(0, 2),
-                                spreadRadius: 1,
-                              ),
-                            ]),
-                        child: TextFormField(
-                          controller:
-                          chatSentController.charController.value,
-                          onChanged: (value) {},
-                          textInputAction: TextInputAction.send,
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: ConstantColor.blackColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          keyboardType: TextInputType.text,
-                          cursorColor: ConstantColor.blackColor,
-                          decoration: InputDecoration(
-                            fillColor: Colors.white,
-                            contentPadding:
-                            const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 15),
-                            hintText: "Type your messages...",
-                            hintStyle: TextStyle(
-                                fontSize: 18,
-                                color: ConstantColor.grayColor,
-                                fontWeight: FontWeight.w400),
-                            filled: true,
-                            border: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(100.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(100.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(100.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(100.0),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: width * 0.02),
-                    GestureDetector(
-                      onTap: () {
-                        if (chatSentController.charController.value.text
-                            .trim()
-                            .isEmpty) {
-                          ShowToast.showToast(
-                            'Please Enter Message',
-                            showSuccess: false,
-                          );
-                        } else {
-                          chatSentController.isLoading(true);
+              if (widget.isChat) _buildMessageInput(width),
+            ],
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 64,
+            color: ConstantColor.grayColor.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No messages yet',
+            style: TextStyle(
+              fontSize: 16,
+              color: ConstantColor.grayColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start the conversation',
+            style: TextStyle(
+              fontSize: 14,
+              color: ConstantColor.grayColor.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                          chatSentController.postSendChatApi();
-                          chatSentController.scrollController.value
-                              .animateTo(
-                            chatSentController.scrollController.value
-                                .position.maxScrollExtent,
-                            duration: const Duration(
-                                milliseconds: 800),
-                            curve: Curves.fastOutSlowIn,
-                          );
-                          chatSentController.charController.value
-                              .clear();
-                          chatSentController.isLoading(false);
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: ConstantColor.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(10),
-                        child: Icon(
-                          Icons.send,
-                          color: ConstantColor.whiteColor,
-                        ),
-                      ),
+  Widget _buildMessageInput(double width) {
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.only(left: 15, right: 15, bottom: 15, top: 10),
+        decoration: BoxDecoration(
+          color: ConstantColor.bgColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(100.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xff000000).withAlpha(48),
+                      blurRadius: 0,
+                      offset: const Offset(0, 2),
+                      spreadRadius: 1,
                     ),
                   ],
                 ),
-              )
-                  : const SizedBox()
-            ],
-          ),
-        ),);
-  }
-
-  Widget chatBubbles(BuildContext context, bool isMe, data, index) {
-    return isMe
-        ? Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  constraints:
-                      BoxConstraints(maxWidth: Responsive.width(60, context)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 30.0, vertical: 12.0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xffD5EDFB),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      bottomRight: Radius.circular(10.0),
-                      bottomLeft: Radius.circular(10.0),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xff000000).withAlpha(48),
-                        blurRadius: 0,
-                        offset: const Offset(0, 2),
-                        spreadRadius: 0,
-                      ),
-                    ],
+                child: TextFormField(
+                  controller: chatSentController.textController,
+                  focusNode: _focusNode,
+                  onChanged: (value) {
+                    chatSentController.updateMessage(value);
+                  },
+                  onFieldSubmitted: (_) => _sendMessage(),
+                  textInputAction: TextInputAction.send,
+                  enabled: !chatSentController.isSending.value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: ConstantColor.blackColor,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: Text(
-                    data[index]['text'] ?? "",
-                    style: TextStyle(
+                  decoration: InputDecoration(
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 15,
+                    ),
+                    hintText: "Type your message...",
+                    hintStyle: TextStyle(
+                      fontSize: 16,
+                      color: ConstantColor.grayColor,
                       fontWeight: FontWeight.w400,
-                      fontSize: 13,
-                      color: ConstantColor.blackColor,
+                    ),
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(100.0),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    DateFormat('hh:mm a').format(DateTime.parse(
-                        data[index]['created_at'] ?? DateTime.now())),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 10,
-                      color: ConstantColor.grayColor,
-                    ),
-                  ),
-                )
-              ],
+              ),
             ),
-          )
-        : Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  constraints:
-                      BoxConstraints(maxWidth: Responsive.width(75, context)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 30.0, vertical: 12.0),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(10.0),
-                        bottomRight: Radius.circular(10.0),
-                        bottomLeft: Radius.circular(10.0),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xff000000).withAlpha(48),
-                          blurRadius: 0,
-                          offset: const Offset(0, 2),
-                          spreadRadius: 0,
+            SizedBox(width: width * 0.02),
+            GestureDetector(
+              onTap: chatSentController.isSending.value ? null : _sendMessage,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: chatSentController.isSending.value 
+                      ? Colors.grey 
+                      : ConstantColor.primary,
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(12),
+                child: chatSentController.isSending.value
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
                         ),
-                      ]),
-                  child: Text(
-                    data[index]['text'] ?? "",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 13,
-                      color: ConstantColor.blackColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    DateFormat('hh:mm a').format(DateTime.parse(
-                        data[index]['created_at'] ?? DateTime.now())),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 10,
-                      color: ConstantColor.grayColor,
-                    ),
-                  ),
-                )
-              ],
+                      )
+                    : Icon(
+                        Icons.send,
+                        color: ConstantColor.whiteColor,
+                        size: 20,
+                      ),
+              ),
             ),
-          );
-  }
-}
-
-class Responsive {
-
-  static double width(double size, BuildContext context) {
-    return MediaQuery.of(context).size.width * (size / 100);
+          ],
+        ),
+      ),
+    );
   }
 
-  static double height(double size, BuildContext context) {
-    return MediaQuery.of(context).size.height * (size / 100);
+  Widget _buildChatBubble(BuildContext context, bool isMe, dynamic data, {bool isOptimistic = false}) {
+    final message = data['text'] ?? "";
+    final createdAt = data['created_at'];
+    
+    String timeString = "";
+    if (createdAt != null && createdAt.toString().isNotEmpty && !isOptimistic) {
+      try {
+        String dateStr = createdAt.toString();
+        DateTime dateTime;
+        if (!dateStr.endsWith('Z') && !dateStr.contains('+')) {
+          String formattedStr = dateStr.replaceAll(' ', 'T');
+          if (!formattedStr.endsWith('Z')) {
+            formattedStr = '${formattedStr}Z';
+          }
+          dateTime = DateTime.parse(formattedStr).toLocal();
+        } else {
+          dateTime = DateTime.parse(dateStr).toLocal();
+        }
+        timeString = DateFormat('hh:mm a').format(dateTime);
+      } catch (e) {
+        try {
+          final dateTime = DateTime.parse(createdAt.toString()).toLocal();
+          timeString = DateFormat('hh:mm a').format(dateTime);
+        } catch (_) {
+          timeString = DateFormat('hh:mm a').format(DateTime.now());
+        }
+      }
+    } else if (!isOptimistic) {
+      timeString = DateFormat('hh:mm a').format(DateTime.now());
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0, 
+                vertical: 10.0,
+              ),
+              decoration: BoxDecoration(
+                color: isMe 
+                    ? (isOptimistic 
+                        ? const Color(0xffD5EDFB).withOpacity(0.6) 
+                        : const Color(0xffD5EDFB))
+                    : Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16.0),
+                  topRight: const Radius.circular(16.0),
+                  bottomLeft: isMe ? const Radius.circular(16.0) : const Radius.circular(4.0),
+                  bottomRight: isMe ? const Radius.circular(4.0) : const Radius.circular(16.0),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xff000000).withAlpha(15),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isOptimistic && isMe) ...[
+                    SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: ConstantColor.primary.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Flexible(
+                    child: Text(
+                      message,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                        color: ConstantColor.blackColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            if (!isOptimistic)
+              Text(
+                timeString,
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 10,
+                  color: ConstantColor.grayColor.withOpacity(0.8),
+                ),
+              ),
+            if (isOptimistic)
+              Text(
+                "Sending...",
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 10,
+                  color: ConstantColor.grayColor.withOpacity(0.7),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
-
+  
+  Future<void> _sendMessage() async {
+    await chatSentController.postSendChatApi();
+    // Keep focus for continuous typing
+    _focusNode.requestFocus();
+  }
 }

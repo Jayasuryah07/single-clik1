@@ -9,25 +9,52 @@ import 'package:http/http.dart' as http;
 import 'package:single_clik/constants/show_toast.dart';
 import 'package:single_clik/services/api.dart';
 import 'package:single_clik/utils/shar_preferences.dart';
+import 'package:single_clik/controller/home_controller/home_controller.dart';
+import 'package:single_clik/controller/home_controller/enquiries_sent_controller.dart';
+import 'package:single_clik/controller/home_controller/enquiries_received_controller.dart';
 import '../../constants/constant_string.dart';
 
 class ChatSentController extends GetxController {
-  final isLoading = true.obs;
-  final isSending = false.obs; // Separate loading state for sending
+  final isLoading = false.obs;
+  final isSending = false.obs;
   final userId = "".obs;
-  final charController = TextEditingController().obs;
-  final scrollController = ScrollController().obs;
+  
+  // Use RxString instead of Rx<TextEditingController> to avoid dispose issues
+  final messageText = "".obs;
+  final scrollController = ScrollController();
   final chatList = <dynamic>[].obs;
   
+  // Local cache for instant display
+  final localMessages = <Map<String, dynamic>>[].obs;
   late Timer timer;
   bool isFirstLoad = true;
-
+  String _lastMessageId = "";
+  
+  // Cache key for storing messages
+  String get _cacheKey => "chat_messages_${Get.arguments['enquiry_id'] ?? ''}_${Get.arguments['user_id'] ?? ''}";
+  
+  // Track if controller is disposed
+  bool _isDisposed = false;
+  
+  // Track optimistic messages that are being sent
+  final Map<String, Timer> _optimisticTimers = {};
+  
+  // Reference to TextEditingController for proper management
+  TextEditingController? _textController;
+  
+  TextEditingController get textController {
+    _textController ??= TextEditingController();
+    return _textController!;
+  }
+  
   void getChatTimer() {
-    const oneSec = Duration(seconds: 2); // Changed to 2 seconds to reduce load
+    const oneSec = Duration(seconds: 1);
     timer = Timer.periodic(
       oneSec,
       (Timer timer) {
-        postChatApi(isFromTimer: true);
+        if (!_isDisposed) {
+          postChatApi(isFromTimer: true);
+        }
       },
     );
   }
@@ -35,47 +62,138 @@ class ChatSentController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Load cached messages FIRST (instant display)
+    _loadCachedMessages();
+    // Then fetch fresh data in background
     getChatTimer();
     postChatApi();
+    _triggerAllRefresh();
+  }
+  
+  // Load messages from cache instantly
+  Future<void> _loadCachedMessages() async {
+    try {
+      final cachedData = await SharPreferences.getString(_cacheKey);
+      if (cachedData != null && cachedData.isNotEmpty) {
+        final List<dynamic> cachedMessages = json.decode(cachedData);
+        if (cachedMessages.isNotEmpty) {
+          // Filter out any stale optimistic messages from cache
+          final validMessages = cachedMessages.where((msg) {
+            if (msg is Map && msg['is_optimistic'] == true) {
+              // Check if optimistic message is older than 30 seconds
+              final createdAt = msg['created_at'];
+              if (createdAt != null) {
+                try {
+                  final msgTime = DateTime.parse(createdAt.toString());
+                  if (DateTime.now().difference(msgTime).inSeconds > 30) {
+                    return false; // Remove stale optimistic messages
+                  }
+                } catch (e) {
+                  return false;
+                }
+              }
+              return true;
+            }
+            return true;
+          }).toList();
+          
+          if (validMessages.isNotEmpty) {
+            chatList.value = validMessages;
+            localMessages.value = List.from(validMessages);
+            
+            // Update last message ID
+            if (validMessages.isNotEmpty && validMessages.last is Map) {
+              _lastMessageId = (validMessages.last as Map)['id']?.toString() ?? "";
+            }
+            
+            // Scroll to bottom after cache loads
+            Future.delayed(const Duration(milliseconds: 50), () {
+              scrollToBottom();
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading cached messages: $e');
+    }
+  }
+  
+  // Save messages to cache
+  Future<void> _saveMessagesToCache(List<dynamic> messages) async {
+    try {
+      // Filter out optimistic messages before saving to cache
+      final messagesToCache = messages.where((msg) {
+        if (msg is Map) {
+          return msg['is_optimistic'] != true;
+        }
+        return true;
+      }).toList();
+      
+      await SharPreferences.setString(_cacheKey, json.encode(messagesToCache));
+    } catch (e) {
+      debugPrint('Error saving messages to cache: $e');
+    }
   }
 
   @override
   void onClose() {
+    _isDisposed = true;
     timer.cancel();
-    charController.value.dispose();
-    scrollController.value.dispose();
+    
+    // Cancel all optimistic timers
+    for (var timer in _optimisticTimers.values) {
+      timer.cancel();
+    }
+    _optimisticTimers.clear();
+    
+    if (_textController != null) {
+      _textController!.dispose();
+      _textController = null;
+    }
+    scrollController.dispose();
+
+    // Trigger instant refresh of bottom bar and enquiries when user leaves chat screen
+    _triggerAllRefresh();
     super.onClose();
+  }
+  
+  // Helper method to get message from controller
+  String getMessage() {
+    return _textController?.text.trim() ?? "";
+  }
+  
+  // Helper method to clear message
+  void clearMessage() {
+    if (_textController != null) {
+      _textController!.clear();
+    }
+    messageText.value = "";
+  }
+  
+  // Helper method to update message text
+  void updateMessage(String text) {
+    messageText.value = text;
   }
 
   Future<void> postChatApi({bool isFromTimer = false}) async {
-    // Skip if already loading and not from timer to prevent duplicate calls
-    if (isLoading.value && !isFromTimer) return;
+    if (_isDisposed) return;
     
     try {
-      if (!isFromTimer) {
-        isLoading.value = true;
-      }
-      
       final enquiryId = Get.arguments['enquiry_id']?.toString() ?? '';
       final replyId = Get.arguments['user_id']?.toString() ?? '';
       
       if (enquiryId.isEmpty || replyId.isEmpty) {
-        debugPrint('Error: enquiry_id or user_id is missing');
-        isLoading.value = false;
         return;
       }
       
       var bodyParams = {
         'enquiry_id': enquiryId,
-        'reply_id': replyId
+        'reply_id': replyId,
+        'last_message_id': _lastMessageId,
       };
-      
-      debugPrint('postChatApi bodyParams: $bodyParams');
       
       final token = await SharPreferences.getString(SharPreferences.token);
       if (token == null || token.isEmpty) {
-        debugPrint('Error: Token is missing');
-        isLoading.value = false;
         return;
       }
       
@@ -83,83 +201,111 @@ class ChatSentController extends GetxController {
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll({
         'Authorization': 'Bearer $token',
-        'Accept': 'application/json', // Add accept header
+        'Accept': 'application/json',
       });
       request.fields.addAll(bodyParams);
       
-      final response = await request.send();
+      final response = await request.send().timeout(const Duration(seconds: 5));
       final responseBody = await response.stream.bytesToString();
       
-      debugPrint('Response status code: ${response.statusCode}');
-      debugPrint('Response body preview: ${responseBody.substring(0, responseBody.length > 200 ? 200 : responseBody.length)}');
-      
-      // Check if response is JSON
       if (responseBody.trim().startsWith('{') || responseBody.trim().startsWith('[')) {
         try {
           final responseData = json.decode(responseBody);
           
           if (response.statusCode == 200) {
             if (responseData['data'] != null) {
+              List<dynamic> newMessages = [];
+              
               if (responseData['data'] is List) {
-                // Only update if data has changed to avoid unnecessary rebuilds
-                if (!_isSameChatList(responseData['data'])) {
-                  chatList.value = responseData['data'];
-                  if (isFirstLoad) {
-                    isFirstLoad = false;
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      scrollToBottom();
-                    });
+                newMessages = responseData['data'];
+              } else if (responseData['data'] is Map) {
+                newMessages = [responseData['data']];
+              }
+              
+              if (newMessages.isNotEmpty) {
+                // Deduplicate optimistic messages if they have been confirmed by the server
+                final optimisticMessages = chatList.where((msg) => 
+                  msg is Map && msg['is_optimistic'] == true
+                ).toList();
+
+                for (var optMsg in optimisticMessages) {
+                  final text = optMsg['text']?.toString() ?? '';
+                  final isConfirmed = newMessages.any((newMsg) => 
+                    newMsg is Map && 
+                    newMsg['text']?.toString().trim() == text.trim() && 
+                    newMsg['user_id']?.toString() == optMsg['user_id']?.toString()
+                  );
+                  if (isConfirmed) {
+                    final tempId = optMsg['temp_id']?.toString() ?? '';
+                    if (tempId.isNotEmpty) {
+                      _removeOptimisticMessage(tempId);
+                    }
                   }
                 }
-              } else if (responseData['data'] is Map) {
-                if (!_isSameChatList([responseData['data']])) {
-                  chatList.value = [responseData['data']];
+
+                // Update last message ID
+                if (newMessages.last is Map && (newMessages.last as Map).containsKey('id')) {
+                  _lastMessageId = (newMessages.last as Map)['id'].toString();
+                }
+                
+                if (isFromTimer) {
+                  // Only add new messages that don't exist yet
+                  final existingIds = chatList.map((msg) => 
+                    msg is Map ? msg['id']?.toString() : null
+                  ).toSet();
+                  
+                  final uniqueNewMessages = newMessages.where((msg) => 
+                    msg is Map && !existingIds.contains(msg['id']?.toString())
+                  ).toList();
+                  
+                  if (uniqueNewMessages.isNotEmpty && !_isDisposed) {
+                    chatList.addAll(uniqueNewMessages);
+                    localMessages.value = List.from(chatList);
+                    await _saveMessagesToCache(chatList);
+                    _triggerAllRefresh();
+                  }
+                } else {
+                  // For non-timer refresh, replace all messages but preserve optimistic ones
+                  final optimisticMessages = chatList.where((msg) => 
+                    msg is Map && msg['is_optimistic'] == true
+                  ).toList();
+                  
+                  if (optimisticMessages.isNotEmpty) {
+                    // Keep optimistic messages and add new ones
+                    final allMessages = [...optimisticMessages, ...newMessages];
+                    chatList.value = allMessages;
+                    localMessages.value = List.from(allMessages);
+                  } else {
+                    chatList.value = newMessages;
+                    localMessages.value = List.from(newMessages);
+                  }
+                  await _saveMessagesToCache(chatList);
+                  _triggerAllRefresh();
+                }
+                
+                if (isFirstLoad && !_isDisposed) {
+                  isFirstLoad = false;
+                  scrollToBottom();
                 }
               }
-            }
-          } else {
-            debugPrint('Non-200 status code: ${response.statusCode}');
-            if (!isFromTimer) {
-              ShowToast.showToast(
-                responseData['msg'] ?? 'Failed to load messages',
-                showSuccess: false,
-              );
             }
           }
         } catch (e) {
           debugPrint('JSON parsing error: $e');
-          debugPrint('Raw response: $responseBody');
-        }
-      } else {
-        // Response is HTML or other format - API is returning error page
-        debugPrint('Non-JSON response received (likely API error)');
-        debugPrint('Response: $responseBody');
-        
-        // Don't show error for timer-based requests
-        if (!isFromTimer) {
-          ShowToast.showToast(
-            'Server error. Please try again.',
-            showSuccess: false,
-          );
         }
       }
       
-      isLoading.value = false;
-      
+    } on TimeoutException catch (e) {
+      debugPrint('Timeout in postChatApi: $e');
     } catch (e) {
       debugPrint('Error in postChatApi: $e');
-      isLoading.value = false;
-      if (!isFromTimer) {
-        ShowToast.showToast(
-          'Connection error. Please check your internet.',
-          showSuccess: false,
-        );
-      }
     }
   }
 
   Future<void> postSendChatApi() async {
-    final message = charController.value.text.trim();
+    if (_isDisposed) return;
+    
+    final message = getMessage();
     
     if (message.isEmpty) {
       ShowToast.showToast(
@@ -170,21 +316,52 @@ class ChatSentController extends GetxController {
     }
     
     if (isSending.value) {
-      debugPrint('Already sending a message, skipping...');
       return;
     }
     
+    // Create optimistic message
+    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    final optimisticMessage = {
+      'id': tempId,
+      'text': message,
+      'user_id': userId.value,
+      'created_at': DateTime.now().toIso8601String(),
+      'is_optimistic': true,
+      'temp_id': tempId,
+    };
+    
+    // Add optimistic message immediately
+    final currentList = List<Map<String, dynamic>>.from(localMessages);
+    currentList.add(optimisticMessage);
+    localMessages.value = currentList;
+    chatList.add(optimisticMessage);
+    
+    // Clear input and scroll instantly
+    clearMessage();
+    scrollToBottom();
+    
+    // Set sending state
+    isSending.value = true;
+    
+    // Set a timeout to remove optimistic message if it takes too long
+    _optimisticTimers[tempId] = Timer(const Duration(seconds: 30), () {
+      if (!_isDisposed) {
+        // Remove stale optimistic message after 30 seconds
+        _removeOptimisticMessage(tempId);
+        ShowToast.showToast(
+          'Message sending took too long. Please check if sent.',
+          showSuccess: false,
+        );
+      }
+    });
+    
     try {
-      isSending.value = true;
-      
       final enquiryId = Get.arguments['enquiry_id']?.toString() ?? '';
       final replyId = Get.arguments['user_id']?.toString() ?? '';
       
       if (enquiryId.isEmpty || replyId.isEmpty) {
-        ShowToast.showToast(
-          'Invalid chat session',
-          showSuccess: false,
-        );
+        _removeOptimisticMessage(tempId);
+        ShowToast.showToast('Invalid chat session', showSuccess: false);
         isSending.value = false;
         return;
       }
@@ -195,14 +372,10 @@ class ChatSentController extends GetxController {
         'text': message
       };
       
-      debugPrint('postSendChatApi bodyParams: $bodyParams');
-      
       final token = await SharPreferences.getString(SharPreferences.token);
       if (token == null || token.isEmpty) {
-        ShowToast.showToast(
-          'Authentication error. Please login again.',
-          showSuccess: false,
-        );
+        _removeOptimisticMessage(tempId);
+        ShowToast.showToast('Authentication error', showSuccess: false);
         isSending.value = false;
         return;
       }
@@ -212,150 +385,85 @@ class ChatSentController extends GetxController {
       request.headers.addAll({
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
-        'Content-Type': 'application/json', // Add content type
       });
       request.fields.addAll(bodyParams);
       
-      final response = await request.send();
+      final response = await request.send().timeout(const Duration(seconds: 10));
       final responseBody = await response.stream.bytesToString();
       
-      debugPrint('Send message status code: ${response.statusCode}');
-      debugPrint('Send message response: $responseBody');
+      // Cancel the timeout timer
+      _optimisticTimers[tempId]?.cancel();
+      _optimisticTimers.remove(tempId);
       
-      // Check if response is JSON
-      if (responseBody.trim().startsWith('{') || responseBody.trim().startsWith('[')) {
-        try {
-          final responseData = json.decode(responseBody);
-          
-          // Consider 200, 201, and sometimes 500 as success if message was actually sent
-          // Because your API might return error but still send the message
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            // Success case
-            charController.value.clear();
-            
-            // Wait a moment then refresh chat
-            await Future.delayed(const Duration(milliseconds: 500));
-            await postChatApi();
-            
-            // Scroll to bottom
-            Future.delayed(const Duration(milliseconds: 300), () {
-              scrollToBottom();
-            });
-            
-            ShowToast.showToast(
-              'Message sent successfully',
-              showSuccess: true,
-            );
-          } else {
-            // Even if status code is not 200, the message might have been sent
-            // Check if the response indicates message was sent, or just show generic error
-            debugPrint('Message may have been sent despite error response');
-            
-            // Still clear the text field as the message was likely sent
-            charController.value.clear();
-            
-            // Refresh chat to see if message appears
-            await Future.delayed(const Duration(milliseconds: 1000));
-            await postChatApi();
-            
-            ShowToast.showToast(
-              responseData['msg'] ?? 'Message sent (check if delivered)',
-              showSuccess: true,
-            );
-          }
-        } catch (e) {
-          debugPrint('JSON parse error: $e');
-          // If we can't parse JSON but request completed, message might still be sent
-          charController.value.clear();
-          await Future.delayed(const Duration(milliseconds: 1000));
-          await postChatApi();
-          ShowToast.showToast(
-            'Message may have been sent. Refresh to check.',
-            showSuccess: true,
-          );
-        }
-      } else {
-        // HTML response - likely an error page, but message might still be sent
-        debugPrint('Non-JSON response: $responseBody');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Success - remove optimistic message
+        _removeOptimisticMessage(tempId);
         
-        // Check if this is a timeout or server error
-        if (response.statusCode == 500 || response.statusCode == 503) {
-          // Server error but message might still be processing
-          charController.value.clear();
-          
-          ShowToast.showToast(
-            'Message sent but server returned error. Check in a moment.',
-            showSuccess: true,
-          );
-          
-          // Refresh after delay to check if message appeared
-          await Future.delayed(const Duration(seconds: 2));
-          await postChatApi();
-        } else {
-          ShowToast.showToast(
-            'Server error. Please try again.',
-            showSuccess: false,
-          );
-        }
-      }
-      
-    } on TimeoutException catch (e) {
-      debugPrint('TimeoutException: $e');
-      // Even on timeout, the message might have been sent
-      // Don't clear the text field, let user retry
-      ShowToast.showToast(
-        'Connection timeout. The message may have been sent. Please refresh.',
-        showSuccess: false,
-      );
-      
-      // Refresh after delay to check
-      await Future.delayed(const Duration(seconds: 2));
-      await postChatApi();
-      
-    } on SocketException catch (e) {
-      debugPrint('SocketException: $e');
-      ShowToast.showToast(
-        'No internet connection. Please check your network.',
-        showSuccess: false,
-      );
-    } catch (e) {
-      debugPrint('Error in postSendChatApi: $e');
-      ShowToast.showToast(
-        'Failed to send message. Please try again.',
-        showSuccess: false,
-      );
-    } finally {
-      isSending.value = false;
-    }
-  }
-  
-  // Helper method to check if chat list is the same
-  bool _isSameChatList(List<dynamic> newList) {
-    if (chatList.length != newList.length) return false;
-    
-    for (int i = 0; i < chatList.length; i++) {
-      if (chatList[i] is Map && newList[i] is Map) {
-        // Compare IDs if available
-        if (chatList[i]['id'] != newList[i]['id']) {
-          return false;
-        }
+        // Refresh chat to get the real message
+        await postChatApi();
+        scrollToBottom();
+        
+        ShowToast.showToast('Message sent', showSuccess: true);
       } else {
-        return false;
+        // Keep optimistic message for a bit longer
+        ShowToast.showToast('Message will be delivered', showSuccess: true);
+        
+        // Try to refresh after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          if (!_isDisposed) {
+            postChatApi();
+          }
+        });
+      }
+      
+    } catch (e) {
+      debugPrint('Error sending: $e');
+      _optimisticTimers[tempId]?.cancel();
+      _optimisticTimers.remove(tempId);
+      
+      // Keep optimistic message - it will be resolved on next poll
+      ShowToast.showToast('Sending... Will retry', showSuccess: false);
+      
+      // Try to refresh after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (!_isDisposed) {
+          postChatApi();
+        }
+      });
+    } finally {
+      if (!_isDisposed) {
+        isSending.value = false;
       }
     }
-    return true;
   }
   
-  // Helper method to scroll to bottom
+  void _removeOptimisticMessage(String tempId) {
+    if (!_isDisposed) {
+      // Cancel timer if exists
+      _optimisticTimers[tempId]?.cancel();
+      _optimisticTimers.remove(tempId);
+      
+      // Remove from lists
+      localMessages.removeWhere((msg) => msg['temp_id'] == tempId);
+      chatList.removeWhere((msg) => 
+        msg is Map && msg['temp_id'] == tempId
+      );
+      
+      // Save to cache without optimistic messages
+      _saveMessagesToCache(chatList);
+    }
+  }
+  
+  // Instant scroll to bottom
   void scrollToBottom() {
-    if (scrollController.value.hasClients) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (scrollController.value.hasClients) {
-          scrollController.value.animateTo(
-            scrollController.value.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
+    if (!_isDisposed && scrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (scrollController.hasClients) {
+          try {
+            scrollController.jumpTo(0.0);
+          } catch (e) {
+            // Ignore scroll errors
+          }
         }
       });
     }
@@ -363,6 +471,43 @@ class ChatSentController extends GetxController {
   
   // Method to manually refresh chat
   Future<void> refreshChat() async {
-    await postChatApi();
+    if (!_isDisposed) {
+      await postChatApi();
+    }
+  }
+  
+  // Get messages instantly from cache
+  List<dynamic> getDisplayMessages() {
+    if (_isDisposed) return [];
+    if (localMessages.isNotEmpty) {
+      return localMessages;
+    }
+    return chatList;
+  }
+
+  void _triggerAllRefresh() {
+    try {
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().getSentEnquiriesUnreadCount('1', forceRefresh: true);
+      }
+    } catch (e) {
+      debugPrint('Error refreshing home controller counts: $e');
+    }
+    try {
+      if (Get.isRegistered<EnquiriesSentController>()) {
+        Get.find<EnquiriesSentController>().postSentApi("1", isAutoRefresh: true);
+        Get.find<EnquiriesSentController>().postSentApi("2", isAutoRefresh: true);
+      }
+    } catch (e) {
+      debugPrint('Error refreshing enquiries sent: $e');
+    }
+    try {
+      if (Get.isRegistered<EnquiriesReceivedController>()) {
+        Get.find<EnquiriesReceivedController>().postReceivedApi("1", isAutoRefresh: true);
+        Get.find<EnquiriesReceivedController>().postReceivedApi("2", isAutoRefresh: true);
+      }
+    } catch (e) {
+      debugPrint('Error refreshing enquiries received: $e');
+    }
   }
 }
