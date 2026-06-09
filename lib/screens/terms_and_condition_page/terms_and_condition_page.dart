@@ -30,9 +30,14 @@ class TermsAndConditionPageState extends State<TermsAndConditionPage> {
   Widget build(BuildContext context) {
     return SafeArea(child: Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: ConstantColor.blackColor,),
-        backgroundColor: ConstantColor.whiteColor,
-        surfaceTintColor: ConstantColor.whiteColor,
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: ConstantColor.primaryGradient,
+          ),
+        ),
       ),
       backgroundColor: ConstantColor.whiteColor,
       body: WebViewWidget(controller: controller),

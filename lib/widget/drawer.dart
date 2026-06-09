@@ -19,8 +19,10 @@ import 'package:single_clik/screens/home_screens/home_screens/drawer_screens/not
 import 'package:single_clik/screens/home_screens/home_screens/drawer_screens/profile_screen.dart';
 import 'package:single_clik/services/api.dart';
 import 'package:single_clik/utils/shar_preferences.dart';
-import 'package:single_clik/widget/app_button.dart';
+import 'package:single_clik/utils/cache_manager.dart';
 import 'package:single_clik/widget/app_image_assets.dart';
+import 'package:single_clik/widget/app_button.dart';
+import 'package:single_clik/screens/home_tab_bar_screen.dart';
 
 import '../constants/constant_string.dart';
 import '../constants/network_to_file_image.dart';
@@ -68,16 +70,18 @@ class AppDrawerState extends State<AppDrawer> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(1000),
                 child: AppImageAsset(
+                  // ValueKey forces Flutter to recreate this widget (and re-download
+                  // the image) whenever photoVersion increments after a refresh.
+                  key: ValueKey('drawer_photo_${homeController.photoVersion.value}'),
                   image:
                   "${ConstantString.userImgUrlPath}${homeController.userData['photo']}",
                   isFile: false,
-                  cache: true,
                   fit: BoxFit.cover,
                   height: 100,
                   width: 100,
                 ),
               ),
-              SizedBox(height: height * 0.02),
+              SizedBox(height: height * 0.015),
               Text(
                 (homeController.userData['name'] ?? ""),
                 style: TextStyle(
@@ -86,6 +90,35 @@ class AppDrawerState extends State<AppDrawer> {
                   color: ConstantColor.blackColor,
                 ),
               ),
+              // ── Full App Refresh button ────────────────────────────────────
+              SizedBox(height: height * 0.012),
+              Obx(() => homeController.isFullRefreshing.value
+                  ? const SizedBox(
+                      height: 36,
+                      width: 36,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : OutlinedButton.icon(
+                      onPressed: () async {
+                        Get.offAll(() => const HomeTabBarScreen());
+                        await homeController.fullAppRefresh();
+                      },
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text(
+                        'Refresh App',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ConstantColor.primary,
+                        side: BorderSide(color: ConstantColor.primary, width: 1.2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 6),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                      ),
+                    )),
+              // ─────────────────────────────────────────────────────────────
+              SizedBox(height: height * 0.01),
               Divider(color: ConstantColor.blackColor, thickness: 1.2),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -117,7 +150,9 @@ class AppDrawerState extends State<AppDrawer> {
                     Divider(color: ConstantColor.grayColor, thickness: 1),
                     drawerButton(
                       icon: "assets/icons/my_enquiries_dr_icon.png",
-                      title: "My Enquiries",
+                      title: homeController.userData['user_type'] != 2
+                          ? "My Enquiries"
+                          : "Send Enquiry",
                       padding: 4,
                       onTap: () {
                         homeController.selectTab.value = 2;
@@ -280,6 +315,48 @@ class AppDrawerState extends State<AppDrawer> {
                       },
                     ),
                     Divider(color: ConstantColor.grayColor, thickness: 1),
+                    // ── Refresh App (menu item) ───────────────────────────────
+                    Obx(() => InkWell(
+                      onTap: homeController.isFullRefreshing.value
+                          ? null
+                          : () async {
+                              Get.offAll(() => const HomeTabBarScreen());
+                              await homeController.fullAppRefresh();
+                            },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            homeController.isFullRefreshing.value
+                                ? const SizedBox(
+                                    height: 25,
+                                    width: 25,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.refresh_rounded,
+                                    size: 25,
+                                    color: ConstantColor.primary,
+                                  ),
+                            const SizedBox(width: 15),
+                            Text(
+                              homeController.isFullRefreshing.value
+                                  ? 'Refreshing...'
+                                  : 'Refresh App',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: ConstantColor.primary,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )),
+                    Divider(color: ConstantColor.grayColor, thickness: 1),
                     drawerButton(
                       icon: "assets/icons/logout_dr_icon.png",
                       title: "Logout",
@@ -292,6 +369,7 @@ class AppDrawerState extends State<AppDrawer> {
                           onPressed: () async {
                             Get.back();
                             await SharPreferences.clearSharPreference();
+                            await CacheManager.clearAll();
                             Get.offAll(() => const MobileNumberScreen());
                           },
                         );
@@ -498,6 +576,7 @@ class AppDrawerState extends State<AppDrawer> {
                   child: AppButton(
                     onTap: () async {
                       await SharPreferences.clearSharPreference();
+                      await CacheManager.clearAll();
                       Get.offAll(() => const MobileNumberScreen());
                     },
                     title: "Logout",
@@ -624,6 +703,7 @@ Future postDeleteProfileApi() async {
       debugPrint(responseData.toString());
       if (responseData['code'] == 200) {
         await SharPreferences.clearSharPreference();
+        await CacheManager.clearAll();
         Get.offAll(() => const MobileNumberScreen());
         ShowToast.showToast(
           responseData['msg'] ?? ConstantString.dataDeletedSuccessfullyMsg,

@@ -2,10 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:single_clik/constants/constant_color.dart';
-import 'package:single_clik/constants/constant_string.dart';
 import 'package:single_clik/constants/show_toast.dart';
 import 'package:single_clik/controller/auth_controller/otp_controller.dart';
 import 'package:single_clik/screens/home_tab_bar_screen.dart';
@@ -349,10 +347,10 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
+    bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     debugPrint('=== OtpScreen Building ===');
 
-    return KeyboardVisibilityBuilder(
-        builder: (p0, isKeyboardVisible) => Scaffold(
+    return Scaffold(
           backgroundColor: ConstantColor.whiteColor,
           body: Obx(
             () => otpController.isLoading.value
@@ -658,13 +656,13 @@ class _OtpScreenState extends State<OtpScreen> {
                             isLoading: otpController.isButtonLoading.value,
                             arrowShow: false,
                           ),
-                          SizedBox(height: height * 0.02),
+                           SizedBox(height: height * 0.02),
                         ],
                       ),
                     ),
                   ),
           ),
-        ));
+        );
   }
 
   InputDecoration otpInputDecoration = InputDecoration(

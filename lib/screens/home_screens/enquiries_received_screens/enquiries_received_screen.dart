@@ -23,16 +23,16 @@ class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
-    if(enquiriesReceivedController.tabController.index == 0)
-      {
+    super.initState();
+    // Mark received enquiries as seen when screen opens
+    enquiriesReceivedController.markOpenEnquiriesAsSeen();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (enquiriesReceivedController.tabController.index == 0) {
         getData('1');
-      }
-    else
-      {
+      } else {
         getData('2');
       }
-    super.initState();
+    });
   }
 
   Future<void> getData(String status) async {
@@ -49,53 +49,49 @@ class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
     return Scaffold(
       backgroundColor: ConstantColor.bgColor,
       body: Obx(
-        () => Column(
-          children: [
-            Container(
-              color: ConstantColor.primary,
-              child: TabBar(
-                controller: enquiriesReceivedController.tabController,
-                indicatorColor: ConstantColor.whiteColor,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorWeight: 4,
-                onTap: (value) async {
-                  if (value == 0) {
-                    await enquiriesReceivedController.postReceivedApi("1");
-                    await homeController.getSentEnquiriesUnreadCount("1");
-                  } else if (value == 1) {
-                    await enquiriesReceivedController.postReceivedApi("2");
-                    await homeController.getSentEnquiriesUnreadCount("1");
-                  }
-                },
-                tabs: [
-                  Tab(
-                    child: Text(
-                      "Open",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: ConstantColor.whiteColor,
-                      ),
-                    ),
-                  ),
-                  Tab(
-                    child: Text(
-                      "Closed",
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: ConstantColor.whiteColor),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: enquiriesReceivedController.isLoading.value
-                  ? const Center(
+        () => enquiriesReceivedController.isLoading.value
+            ? const Center(
                 child: CircularProgressIndicator(),
               )
-                  : TabBarView(
+                  : Column(
+                children: [
+                  // Real-time new enquiry notification banner
+                  Obx(() {
+                    final newCount = enquiriesReceivedController.newOpenCount.value;
+                    if (newCount <= 0) return const SizedBox.shrink();
+                    return GestureDetector(
+                      onTap: () {
+                        enquiriesReceivedController.markOpenEnquiriesAsSeen();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF00C853), Color(0xFF00897B)],
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.notifications_active, color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$newCount new ${newCount == 1 ? 'enquiry' : 'enquiries'} received! Tap to dismiss',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  Expanded(
+                    child: TabBarView(
                 controller: enquiriesReceivedController.tabController,
                 children: [
                   RefreshIndicator(
@@ -797,13 +793,13 @@ class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
                       },
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+                 ],
+                ),   // close TabBarView
+                 ),  // close inner Expanded(TabBarView)
+                 ],  // close Column children
+               ),    // close Column
+       ),
+     );
 
   }
 

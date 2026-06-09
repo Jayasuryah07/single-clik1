@@ -329,6 +329,7 @@ class _SignDetailsScreenState extends State<SignDetailsScreen> {
                           'referred_by_code': signDetailsController
                               .referredCodeController.value.text
                               .trim(),
+                          'user_type': '1',
                         };
                         await signDetailsController.postSignUpApi(bodyParams,signDetailsController.croppedProfileFile!.value.path != ""  ? signDetailsController.croppedProfileFile!.value.path.trim() : signDetailsController.filePath.value.trim(),);
                       }

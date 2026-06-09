@@ -39,11 +39,11 @@ class _HomeScreenState extends State<HomeScreen>
         scale.value = animation.value;
       });
 
-    getData();
-    getServices();
-    
-    // Start animation
-    _animationController.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getData();
+      getServices();
+      _animationController.forward();
+    });
   }
 
   @override
@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen>
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: ConstantColor.primary,
+                      gradient: ConstantColor.primaryGradient,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -117,66 +117,13 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
       body: Obx(
-        () => Column(
-          children: [
-            Container(
-              color: ConstantColor.primary,
-              child: TabBar(
+        () => homeController.isLoading.value
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : TabBarView(
                 controller: homeController.tabController,
-                indicatorColor: ConstantColor.whiteColor,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorWeight: 4,
-                onTap: (value) async {
-                  homeController.tabIndex.value = value;
-                  homeController.isSearchOpen.value = false;
-                  if (value == 0) {
-                    await homeController.getSentEnquiriesUnreadCount("1");
-                  } else if (value == 1) {
-                    await homeController.getSentEnquiriesUnreadCount("1");
-                  } else if (value == 2) {
-                    await homeController.getSentEnquiriesUnreadCount("1");
-                  }
-                },
-                tabs: [
-                  Tab(
-                    child: Text(
-                      "All",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: ConstantColor.whiteColor,
-                      ),
-                    ),
-                  ),
-                  Tab(
-                    child: Text(
-                      "Business",
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: ConstantColor.whiteColor),
-                    ),
-                  ),
-                  Tab(
-                    child: Text(
-                      "Services",
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: ConstantColor.whiteColor),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: homeController.isLoading.value
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : TabBarView(
-                      controller: homeController.tabController,
-                      children: [
+                children: [
                         RefreshIndicator(
                           onRefresh: () async {
                             await homeController.postDashboardApi("");
@@ -237,15 +184,14 @@ class _HomeScreenState extends State<HomeScreen>
                                                               left: Get.width /
                                                                   30,
                                                             ),
-                                                            child: Text(
+                                                            child: const Text(
                                                               'Recently Joined Members',
                                                               style: TextStyle(
-                                                                color: ConstantColor
-                                                                    .blackColor,
+                                                                color: Color(0xff0F172A),
                                                                 fontWeight:
                                                                     FontWeight
-                                                                        .w600,
-                                                                fontSize: 15,
+                                                                        .w700,
+                                                                fontSize: 16,
                                                               ),
                                                             ),
                                                           ),
@@ -298,12 +244,19 @@ class _HomeScreenState extends State<HomeScreen>
                                                                           border:
                                                                               Border.all(
                                                                             color:
-                                                                                ConstantColor.primary,
+                                                                                const Color(0xff0B3C9B),
                                                                             width:
-                                                                                2,
+                                                                                2.5,
                                                                           ),
                                                                           shape:
                                                                               BoxShape.circle,
+                                                                          boxShadow: [
+                                                                            BoxShadow(
+                                                                              color: Colors.black.withOpacity(0.06),
+                                                                              blurRadius: 8,
+                                                                              offset: const Offset(0, 3),
+                                                                            ),
+                                                                          ],
                                                                         ),
                                                                         child:
                                                                             ClipOval(
@@ -332,13 +285,12 @@ class _HomeScreenState extends State<HomeScreen>
                                                                               'name'] ??
                                                                           ""),
                                                                       style:
-                                                                          TextStyle(
+                                                                          const TextStyle(
                                                                         fontSize:
                                                                             12,
                                                                         fontWeight:
-                                                                            FontWeight.w500,
-                                                                        color: ConstantColor
-                                                                            .primary,
+                                                                            FontWeight.w600,
+                                                                        color: Color(0xff334155),
                                                                       ),
                                                                       overflow:
                                                                           TextOverflow
@@ -453,14 +405,21 @@ class _HomeScreenState extends State<HomeScreen>
                                             },
                                             child: Container(
                                               padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20,
-                                                      vertical: 10),
+                                                  const EdgeInsets.all(16),
                                               margin:
                                                   const EdgeInsets.symmetric(
-                                                      vertical: 5),
+                                                      horizontal: 16,
+                                                      vertical: 8),
                                               decoration: BoxDecoration(
                                                 color: ConstantColor.whiteColor,
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.04),
+                                                    blurRadius: 10,
+                                                    offset: const Offset(0, 4),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 crossAxisAlignment:
@@ -469,11 +428,17 @@ class _HomeScreenState extends State<HomeScreen>
                                                   Container(
                                                     decoration: BoxDecoration(
                                                       border: Border.all(
-                                                        color: ConstantColor
-                                                            .primary,
-                                                        width: 2,
+                                                        color: const Color(0xff0B3C9B),
+                                                        width: 2.5,
                                                       ),
                                                       shape: BoxShape.circle,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black.withOpacity(0.06),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(0, 3),
+                                                        ),
+                                                      ],
                                                     ),
                                                     child: ClipOval(
                                                       child: AppImageAsset(
@@ -481,12 +446,12 @@ class _HomeScreenState extends State<HomeScreen>
                                                             "${ConstantString.userImgUrlPath}${homeController.allList[index]['photo']}",
                                                         isFile: false,
                                                         fit: BoxFit.cover,
-                                                        height: width / 3.5,
-                                                        width: width / 3.5,
+                                                        height: width / 3.8,
+                                                        width: width / 3.8,
                                                       ),
                                                     ),
                                                   ),
-                                                  SizedBox(width: width * 0.02),
+                                                  SizedBox(width: width * 0.035),
                                                   Expanded(
                                                     child: Column(
                                                       crossAxisAlignment:
@@ -498,72 +463,40 @@ class _HomeScreenState extends State<HomeScreen>
                                                                       index]
                                                                   ['name'] ??
                                                               ""),
-                                                          style: TextStyle(
-                                                            fontSize: 18,
+                                                          style: const TextStyle(
+                                                            fontSize: 16,
                                                             fontWeight:
-                                                                FontWeight.w600,
-                                                            color: ConstantColor
-                                                                .primary,
+                                                                FontWeight.w700,
+                                                            color: Color(0xff1E293B),
                                                           ),
                                                         ),
-                                                        SizedBox(
-                                                          height: width / 90,
-                                                        ),
+                                                        const SizedBox(height: 4),
                                                         Text(
                                                           homeController.allList[
                                                                       index][
                                                                   'company_name'] ??
                                                               "",
                                                           style: TextStyle(
-                                                            fontSize: 14,
+                                                            fontSize: 13,
                                                             fontWeight:
                                                                 FontWeight.w500,
-                                                            color: ConstantColor
-                                                                .primaryDark,
+                                                            color: Colors.grey.shade600,
                                                           ),
                                                           maxLines: 1,
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                         ),
-                                                        SizedBox(
-                                                          height: width / 90,
-                                                        ),
+                                                        const SizedBox(height: 6),
                                                         Container(
-                                                          width: width,
-                                                          margin:
-                                                              EdgeInsets.only(
-                                                            right:
-                                                                Get.width / 30,
-                                                          ),
-                                                          decoration:
-                                                              BoxDecoration(
+                                                          decoration: BoxDecoration(
                                                             borderRadius:
                                                                 BorderRadius
-                                                                    .circular(
-                                                                        1000),
-                                                            gradient:
-                                                                LinearGradient(
-                                                              begin: Alignment
-                                                                  .centerLeft,
-                                                              end: Alignment
-                                                                  .centerRight,
-                                                              colors: [
-                                                                Colors
-                                                                    .deepOrange
-                                                                    .withAlpha(0),
-                                                                Colors
-                                                                    .deepOrange
-                                                                    .shade900
-                                                                    .withAlpha(128),
-                                                              ],
-                                                            ),
+                                                                    .circular(6),
+                                                            color: const Color(0xffFFF2E6),
                                                           ),
-                                                          padding: EdgeInsets
-                                                              .fromLTRB(
-                                                            width / 90,
-                                                            width / 90,
-                                                            width / 40,
-                                                            width / 90,
+                                                          padding: const EdgeInsets.symmetric(
+                                                            horizontal: 10,
+                                                            vertical: 4,
                                                           ),
                                                           child: Text(
                                                             homeController.allList[index]
@@ -586,19 +519,17 @@ class _HomeScreenState extends State<HomeScreen>
                                                                     .toString()
                                                                     .toUpperCase(),
                                                             style: const TextStyle(
-                                                                fontSize: 16,
+                                                                fontSize: 11,
                                                                 fontWeight:
                                                                     FontWeight
-                                                                        .w900,
+                                                                        .w800,
                                                                 color: Colors
                                                                     .deepOrange,
                                                                 letterSpacing:
-                                                                    2),
+                                                                    1.2),
                                                           ),
                                                         ),
-                                                        SizedBox(
-                                                          height: width / 90,
-                                                        ),
+                                                        const SizedBox(height: 4),
                                                         Text(
                                                           homeController.allList[
                                                                               index]
@@ -620,11 +551,11 @@ class _HomeScreenState extends State<HomeScreen>
                                                                       'subcategory']
                                                                   .toString(),
                                                           style: TextStyle(
-                                                            fontSize: 14,
+                                                            fontSize: 13,
                                                             fontWeight:
                                                                 FontWeight.w500,
                                                             color: Colors
-                                                                .grey.shade600,
+                                                                .grey.shade500,
                                                           ),
                                                         ),
                                                       ],
@@ -672,7 +603,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     crossAxisCount: 3,
                                     crossAxisSpacing: 10,
                                     mainAxisSpacing: 10,
-                                    childAspectRatio: 0.8,
+                                    childAspectRatio: 0.95,
                                   ),
                                   padding: const EdgeInsets.only(bottom: 80, top: 10),
                                   itemCount: homeController.businessList.length,
@@ -723,9 +654,10 @@ class _HomeScreenState extends State<HomeScreen>
                                                 color: const Color(0xffF6F5FA),
                                                 width: 2,
                                               ),
-                                              shape: BoxShape.circle,
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
-                                            child: ClipOval(
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(10),
                                               child: AppImageAsset(
                                                 image:
                                                     "${ConstantString.categoriesImgUrlPath}${homeController.businessList[index]['category_image']}",
@@ -797,7 +729,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     crossAxisCount: 3,
                                     crossAxisSpacing: 10,
                                     mainAxisSpacing: 10,
-                                    childAspectRatio: 0.8,
+                                    childAspectRatio: 0.95,
                                   ),
                                   itemCount: homeController.servicesList.length,
                                   padding: const EdgeInsets.only(bottom: 80, top: 10),
@@ -846,9 +778,10 @@ class _HomeScreenState extends State<HomeScreen>
                                                 color: const Color(0xffF6F5FA),
                                                 width: 2,
                                               ),
-                                              shape: BoxShape.circle,
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
-                                            child: ClipOval(
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(10),
                                               child: AppImageAsset(
                                                 image:
                                                     "${ConstantString.categoriesImgUrlPath}${homeController.servicesList[index]['category_image']}",
@@ -890,9 +823,6 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ],
                     ),
-            )
-          ],
-        ),
       ),
     );
   }
@@ -927,428 +857,405 @@ class _HomeScreenState extends State<HomeScreen>
       () => Dialog(
         backgroundColor: ConstantColor.whiteColor,
         surfaceTintColor: ConstantColor.whiteColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
         insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         child: SingleChildScrollView(
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (!controller.isButtonLoading.value) {
-                          Get.back();
-                        }
-                      },
-                      child: Image.asset(
-                        "assets/icons/icon_close.png",
-                        height: 25,
-                        width: 25,
-                      ),
-                    )
-                  ],
+                Center(
+                  child: Text(
+                    "Raise Inquiry",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: ConstantColor.blackColor,
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 24),
                 Text(
-                  "Raise Inquiry",
+                  "Category",
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: ConstantColor.blackColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      color: const Color(0xffF7F8FA),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xffEBEFF2),
+                        width: 1,
+                      )),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 16,
+                  ),
+                  child: DropdownButton(
+                    dropdownColor: ConstantColor.whiteColor,
+                    value: controller.categorySelect['category'] == null ||
+                            controller.categorySelect['category']
+                                .toString()
+                                .trim()
+                                .isEmpty
+                        ? null
+                        : controller.categorySelect['category'].toString(),
+                    padding: EdgeInsets.zero,
+                    isExpanded: true,
+                    onChanged: (dynamic newValue) {
+                      for (int i = 0; i < categoryList.length; i++) {
+                        if (categoryList[i]['category'].toString() == newValue.toString()) {
+                          debugPrint('Selected Category Data: ${categoryList[i]}');
+                          controller.categorySelect.value = categoryList[i] ?? {};
+                          debugPrint('Category ID: ${controller.categorySelect['id']}');
+                          controller.postSubCategoriesApi(
+                              controller.categorySelect['id'].toString());
+                        }
+                      }
+                    },
+                    items: categoryList.map(
+                      (val) {
+                        return DropdownMenuItem(
+                          value: val['category']?.toString() ?? "",
+                          child: Text(
+                            val['category']?.toString() ?? "",
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: ConstantColor.blackColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      },
+                    ).toList(),
+                    underline: const SizedBox(),
+                    hint: Text(
+                      "Select Category",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      size: 24,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Text(
+                  "Sub-Category",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      color: const Color(0xffF7F8FA),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xffEBEFF2),
+                        width: 1,
+                      )),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 16,
+                  ),
+                  child: DropdownButton(
+                    dropdownColor: ConstantColor.whiteColor,
+                    value: controller.subCategorySelect['subcategory'] == null ||
+                            controller.subCategorySelect['subcategory']
+                                .toString()
+                                .trim()
+                                .isEmpty
+                        ? null
+                        : controller.subCategorySelect['subcategory'].toString(),
+                    padding: EdgeInsets.zero,
+                    isExpanded: true,
+                    onChanged: (dynamic newValue) {
+                      for (int i = 0; i < controller.subCategoryList.length; i++) {
+                        if (controller.subCategoryList[i]['subcategory'].toString() == newValue.toString()) {
+                          debugPrint('Selected SubCategory Data: ${controller.subCategoryList[i]}');
+                          controller.subCategorySelect.value = controller.subCategoryList[i] ?? {};
+                          debugPrint('SubCategory ID: ${controller.subCategorySelect['id']}');
+                        }
+                      }
+                    },
+                    hint: Text(
+                      "Select SubCategory",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    items: controller.subCategoryList.map(
+                      (val) {
+                        return DropdownMenuItem(
+                          value: val['subcategory']?.toString() ?? "",
+                          child: Text(
+                            val['subcategory']?.toString() ?? "",
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: ConstantColor.blackColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      },
+                    ).toList(),
+                    underline: const SizedBox(),
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      size: 24,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Priority type",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
                   children: [
-                    Text(
-                      "Category *",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ConstantColor.blackColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                          color: ConstantColor.bgColor,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(0xffDDDDDD),
-                          )),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 15,
-                      ),
-                      child: DropdownButton(
-                        dropdownColor: ConstantColor.bgColor,
-                        value: controller.categorySelect['category'] == null ||
-                                controller.categorySelect['category']
-                                    .toString()
-                                    .trim()
-                                    .isEmpty
-                            ? null
-                            : controller.categorySelect['category']
-                                .toString(),
-                        padding: EdgeInsets.zero,
-                        isExpanded: true,
-                        onChanged: (dynamic newValue) {
-                          for (int i = 0; i < categoryList.length; i++) {
-                            if (categoryList[i]['category'].toString() == newValue.toString()) {
-                              debugPrint('Selected Category Data: ${categoryList[i]}');
-                              controller.categorySelect.value = categoryList[i] ?? {};
-                              debugPrint('Category ID: ${controller.categorySelect['id']}');
-                              controller.postSubCategoriesApi(
-                                  controller.categorySelect['id'].toString());
-                            }
-                          }
-                        },
-                        items: categoryList.map(
-                          (val) {
-                            return DropdownMenuItem(
-                              value: val['category']?.toString() ?? "",
-                              child: Text(
-                                val['category']?.toString() ?? "",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: ConstantColor.blackColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          },
-                        ).toList(),
-                        underline: const SizedBox(),
-                        hint: Text(
-                          "Select Category",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: ConstantColor.grayColor,
-                            fontWeight: FontWeight.w500,
+                    GestureDetector(
+                      onTap: () {
+                        controller.priorityTypeSelect.value = "Urgent";
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            controller.priorityTypeSelect.value == "Urgent"
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color: controller.priorityTypeSelect.value == "Urgent"
+                                ? const Color(0xff0B3C9B)
+                                : Colors.grey.shade400,
+                            size: 22,
                           ),
-                        ),
-                        icon: Icon(
-                          Icons.arrow_drop_down_sharp,
-                          size: 25,
-                          color: ConstantColor.blackColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Sub-Category *",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ConstantColor.blackColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                          color: ConstantColor.bgColor,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(0xffDDDDDD),
-                          )),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 15,
-                      ),
-                      child: DropdownButton(
-                        dropdownColor: ConstantColor.bgColor,
-                        value: controller.subCategorySelect['subcategory'] == null ||
-                                controller.subCategorySelect['subcategory']
-                                    .toString()
-                                    .trim()
-                                    .isEmpty
-                            ? null
-                            : controller.subCategorySelect['subcategory']
-                                .toString(),
-                        padding: EdgeInsets.zero,
-                        isExpanded: true,
-                        onChanged: (dynamic newValue) {
-                          for (int i = 0; i < controller.subCategoryList.length; i++) {
-                            if (controller.subCategoryList[i]['subcategory'].toString() == newValue.toString()) {
-                              debugPrint('Selected SubCategory Data: ${controller.subCategoryList[i]}');
-                              controller.subCategorySelect.value = controller.subCategoryList[i] ?? {};
-                              debugPrint('SubCategory ID: ${controller.subCategorySelect['id']}');
-                            }
-                          }
-                        },
-                        hint: Text(
-                          "Select SubCategory",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: ConstantColor.grayColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        items: controller.subCategoryList.map(
-                          (val) {
-                            return DropdownMenuItem(
-                              value: val['subcategory']?.toString() ?? "",
-                              child: Text(
-                                val['subcategory']?.toString() ?? "",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: ConstantColor.blackColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          },
-                        ).toList(),
-                        underline: const SizedBox(),
-                        icon: Icon(
-                          Icons.arrow_drop_down_sharp,
-                          size: 25,
-                          color: ConstantColor.blackColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Priority Type *",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ConstantColor.blackColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              controller.priorityTypeSelect.value = "Urgent";
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: controller.priorityTypeSelect.value == "Urgent"
-                                      ? ConstantColor.primary
-                                      : const Color(0xffABAAAF),
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 10),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    controller.priorityTypeSelect.value == "Urgent"
-                                        ? Icons.radio_button_checked
-                                        : Icons.radio_button_unchecked,
-                                    color: controller.priorityTypeSelect.value == "Urgent"
-                                        ? ConstantColor.primary
-                                        : ConstantColor.grayColor,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    "Urgent",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: controller
-                                                  .priorityTypeSelect.value ==
-                                              "Urgent"
-                                          ? ConstantColor.primary
-                                          : ConstantColor.grayColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Urgent",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: controller.priorityTypeSelect.value == "Urgent"
+                                  ? ConstantColor.blackColor
+                                  : Colors.grey.shade600,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              controller.priorityTypeSelect.value = "General";
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: controller.priorityTypeSelect.value == "General"
-                                      ? ConstantColor.primary
-                                      : const Color(0xffABAAAF),
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 10),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    controller.priorityTypeSelect.value == "General"
-                                        ? Icons.radio_button_checked
-                                        : Icons.radio_button_unchecked,
-                                    color: controller.priorityTypeSelect.value == "General"
-                                        ? ConstantColor.primary
-                                        : ConstantColor.grayColor,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    "General",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: controller
-                                                  .priorityTypeSelect.value ==
-                                              "General"
-                                          ? ConstantColor.primary
-                                          : ConstantColor.grayColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 32),
+                    GestureDetector(
+                      onTap: () {
+                        controller.priorityTypeSelect.value = "General";
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            controller.priorityTypeSelect.value == "General"
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color: controller.priorityTypeSelect.value == "General"
+                                ? const Color(0xff0B3C9B)
+                                : Colors.grey.shade400,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "General",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: controller.priorityTypeSelect.value == "General"
+                                  ? ConstantColor.blackColor
+                                  : Colors.grey.shade600,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Inquiry Details",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ConstantColor.blackColor,
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: ConstantColor.bgColor,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xffDDDDDD),
-                        ),
-                      ),
-                      child: TextFormField(
-                        controller: controller.inquiryController.value,
-                        onChanged: (value) {},
-                        textInputAction: TextInputAction.newline,
-                        maxLines: 5,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: ConstantColor.blackColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        keyboardType: TextInputType.multiline,
-                        cursorColor: ConstantColor.blackColor,
-                        decoration: InputDecoration(
-                          fillColor: ConstantColor.bgColor,
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 15, horizontal: 15),
-                          hintText: "Enter your inquiry details here...",
-                          hintStyle: TextStyle(
-                              fontSize: 14,
-                              color: ConstantColor.grayColor,
-                              fontWeight: FontWeight.w400),
-                          filled: true,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none),
-                        ),
-                      ),
-                    )
                   ],
                 ),
-                const SizedBox(height: 25),
-                SizedBox(
-                  width: double.infinity,
-                  child: AppButton(
-                    onTap: () async {
-                      // ========== REPLACE THIS ENTIRE onTap FUNCTION ==========
-                      
-                      // Validate selections
-                      if (controller.categorySelect.isEmpty) {
-                        ShowToast.showToast('Please Select Category', showSuccess: false);
-                        return;
-                      }
-                      
-                      if (controller.subCategorySelect.isEmpty) {
-                        ShowToast.showToast('Please Select Sub-Category', showSuccess: false);
-                        return;
-                      }
-                      
-                      if (controller.priorityTypeSelect.value.isEmpty) {
-                        ShowToast.showToast('Please Select Priority Type', showSuccess: false);
-                        return;
-                      }
-                      
-                      // Get IDs safely
-                      String categoryId = controller.categorySelect['id']?.toString() ?? '';
-                      String subCategoryId = controller.subCategorySelect['id']?.toString() ?? '';
-                      String priorityType = controller.priorityTypeSelect.value == "Urgent" ? "0" : "1";
-                      String inquiryText = controller.inquiryController.value.text.trim();
-                      
-                      // Validate IDs
-                      if (categoryId.isEmpty) {
-                        ShowToast.showToast('Invalid Category selected', showSuccess: false);
-                        debugPrint('Category Select Data: ${controller.categorySelect}');
-                        return;
-                      }
-                      
-                      if (subCategoryId.isEmpty) {
-                        ShowToast.showToast('Invalid Sub-Category selected', showSuccess: false);
-                        debugPrint('SubCategory Select Data: ${controller.subCategorySelect}');
-                        return;
-                      }
-                      
-                      var bodyParams = {
-                        'category': categoryId,
-                        'sub_category': subCategoryId,
-                        'type': priorityType,
-                        'enq_text': inquiryText,
-                      };
-                      
-                      debugPrint('Sending Inquiry with params: $bodyParams');
-                      debugPrint('Category ID: $categoryId');
-                      debugPrint('SubCategory ID: $subCategoryId');
-                      
-                      // Call API
-                      bool success = await controller.postCreateEnquiryApi(bodyParams);
-                      
-                      if (success) {
-                        // Only close dialog on explicit success
-                        if (context.mounted) {
-                          Navigator.of(context).pop();
-                        }
-                      } else {
-                        // Don't close dialog, let user try again or check
-                        debugPrint('Enquiry creation returned false - dialog stays open');
-                      }
-                      
-                      // ========== END OF REPLACEMENT ==========
-                    },
-                    isLoading: controller.isButtonLoading.value,
-                    title: "Submit Inquiry",
-                    myWidth: double.infinity,
-                    arrowShow: false,
+                const SizedBox(height: 20),
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xffF7F8FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xffEBEFF2),
+                      width: 1,
+                    ),
                   ),
+                  child: TextFormField(
+                    controller: controller.inquiryController.value,
+                    textInputAction: TextInputAction.newline,
+                    maxLines: 5,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: ConstantColor.blackColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    keyboardType: TextInputType.multiline,
+                    cursorColor: ConstantColor.blackColor,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 16),
+                      hintText: "Need Photographer for one day for birthday celebration.",
+                      hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w400),
+                      filled: false,
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          if (!controller.isButtonLoading.value) {
+                            Get.back();
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xffD0D5DD), width: 1.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "CANCEL",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xff344054),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: controller.isButtonLoading.value
+                            ? null
+                            : () async {
+                                // Validate selections
+                                if (controller.categorySelect.isEmpty) {
+                                  ShowToast.showToast('Please Select Category', showSuccess: false);
+                                  return;
+                                }
+                                
+                                if (controller.subCategorySelect.isEmpty) {
+                                  ShowToast.showToast('Please Select Sub-Category', showSuccess: false);
+                                  return;
+                                }
+                                
+                                if (controller.priorityTypeSelect.value.isEmpty) {
+                                  ShowToast.showToast('Please Select Priority Type', showSuccess: false);
+                                  return;
+                                }
+                                
+                                // Get IDs safely
+                                String categoryId = controller.categorySelect['id']?.toString() ?? '';
+                                String subCategoryId = controller.subCategorySelect['id']?.toString() ?? '';
+                                String priorityType = controller.priorityTypeSelect.value == "Urgent" ? "0" : "1";
+                                String inquiryText = controller.inquiryController.value.text.trim();
+                                
+                                // Validate IDs
+                                if (categoryId.isEmpty) {
+                                  ShowToast.showToast('Invalid Category selected', showSuccess: false);
+                                  return;
+                                }
+                                
+                                if (subCategoryId.isEmpty) {
+                                  ShowToast.showToast('Invalid Sub-Category selected', showSuccess: false);
+                                  return;
+                                }
+                                
+                                var bodyParams = {
+                                  'category': categoryId,
+                                  'sub_category': subCategoryId,
+                                  'type': priorityType,
+                                  'enq_text': inquiryText,
+                                };
+                                
+                                debugPrint('Sending Inquiry with params: $bodyParams');
+                                
+                                // Call API
+                                bool success = await controller.postCreateEnquiryApi(bodyParams);
+                                
+                                if (success) {
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop();
+                                  }
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff0B3C9B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        child: controller.isButtonLoading.value
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "SUBMIT",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

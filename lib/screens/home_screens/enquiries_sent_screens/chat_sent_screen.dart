@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:single_clik/constants/constant_color.dart';
-import 'package:single_clik/constants/show_toast.dart';
 import 'package:single_clik/controller/home_controller/chat_sent_controller.dart';
 import 'package:single_clik/utils/shar_preferences.dart';
 import 'package:single_clik/widget/app_image_assets.dart';
 
 import '../../../constants/constant_string.dart';
-import '../../../controller/home_controller/enquiries_received_group_controller.dart';
 
 class ChatSentScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -66,7 +64,13 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
     return Scaffold(
       backgroundColor: ConstantColor.bgColor,
       appBar: AppBar(
-        backgroundColor: ConstantColor.primary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: ConstantColor.primaryGradient,
+          ),
+        ),
         leading: GestureDetector(
           onTap: () {
             Get.back();
