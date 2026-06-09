@@ -531,61 +531,105 @@ class UserDetailsScreenState extends State<UserDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              ListView.builder(
-                                physics: NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: userDetailsController
-                                    .userDetailsProduct['categories'].length,
-                                itemBuilder: (context, index) {
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        ' ' +
-                                            userDetailsController
-                                                .userDetailsProduct[
-                                                    'categories'][index]
-                                                    ["category"]
-                                                .toString()
-                                                .trim()
-                                                .replaceAll(",", "\n")
-                                                .trim(),
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.deepOrange,
+                              const SizedBox(height: 16),
+                              
+                              // Services Offered Header
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 18,
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepOrange,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Services Offered",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              
+                              // Check if categories list is empty
+                              if (userDetailsController.userDetailsProduct['categories'] == null ||
+                                  (userDetailsController.userDetailsProduct['categories'] as List).isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                                  child: Text(
+                                    "No services listed",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[500],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: userDetailsController
+                                      .userDetailsProduct['categories'].length,
+                                  itemBuilder: (context, index) {
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 4),
+                                          child: Text(
+                                            ' ' +
+                                                userDetailsController
+                                                    .userDetailsProduct[
+                                                        'categories'][index]
+                                                        ["category"]
+                                                    .toString()
+                                                    .trim()
+                                                    .replaceAll(",", "\n")
+                                                    .trim(),
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.deepOrange,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      ListView.builder(
-                                        physics: NeverScrollableScrollPhysics(),
-                                        shrinkWrap: true,
-                                        itemCount: userDetailsController
-                                            .userDetailsProduct['subcategories']
-                                            .length,
-                                        itemBuilder: (context, index2) {
-                                          return userDetailsController
-                                                              .userDetailsProduct[
-                                                          'subcategories']
-                                                      [index2]["category_id"] !=
-                                                  userDetailsController
-                                                              .userDetailsProduct[
-                                                          'categories'][index]
-                                                      ["u_catg_id"]
-                                              ? Container()
-                                              : SizedBox(
-                                                  height: 30,
-                                                  child: Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Padding(
-                                                        padding: const EdgeInsets.only(left: 30,right: 5),
-                                                        child: Icon(Icons.circle,size: 7,),
-                                                      ),
-                                                      Text(
-                                                        ' ' +
+                                        ListView.builder(
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          shrinkWrap: true,
+                                          itemCount: userDetailsController
+                                              .userDetailsProduct['subcategories']
+                                              .length,
+                                          itemBuilder: (context, index2) {
+                                            return userDetailsController
+                                                                .userDetailsProduct[
+                                                            'subcategories']
+                                                        [index2]["category_id"] !=
+                                                    userDetailsController
+                                                                .userDetailsProduct[
+                                                            'categories'][index]
+                                                        ["u_catg_id"]
+                                                ? const SizedBox.shrink()
+                                                : Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                                    child: Row(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(left: 30, right: 10),
+                                                          child: Icon(Icons.circle, size: 7, color: ConstantColor.primary),
+                                                        ),
+                                                        Expanded(
+                                                          child: Text(
                                                             userDetailsController
                                                                 .userDetailsProduct[
                                                                     'subcategories']
@@ -596,23 +640,201 @@ class UserDetailsScreenState extends State<UserDetailsScreen> {
                                                                 .replaceAll(
                                                                     ",", "\n")
                                                                 .trim(),
-                                                        style: TextStyle(
-                                                          fontSize: 15,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: ConstantColor
-                                                              .blackColor,
+                                                            style: TextStyle(
+                                                              fontSize: 15,
+                                                              fontWeight:
+                                                                  FontWeight.w600,
+                                                              color: ConstantColor
+                                                                  .blackColor,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                          },
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              
+                              const SizedBox(height: 12),
+                              const Divider(),
+                              const SizedBox(height: 16),
+                              
+                              // Products Header
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 18,
+                                    decoration: BoxDecoration(
+                                      color: ConstantColor.primary,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Products",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              
+                              // Products Display List
+                              Builder(
+                                builder: (context) {
+                                  final products = List.from(
+                                    userDetailsController.userDetailsProduct['products'] ??
+                                    userDetailsController.userDetailsProduct['product_services'] ??
+                                    userDetailsController.userDetails['products'] ??
+                                    userDetailsController.userDetails['product_services'] ??
+                                    []
+                                  );
+                                  
+                                  if (products.isEmpty) {
+                                    return Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 30),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.shopping_bag_outlined, size: 48, color: Colors.grey[300]),
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              "No products uploaded by this business yet",
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[500],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  
+                                  return GridView.builder(
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      crossAxisSpacing: 12,
+                                      mainAxisSpacing: 12,
+                                      childAspectRatio: 0.85,
+                                    ),
+                                    itemCount: products.length,
+                                    itemBuilder: (context, idx) {
+                                      final product = products[idx];
+                                      return GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return Dialog(
+                                                insetPadding: EdgeInsets.symmetric(
+                                                  horizontal: Get.width / 20,
+                                                ),
+                                                backgroundColor: ConstantColor.whiteColor,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    AppBar(
+                                                      backgroundColor: Colors.transparent,
+                                                      elevation: 0,
+                                                      leading: IconButton(
+                                                        icon: const Icon(Icons.close, color: Colors.black),
+                                                        onPressed: () => Get.back(),
+                                                      ),
+                                                      title: Text(
+                                                        (product['product_name'] ?? '').toString(),
+                                                        style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                                                      ),
+                                                    ),
+                                                    ConstrainedBox(
+                                                      constraints: BoxConstraints(
+                                                        maxHeight: Get.height * 0.6,
+                                                        maxWidth: Get.width * 0.9,
+                                                      ),
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                                        child: ClipRRect(
+                                                          borderRadius: BorderRadius.circular(8),
+                                                          child: AppImageAsset(
+                                                            image: "${ConstantString.productImgUrlPath}${product['product_images'] ?? ''}",
+                                                            isFile: false,
+                                                            fit: BoxFit.contain,
+                                                          ),
                                                         ),
                                                       ),
-                                                    ],
-                                                  ),
-                                                );
+                                                    ),
+                                                    const SizedBox(height: 16),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
                                         },
-                                      ),
-                                    ],
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(12),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.04),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                            border: Border.all(color: Colors.grey[200]!),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            children: [
+                                              Expanded(
+                                                child: ClipRRect(
+                                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+                                                  child: AppImageAsset(
+                                                    image: "${ConstantString.productImgUrlPath}${product['product_images'] ?? ''}",
+                                                    isFile: false,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.all(8),
+                                                child: Text(
+                                                  (product['product_name'] ?? '').toString(),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  textAlign: TextAlign.center,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
+                              const SizedBox(height: 24),
                             ],
                           ),
                         ),

@@ -251,7 +251,7 @@ class BusinessSignUpController extends GetxController {
           debugPrint('JSON parsing error in update profile: $jsonError');
           return {
             'code': 200,
-            'msg': 'Profile updated successfully',
+            'msg': 'Profile updated successfully wait for admin approval',
             'data': {}
           };
         }
@@ -291,5 +291,83 @@ class BusinessSignUpController extends GetxController {
     isAccountCreated.value = false;
     createdPassword.value = "";
     createdUserId.value = 0;
+  }
+
+  // ── Business Request Tracking ─────────────────────────────────────────────
+
+  /// Save locally that the user has submitted a business conversion request.
+  /// Call this immediately after a successful form submission.
+  static Future<void> markBusinessRequestSubmitted() async {
+    await SharPreferences.setBoolean(
+        SharPreferences.businessRequestSubmitted, true);
+    debugPrint('✅ Business request marked as submitted locally.');
+  }
+
+  /// Clear the local flag — only call on logout / account deletion.
+  static Future<void> clearBusinessRequestFlag() async {
+    await SharPreferences.setBoolean(
+        SharPreferences.businessRequestSubmitted, false);
+  }
+
+  /// Returns true if the user already has a pending business request.
+  /// Priority: local flag first, then API check.
+  Future<Map<String, dynamic>> checkProfileBusinessProfileApi() async {
+    // 1️⃣  Local flag check (instant, no network needed)
+    final localFlag =
+        await SharPreferences.getBoolean(SharPreferences.businessRequestSubmitted);
+    if (localFlag == true) {
+      debugPrint('Local flag says request already submitted — blocking.');
+      return {
+        'code': 200,
+        'status': true,
+        'msg': 'Business account request already submitted.'
+      };
+    }
+
+    // 2️⃣  API check (server-side confirmation) — route is GET only
+    try {
+      String? token = await SharPreferences.getString(SharPreferences.token);
+      debugPrint('Check Business Profile Token: $token');
+
+      if (token == null || token.isEmpty) {
+        debugPrint('No token found — cannot check profile status');
+        return {'code': 400, 'status': false, 'msg': 'Not logged in.'};
+      }
+
+      // ✅ Backend route is GET — use http.get, NOT MultipartRequest POST
+      final response = await http.get(
+        Uri.parse(API.checkProfileBusinessProfile),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      debugPrint('Check Business Profile Status Code: ${response.statusCode}');
+      debugPrint('Check Business Profile Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          // Normalise: 'status' may come as bool true or string "true"
+          final rawStatus = decoded['status'];
+          final isSubmitted =
+              rawStatus == true || rawStatus.toString() == 'true';
+          decoded['status'] = isSubmitted;
+          debugPrint('API normalised status: $isSubmitted');
+
+          // If API says submitted, also persist locally for future fast checks
+          if (isSubmitted) {
+            await SharPreferences.setBoolean(
+                SharPreferences.businessRequestSubmitted, true);
+          }
+          return Map<String, dynamic>.from(decoded);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in check business profile: $e');
+    }
+
+    // On API failure default to false so user is not wrongly blocked
+    return {'code': 400, 'status': false, 'msg': 'Failed to check status.'};
   }
 }

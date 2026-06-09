@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +31,6 @@ class MobileNumberScreen extends StatefulWidget {
 }
 
 class _MobileNumberScreenState extends State<MobileNumberScreen> {
-
   final controller = WebViewController();
   RxBool checkTermsCondition = false.obs;
   
@@ -247,329 +247,466 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-          backgroundColor: ConstantColor.whiteColor,
-          body: Obx(
-            () => mobileNumberController.isLoading.value
-                ? Center(
-              child: CircularProgressIndicator(
-                  color: ConstantColor.primary),
-            )
-                : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: height * 0.07),
-                    Center(
-                      child: Image.asset(
-                        "assets/images/sc_logo_new.png",
-                        height: height * 0.25,
-                      ),
-                    ),
-                    SizedBox(height: height * 0.04),
-                    Center(
-                      child: Text(
-                        "WELCOME TO",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: ConstantColor.grayColor,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: height * 0.01),
-                    Center(
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: ConstantColor.bgColor,
+      body: Obx(
+        () => mobileNumberController.isLoading.value
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: ConstantColor.primary,
+                ),
+              )
+            : Stack(
+                children: [
+                  // ── Background Bubbles ──────────────────────────────────────
+                  _buildBackgroundBubbles(height, width),
+                  
+                  // ── Main Content ────────────────────────────────────────────
+                  Center(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "SINGLE",
-                              style: TextStyle(
-                                fontSize: 40,
-                                color: ConstantColor.primary,
-                                fontWeight: FontWeight.w600,
+                            Center(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.9),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: ConstantColor.primary.withOpacity(0.15),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(12),
+                                child: Image.asset(
+                                  "assets/images/sc_logo_new.png",
+                                  height: height * 0.14,
+                                ),
                               ),
                             ),
-                            Text(
-                              " CLIK",
-                              style: TextStyle(
-                                fontSize: 40,
-                                color: ConstantColor.primaryDark,
-                                fontWeight: FontWeight.w600,
+                            SizedBox(height: height * 0.025),
+                            Center(
+                              child: Text(
+                                "WELCOME TO",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: ConstantColor.grayColor,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.5,
+                                ),
                               ),
                             ),
-                          ]),
-                    ),
-                    SizedBox(height: height * 0.04),
-                    Text(
-                      "Enter your Mobile number\nto Log in",
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: ConstantColor.blackColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      "We will send you confirmation code",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: ConstantColor.grayColor,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    SizedBox(height: height * 0.03),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 15,
-                      ),
-                      child: appTextFormField(
-                        style: TextStyle(
-                          color: ConstantColor.blackColor,
-                          fontSize: 21,
-                        ),
-                        keyboardType: TextInputType.number,
-                        hintText: "Enter your mobile number",
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                        ),
-                        maxLength: 10,
-                        counterText: '',
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9]'))
-                        ],
-                        prefixIcon: Padding(
-                          padding: const EdgeInsets.only(
-                              top: 5, bottom: 5, right: 20),
-                          child: Text(
-                            "+91",
-                            style: TextStyle(
-                              fontSize: 22,
-                              color: ConstantColor.primary,
-                              fontWeight: FontWeight.w400,
+                            const SizedBox(height: 4),
+                            Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "SINGLE",
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      color: ConstantColor.primary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Text(
+                                    " CLIK",
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      color: ConstantColor.primaryDark,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                        textInputAction: TextInputAction.done,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 0, vertical: 5),
-                        controller:
-                        mobileNumberController.mobileNumberController.value,
-                      ),
-                    ),
-                    SizedBox(height: height * 0.018),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Checkbox(
-                          value: checkTermsCondition.value,
-                          onChanged: (value) =>
-                          checkTermsCondition.value = value ?? false,
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            controller
-                              ..setJavaScriptMode(JavaScriptMode.unrestricted)
-                              ..loadRequest(Uri.parse(ConstantString.loginTermsUrl));
-                            showDialog(
-                              barrierDismissible: false,
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  titlePadding: EdgeInsets.only(top: 10,right: 10,bottom: 0),
-                                  title: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      GestureDetector(
-                                        onTap: (){
-                                          Navigator.pop(context);
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(3),
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: ConstantColor.grayColor.withAlpha(128)
-                                            ),
-                                            child: Icon(Icons.close,color: ConstantColor.blackColor,)),
-                                      ),
-                                    ],
-                                  ),
-                                  contentPadding: EdgeInsets.all(0),
-                                  content: SizedBox(
-                                    width: 430,
-                                    child: WebViewWidget(controller: controller),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: RichText(
-                            text: TextSpan(
-                              text: 'I read & agree to ',
+                            SizedBox(height: height * 0.035),
+                            Text(
+                              "Enter your Mobile number\nto Log in",
                               style: TextStyle(
+                                fontSize: 22,
                                 color: ConstantColor.blackColor,
-                                fontSize: Get.width*0.03,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w700,
+                                height: 1.2,
                               ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "We will send you confirmation code",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            SizedBox(height: height * 0.025),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 15,
+                              ),
+                              child: appTextFormField(
+                                style: TextStyle(
+                                  color: ConstantColor.blackColor,
+                                  fontSize: 21,
+                                ),
+                                keyboardType: TextInputType.number,
+                                hintText: "Enter your mobile number",
+                                hintStyle: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade400,
+                                ),
+                                maxLength: 10,
+                                counterText: '',
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'[0-9]'))
+                                ],
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(
+                                      top: 5, bottom: 5, right: 20),
+                                  child: Text(
+                                    "+91",
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      color: ConstantColor.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                textInputAction: TextInputAction.done,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 0, vertical: 5),
+                                controller:
+                                    mobileNumberController.mobileNumberController.value,
+                              ),
+                            ),
+                            SizedBox(height: height * 0.018),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                TextSpan(
-                                  text: 'Terms & Conditions',
-                                  style: TextStyle(
-                                    color: ConstantColor.primary,
-                                    fontSize: Get.width*0.03,
-                                    fontWeight: FontWeight.w500,
-                                    decoration: TextDecoration.underline,
+                                Checkbox(
+                                  value: checkTermsCondition.value,
+                                  activeColor: ConstantColor.primary,
+                                  onChanged: (value) =>
+                                      checkTermsCondition.value = value ?? false,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    controller
+                                      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+                                      ..loadRequest(Uri.parse(ConstantString.loginTermsUrl));
+                                    showDialog(
+                                      barrierDismissible: false,
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          titlePadding: const EdgeInsets.only(top: 10, right: 10, bottom: 0),
+                                          title: Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(3),
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: ConstantColor.grayColor.withAlpha(128)
+                                                  ),
+                                                  child: Icon(Icons.close, color: ConstantColor.blackColor),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          contentPadding: const EdgeInsets.all(0),
+                                          content: SizedBox(
+                                            width: 430,
+                                            child: WebViewWidget(controller: controller),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'I read & agree to ',
+                                      style: TextStyle(
+                                        color: ConstantColor.blackColor,
+                                        fontSize: Get.width * 0.032,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Terms & Conditions',
+                                          style: TextStyle(
+                                            color: ConstantColor.primary,
+                                            fontSize: Get.width * 0.032,
+                                            fontWeight: FontWeight.w600,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: height * 0.02),
-                    Center(
-                      child: AppButton(
-                        onTap: _handleLogin, // Using the new method
-                        title: "Next",
-                        isLoading: mobileNumberController.isButtonLoading.value,
-                        myWidth: Get.width / 1.8,
-                      ),
-                    ),
-                    SizedBox(height: height * 0.02),
-                    Center(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(6),
-                        onTap: () async {
-                          debugPrint('=== Business/Service Signup Started ===');
-                          EasyLoading.show(
-                            status: ConstantString.pleaseWaitLabel,
-                          );
-                          businessSignUpController
-                              .isButtonLoading.value = false;
-                          businessSignUpController.txtFullName.value
-                              .clear();
-                          businessSignUpController
-                              .txtCompanyName.value
-                              .clear();
-                          businessSignUpController.txtMobileNo.value
-                              .clear();
-                          businessSignUpController.txtEmailId.value
-                              .clear();
-                          businessSignUpController.txtWhatsappNo.value
-                              .clear();
-                          businessSignUpController.txtWebsite.value
-                              .clear();
-                          businessSignUpController.txtAbout.value
-                              .clear();
-                          businessSignUpController.txtArea.value
-                              .clear();
-                          businessSignUpController
-                              .txtReferredCode.value
-                              .clear();
-                          businessSignUpController
-                              .txtOtherCategory.value
-                              .clear();
-                          businessSignUpController
-                              .txtOtherSubCategory.value
-                              .clear();
-                          businessSignUpController
-                              .selectedProfileType.value = '';
-                          businessSignUpController
-                              .selectedCategory.value = {};
-                          businessSignUpController
-                              .selectedSubCategory.value = {};
-                          businessSignUpController.filePath.value =
-                          '';
-                          try {
-                            debugPrint('Fetching category data');
-                            businessSignUpController
-                                .categoryDataList.value =
-                            await businessSignUpController
-                                .getCategoryDataApi();
-                            businessSignUpController
-                                .subCategoryDataList.value = [];
-                            debugPrint('Category data fetched successfully');
-                            EasyLoading.dismiss();
-                          } on TimeoutException catch (error) {
-                            debugPrint('Timeout error: ${error.message}');
-                            businessSignUpController
-                                .categoryDataList.value = [];
-                            businessSignUpController
-                                .subCategoryDataList.value = [];
-                            EasyLoading.dismiss();
-                            ShowToast.showToast(
-                              error.message.toString(),
-                              showSuccess: false,
-                            );
-                          } on SocketException catch (error) {
-                            debugPrint('Socket error: ${error.message}');
-                            businessSignUpController
-                                .categoryDataList.value = [];
-                            businessSignUpController
-                                .subCategoryDataList.value = [];
-                            EasyLoading.dismiss();
-                            ShowToast.showToast(
-                              error.message.toString(),
-                              showSuccess: false,
-                            );
-                          } catch (error) {
-                            debugPrint('General error: $error');
-                            businessSignUpController
-                                .categoryDataList.value = [];
-                            businessSignUpController
-                                .subCategoryDataList.value = [];
-                            debugPrint(error.toString());
-                            EasyLoading.dismiss();
-                            ShowToast.showToast(
-                              'Something went wrong.',
-                              showSuccess: false,
-                            );
-                          }
+                            SizedBox(height: height * 0.02),
+                            Center(
+                              child: AppButton(
+                                onTap: _handleLogin,
+                                title: "Next",
+                                isLoading: mobileNumberController.isButtonLoading.value,
+                                myWidth: Get.width / 1.8,
+                              ),
+                            ),
+                            SizedBox(height: height * 0.03),
+                            Center(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () async {
+                                  debugPrint('=== Business/Service Signup Started ===');
+                                  EasyLoading.show(
+                                    status: ConstantString.pleaseWaitLabel,
+                                  );
+                                  businessSignUpController
+                                      .isButtonLoading.value = false;
+                                  businessSignUpController.txtFullName.value
+                                      .clear();
+                                  businessSignUpController
+                                      .txtCompanyName.value
+                                      .clear();
+                                  businessSignUpController.txtMobileNo.value
+                                      .clear();
+                                  businessSignUpController.txtEmailId.value
+                                      .clear();
+                                  businessSignUpController.txtWhatsappNo.value
+                                      .clear();
+                                  businessSignUpController.txtWebsite.value
+                                      .clear();
+                                  businessSignUpController.txtAbout.value
+                                      .clear();
+                                  businessSignUpController.txtArea.value
+                                      .clear();
+                                  businessSignUpController
+                                      .txtReferredCode.value
+                                      .clear();
+                                  businessSignUpController
+                                      .txtOtherCategory.value
+                                      .clear();
+                                  businessSignUpController
+                                      .txtOtherSubCategory.value
+                                      .clear();
+                                  businessSignUpController
+                                      .selectedProfileType.value = '';
+                                  businessSignUpController
+                                      .selectedCategory.value = {};
+                                  businessSignUpController
+                                      .selectedSubCategory.value = {};
+                                  businessSignUpController.filePath.value =
+                                      '';
+                                  try {
+                                    debugPrint('Fetching category data');
+                                    businessSignUpController
+                                        .categoryDataList.value =
+                                    await businessSignUpController
+                                        .getCategoryDataApi();
+                                    businessSignUpController
+                                        .subCategoryDataList.value = [];
+                                    debugPrint('Category data fetched successfully');
+                                    EasyLoading.dismiss();
+                                  } on TimeoutException catch (error) {
+                                    debugPrint('Timeout error: ${error.message}');
+                                    businessSignUpController
+                                        .categoryDataList.value = [];
+                                    businessSignUpController
+                                        .subCategoryDataList.value = [];
+                                    EasyLoading.dismiss();
+                                    ShowToast.showToast(
+                                      error.message.toString(),
+                                      showSuccess: false,
+                                    );
+                                  } on SocketException catch (error) {
+                                    debugPrint('Socket error: ${error.message}');
+                                    businessSignUpController
+                                        .categoryDataList.value = [];
+                                    businessSignUpController
+                                        .subCategoryDataList.value = [];
+                                    EasyLoading.dismiss();
+                                    ShowToast.showToast(
+                                      error.message.toString(),
+                                      showSuccess: false,
+                                    );
+                                  } catch (error) {
+                                    debugPrint('General error: $error');
+                                    businessSignUpController
+                                        .categoryDataList.value = [];
+                                    businessSignUpController
+                                        .subCategoryDataList.value = [];
+                                    debugPrint(error.toString());
+                                    EasyLoading.dismiss();
+                                    ShowToast.showToast(
+                                      'Something went wrong.',
+                                      showSuccess: false,
+                                    );
+                                  }
 
-                          debugPrint('Navigating to BusinessSignUpPage');
-                          Get.to(
-                            BusinessSignUpPage(
-                              newAccount: true,
-                            ),
-                          );
-                          EasyLoading.dismiss();
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppImageAsset(
-                              image: 'assets/icons/join_as_bs.png',
-                              height: Get.width / 15,
-                              width: Get.width / 15,
-                              fit: BoxFit.cover,
-                            ),
-                            SizedBox(
-                              width: Get.width / 30,
-                            ),
-                            Text(
-                              'Join as\nBusiness/Service',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: ConstantColor.primaryDark,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                decoration: TextDecoration.underline,
+                                  debugPrint('Navigating to BusinessSignUpPage');
+                                  Get.to(
+                                    BusinessSignUpPage(
+                                      newAccount: true,
+                                    ),
+                                  );
+                                  EasyLoading.dismiss();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(
+                                      color: ConstantColor.primaryDark.withOpacity(0.1),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.02),
+                                        blurRadius: 5,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      AppImageAsset(
+                                        image: 'assets/icons/join_as_bs.png',
+                                        height: Get.width / 15,
+                                        width: Get.width / 15,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      SizedBox(
+                                        width: Get.width / 30,
+                                      ),
+                                      Text(
+                                        'Join as Business/Service',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: ConstantColor.primaryDark,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    SizedBox(height: height * 0.02),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
+      ),
+    );
+  }
+
+  /// Helper to create beautiful background bubbles
+  Widget _buildBackgroundBubbles(double height, double width) {
+    return Stack(
+      children: [
+        // Large bubble top left
+        _bubble(
+          left: -width * 0.2,
+          top: -height * 0.1,
+          size: height * 0.4,
+          color: ConstantColor.primary,
+          opacity: 0.15,
+        ),
+        // Large bubble bottom right
+        _bubble(
+          right: -width * 0.2,
+          bottom: -height * 0.1,
+          size: height * 0.35,
+          color: ConstantColor.primaryDark,
+          opacity: 0.12,
+        ),
+        // Medium warm orange bubble center-left
+        _bubble(
+          left: -width * 0.1,
+          top: height * 0.4,
+          size: height * 0.22,
+          color: ConstantColor.orangeColor,
+          opacity: 0.08,
+        ),
+        // Medium bubble top right
+        _bubble(
+          right: width * 0.05,
+          top: height * 0.12,
+          size: height * 0.15,
+          color: ConstantColor.primary,
+          opacity: 0.12,
+        ),
+        // Medium bubble bottom left
+        _bubble(
+          left: width * 0.05,
+          bottom: height * 0.15,
+          size: height * 0.12,
+          color: ConstantColor.primaryDark,
+          opacity: 0.12,
+        ),
+        // Small decorative bubble
+        _bubble(
+          right: width * 0.2,
+          top: height * 0.35,
+          size: height * 0.08,
+          color: ConstantColor.primary,
+          opacity: 0.15,
+        ),
+      ],
+    );
+  }
+
+  /// Creates a soft radial bubble positioned anywhere
+  Widget _bubble({
+    double? left,
+    double? right,
+    double? top,
+    double? bottom,
+    required double size,
+    required Color color,
+    required double opacity,
+  }) {
+    return Positioned(
+      left: left,
+      right: right,
+      top: top,
+      bottom: bottom,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            center: const Alignment(-0.3, -0.3),
+            radius: 0.85,
+            colors: [
+              color.withOpacity(opacity),
+              color.withOpacity(0.01),
+            ],
           ),
-        );
+        ),
+      ),
+    );
   }
 }

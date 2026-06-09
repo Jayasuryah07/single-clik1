@@ -5,8 +5,8 @@ class SharPreferences {
   static const userData = "userData";
   static const token = "token";
   static const fcmToken = "fcmToken";
-
   static const userId = "userId";
+  static const businessRequestSubmitted = "businessRequestSubmitted";
 
   static Future<bool?> getBoolean(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();

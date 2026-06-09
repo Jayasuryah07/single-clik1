@@ -14,11 +14,13 @@ import 'package:single_clik/controller/auth_controller/business_sign_up_controll
 import 'package:single_clik/controller/auth_controller/mobile_number_controller.dart';
 import 'package:single_clik/controller/auth_controller/otp_controller.dart';
 import 'package:single_clik/controller/home_controller/home_controller.dart';
+import 'package:single_clik/controller/home_controller/profile_controller.dart';
 import 'package:single_clik/screens/auth_screens/mobile_number_screen.dart';
 import 'package:single_clik/screens/auth_screens/otp_screen.dart';
 import 'package:single_clik/screens/home_tab_bar_screen.dart';
 import 'package:single_clik/utils/shar_preferences.dart';
 import 'package:single_clik/widget/app_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../constants/constant_string.dart';
@@ -1175,6 +1177,19 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
     
     FocusScope.of(context).unfocus();
     
+    // For existing users converting to business: block if already submitted
+    if (widget.newAccount != true) {
+      EasyLoading.show(status: ConstantString.pleaseWaitLabel);
+      final checkResult = await businessSignUpController.checkProfileBusinessProfileApi();
+      EasyLoading.dismiss();
+      if (checkResult['status'] == true) {
+        if (mounted) {
+          _showAlreadySubmittedDialog(context);
+        }
+        return;
+      }
+    }
+    
     try {
       final bool isUpdateProfile = widget.newAccount != true;
       
@@ -1234,8 +1249,10 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
         await EasyLoading.dismiss();
         
         if (response['code'] == 200) {
+          // ✅ Mark locally so user cannot re-submit
+          await BusinessSignUpController.markBusinessRequestSubmitted();
           await homeController.postFetchProfileApi(forceRefresh: true);
-          ShowToast.showToast(response['msg'] ?? "Profile updated successfully", showSuccess: true);
+          ShowToast.showToast(response['msg'] ?? "Request submitted successfully! Please wait for admin approval.", showSuccess: true);
           
           if (mounted) {
             Get.offAll(() => const HomeTabBarScreen());
@@ -1249,6 +1266,8 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
         
         // Account created successfully
         if (response['code'] == 200 || businessSignUpController.isAccountCreated.value) {
+          // ✅ Mark locally so user cannot re-submit
+          await BusinessSignUpController.markBusinessRequestSubmitted();
           ShowToast.showToast("Account created successfully! Please login.", showSuccess: true);
           
           // Get mobile number
@@ -1324,6 +1343,121 @@ class _BusinessSignUpPageState extends State<BusinessSignUpPage> {
     fontWeight: FontWeight.w600,
     color: ConstantColor.blackColor,
   );
+
+  // ── Already-Submitted protection dialog ─────────────────────────
+  ProfileController get _profileController => Get.isRegistered<ProfileController>()
+      ? Get.find<ProfileController>()
+      : Get.put(ProfileController());
+
+  void _showAlreadySubmittedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(horizontal: Get.width / 15),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: ConstantColor.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.pending_actions_rounded,
+                    color: ConstantColor.primary,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Request Already Submitted",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Your business account request is already submitted. Please wait for admin approval, or contact our support team for immediate assistance.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 14, color: Colors.grey, height: 1.4),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text("Close",
+                            style: TextStyle(color: Colors.grey[700])),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Get.back();
+                          EasyLoading.show(status: 'Loading support...');
+                          try {
+                            final value =
+                                await _profileController.postDeveloperApi();
+                            EasyLoading.dismiss();
+                            if (value['code'] == 200) {
+                              final phone =
+                                  value['data']['company_mobile'] ?? '';
+                              final url = Uri.parse('tel:+$phone');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url);
+                              } else {
+                                ShowToast.showToast(
+                                    "Could not launch dialer",
+                                    showSuccess: false);
+                              }
+                            }
+                          } catch (e) {
+                            EasyLoading.dismiss();
+                            debugPrint(e.toString());
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ConstantColor.primary,
+                          foregroundColor: Colors.white,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("Call Support"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   InputDecoration _inputDecoration({
     required String hintText,

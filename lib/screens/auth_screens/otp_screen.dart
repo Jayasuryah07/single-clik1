@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -347,345 +348,464 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
     bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     debugPrint('=== OtpScreen Building ===');
 
     return Scaffold(
-          backgroundColor: ConstantColor.whiteColor,
-          body: Obx(
-            () => otpController.isLoading.value
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: ConstantColor.primary,
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: height * 0.08),
-                          Text(
-                            "WELCOME TO",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: ConstantColor.grayColor,
-                              fontWeight: FontWeight.w400,
-                              height: 0,
-                            ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "SINGLE",
-                                style: TextStyle(
-                                  fontSize: 40,
-                                  color: ConstantColor.primary,
-                                  fontWeight: FontWeight.w600,
-                                  height: 0,
-                                ),
-                              ),
-                              Text(
-                                " CLIK",
-                                style: TextStyle(
-                                  fontSize: 40,
-                                  color: ConstantColor.primaryDark,
-                                  fontWeight: FontWeight.w600,
-                                  height: 0,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: height * 0.03),
-                          isKeyboardVisible
-                              ? const SizedBox()
-                              : Center(
-                                  child: Image.asset(
-                                    "assets/images/img_mobile_number.png",
-                                    height: height * 0.25,
-                                  ),
-                                ),
-                          SizedBox(height: height * 0.01),
-                          Text(
-                            "Enter your OTP to Log in",
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: ConstantColor.blackColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: height * 0.03),
-                          Row(
-                            children: [
-                              Text(
-                                "+91 ${mobileNumberController.mobileNumberController.value.text.trim()}",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: ConstantColor.blackColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              GestureDetector(
-                                onTap: () {
-                                  debugPrint('Edit button pressed - going back');
-                                  Get.back();
-                                },
-                                child: Image.asset(
-                                  "assets/icons/icon_edit.png",
-                                  height: 22,
-                                  width: 22,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: height * 0.04),
-                          Center(
-                            child: KeyboardListener(
-                              focusNode: FocusNode(),
-                              onKeyEvent: (value) {
-                                // Handle backspace for OTP fields
-                                if (value.logicalKey == LogicalKeyboardKey.backspace) {
-                                  backspaceCount++;
-                                  if (backspaceCount == 2) {
-                                    backspaceCount = 0;
-                                    // Handle backspace navigation logic
-                                    if (otp2FocusNode.hasFocus && txtOTP2.text.isEmpty) {
-                                      otp2FocusNode.unfocus();
-                                      otp1FocusNode.requestFocus();
-                                    } else if (otp3FocusNode.hasFocus && txtOTP3.text.isEmpty) {
-                                      otp3FocusNode.unfocus();
-                                      otp2FocusNode.requestFocus();
-                                    } else if (otp4FocusNode.hasFocus && txtOTP4.text.isEmpty) {
-                                      otp4FocusNode.unfocus();
-                                      otp3FocusNode.requestFocus();
-                                    } else if (otp5FocusNode.hasFocus && txtOTP5.text.isEmpty) {
-                                      otp5FocusNode.unfocus();
-                                      otp4FocusNode.requestFocus();
-                                    } else if (otp6FocusNode.hasFocus && txtOTP6.text.isEmpty) {
-                                      otp6FocusNode.unfocus();
-                                      otp5FocusNode.requestFocus();
-                                    }
-                                  }
-                                } else {
-                                  backspaceCount = 0;
-                                }
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: txtOTP1,
-                                      focusNode: otp1FocusNode,
-                                      textAlign: TextAlign.center,
-                                      textInputAction: TextInputAction.next,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 1,
-                                      decoration: otpInputDecoration,
-                                      onChanged: (value) {
-                                        debugPrint('OTP Field 1 changed: $value');
-                                        if (value.trim().isNotEmpty) {
-                                          otp1FocusNode.unfocus();
-                                          otp2FocusNode.requestFocus();
-                                        }
-                                        checkAllOTPFill();
-                                      },
+      backgroundColor: ConstantColor.bgColor,
+      body: Obx(
+        () => otpController.isLoading.value
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: ConstantColor.primary,
+                ),
+              )
+            : Stack(
+                children: [
+                  // ── Background Bubbles ──────────────────────────────────────
+                  _buildBackgroundBubbles(height, width),
+                  
+                  // ── Main Content ────────────────────────────────────────────
+                  Center(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                                  SizedBox(height: height * 0.01),
+                                  Text(
+                                    "WELCOME TO",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: ConstantColor.grayColor,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1.5,
                                     ),
                                   ),
-                                  SizedBox(width: Get.width / 30),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: txtOTP2,
-                                      focusNode: otp2FocusNode,
-                                      textAlign: TextAlign.center,
-                                      textInputAction: TextInputAction.next,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 1,
-                                      decoration: otpInputDecoration,
-                                      onChanged: (value) {
-                                        debugPrint('OTP Field 2 changed: $value');
-                                        if (value.trim().isNotEmpty) {
-                                          otp2FocusNode.unfocus();
-                                          otp3FocusNode.requestFocus();
-                                        }
-                                        checkAllOTPFill();
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: Get.width / 30),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: txtOTP3,
-                                      focusNode: otp3FocusNode,
-                                      textAlign: TextAlign.center,
-                                      textInputAction: TextInputAction.next,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 1,
-                                      decoration: otpInputDecoration,
-                                      onChanged: (value) {
-                                        debugPrint('OTP Field 3 changed: $value');
-                                        if (value.trim().isNotEmpty) {
-                                          otp3FocusNode.unfocus();
-                                          otp4FocusNode.requestFocus();
-                                        }
-                                        checkAllOTPFill();
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: Get.width / 30),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: txtOTP4,
-                                      focusNode: otp4FocusNode,
-                                      textAlign: TextAlign.center,
-                                      textInputAction: TextInputAction.next,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 1,
-                                      decoration: otpInputDecoration,
-                                      onChanged: (value) {
-                                        debugPrint('OTP Field 4 changed: $value');
-                                        if (value.trim().isNotEmpty) {
-                                          otp4FocusNode.unfocus();
-                                          otp5FocusNode.requestFocus();
-                                        }
-                                        checkAllOTPFill();
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: Get.width / 30),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: txtOTP5,
-                                      focusNode: otp5FocusNode,
-                                      textAlign: TextAlign.center,
-                                      textInputAction: TextInputAction.next,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 1,
-                                      decoration: otpInputDecoration,
-                                      onChanged: (value) {
-                                        debugPrint('OTP Field 5 changed: $value');
-                                        if (value.trim().isNotEmpty) {
-                                          otp5FocusNode.unfocus();
-                                          otp6FocusNode.requestFocus();
-                                        }
-                                        checkAllOTPFill();
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: Get.width / 30),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: txtOTP6,
-                                      focusNode: otp6FocusNode,
-                                      textAlign: TextAlign.center,
-                                      textInputAction: TextInputAction.done,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 1,
-                                      decoration: otpInputDecoration,
-                                      onChanged: (value) {
-                                        debugPrint('OTP Field 6 changed: $value');
-                                        checkAllOTPFill();
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: height * 0.02),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                otpController.start.value == 0 
-                                    ? "Didn't receive OTP - " 
-                                    : "Resend OTP in ",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: ConstantColor.blackColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              otpController.start.value != 0
-                                  ? Text(
-                                      "00:${otpController.start.value.toString().length == 1 ? "0${otpController.start.value}" : otpController.start.value}",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: ConstantColor.blackColor,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  : GestureDetector(
-                                      onTap: _resendOTP,
-                                      child: Text(
-                                        "Resend",
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        "SINGLE",
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 32,
                                           color: ConstantColor.primary,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      Text(
+                                        " CLIK",
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          color: ConstantColor.primaryDark,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: height * 0.035),
+                                  isKeyboardVisible
+                                      ? const SizedBox()
+                                      : Center(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.8),
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: ConstantColor.primary.withOpacity(0.1),
+                                                  blurRadius: 15,
+                                                  spreadRadius: 2,
+                                                ),
+                                              ],
+                                            ),
+                                            padding: const EdgeInsets.all(12),
+                                            child: Image.asset(
+                                              "assets/images/img_mobile_number.png",
+                                              height: height * 0.14,
+                                            ),
+                                          ),
+                                        ),
+                                  SizedBox(height: height * 0.025),
+                                  Text(
+                                    "Enter your OTP to Log in",
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      color: ConstantColor.blackColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: height * 0.025),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "+91 ${mobileNumberController.mobileNumberController.value.text.trim()}",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: ConstantColor.blackColor,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
+                                      const SizedBox(width: 10),
+                                      GestureDetector(
+                                        onTap: () {
+                                          debugPrint('Edit button pressed - going back');
+                                          Get.back();
+                                        },
+                                        child: Image.asset(
+                                          "assets/icons/icon_edit.png",
+                                          height: 22,
+                                          width: 22,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: height * 0.03),
+                                  Center(
+                                    child: KeyboardListener(
+                                      focusNode: FocusNode(),
+                                      onKeyEvent: (value) {
+                                        // Handle backspace for OTP fields
+                                        if (value.logicalKey == LogicalKeyboardKey.backspace) {
+                                          backspaceCount++;
+                                          if (backspaceCount == 2) {
+                                            backspaceCount = 0;
+                                            // Handle backspace navigation logic
+                                            if (otp2FocusNode.hasFocus && txtOTP2.text.isEmpty) {
+                                              otp2FocusNode.unfocus();
+                                              otp1FocusNode.requestFocus();
+                                            } else if (otp3FocusNode.hasFocus && txtOTP3.text.isEmpty) {
+                                              otp3FocusNode.unfocus();
+                                              otp2FocusNode.requestFocus();
+                                            } else if (otp4FocusNode.hasFocus && txtOTP4.text.isEmpty) {
+                                              otp4FocusNode.unfocus();
+                                              otp3FocusNode.requestFocus();
+                                            } else if (otp5FocusNode.hasFocus && txtOTP5.text.isEmpty) {
+                                              otp5FocusNode.unfocus();
+                                              otp4FocusNode.requestFocus();
+                                            } else if (otp6FocusNode.hasFocus && txtOTP6.text.isEmpty) {
+                                              otp6FocusNode.unfocus();
+                                              otp5FocusNode.requestFocus();
+                                            }
+                                          }
+                                        } else {
+                                          backspaceCount = 0;
+                                        }
+                                      },
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Expanded(
+                                            child: TextField(
+                                              controller: txtOTP1,
+                                              focusNode: otp1FocusNode,
+                                              textAlign: TextAlign.center,
+                                              textInputAction: TextInputAction.next,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.digitsOnly,
+                                              ],
+                                              keyboardType: TextInputType.number,
+                                              maxLength: 1,
+                                              decoration: otpInputDecoration,
+                                              onChanged: (value) {
+                                                debugPrint('OTP Field 1 changed: $value');
+                                                if (value.trim().isNotEmpty) {
+                                                  otp1FocusNode.unfocus();
+                                                  otp2FocusNode.requestFocus();
+                                                }
+                                                checkAllOTPFill();
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(width: Get.width / 40),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: txtOTP2,
+                                              focusNode: otp2FocusNode,
+                                              textAlign: TextAlign.center,
+                                              textInputAction: TextInputAction.next,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.digitsOnly,
+                                              ],
+                                              keyboardType: TextInputType.number,
+                                              maxLength: 1,
+                                              decoration: otpInputDecoration,
+                                              onChanged: (value) {
+                                                debugPrint('OTP Field 2 changed: $value');
+                                                if (value.trim().isNotEmpty) {
+                                                  otp2FocusNode.unfocus();
+                                                  otp3FocusNode.requestFocus();
+                                                }
+                                                checkAllOTPFill();
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(width: Get.width / 40),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: txtOTP3,
+                                              focusNode: otp3FocusNode,
+                                              textAlign: TextAlign.center,
+                                              textInputAction: TextInputAction.next,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.digitsOnly,
+                                              ],
+                                              keyboardType: TextInputType.number,
+                                              maxLength: 1,
+                                              decoration: otpInputDecoration,
+                                              onChanged: (value) {
+                                                debugPrint('OTP Field 3 changed: $value');
+                                                if (value.trim().isNotEmpty) {
+                                                  otp3FocusNode.unfocus();
+                                                  otp4FocusNode.requestFocus();
+                                                }
+                                                checkAllOTPFill();
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(width: Get.width / 40),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: txtOTP4,
+                                              focusNode: otp4FocusNode,
+                                              textAlign: TextAlign.center,
+                                              textInputAction: TextInputAction.next,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.digitsOnly,
+                                              ],
+                                              keyboardType: TextInputType.number,
+                                              maxLength: 1,
+                                              decoration: otpInputDecoration,
+                                              onChanged: (value) {
+                                                debugPrint('OTP Field 4 changed: $value');
+                                                if (value.trim().isNotEmpty) {
+                                                  otp4FocusNode.unfocus();
+                                                  otp5FocusNode.requestFocus();
+                                                }
+                                                checkAllOTPFill();
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(width: Get.width / 40),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: txtOTP5,
+                                              focusNode: otp5FocusNode,
+                                              textAlign: TextAlign.center,
+                                              textInputAction: TextInputAction.next,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.digitsOnly,
+                                              ],
+                                              keyboardType: TextInputType.number,
+                                              maxLength: 1,
+                                              decoration: otpInputDecoration,
+                                              onChanged: (value) {
+                                                debugPrint('OTP Field 5 changed: $value');
+                                                if (value.trim().isNotEmpty) {
+                                                  otp5FocusNode.unfocus();
+                                                  otp6FocusNode.requestFocus();
+                                                }
+                                                checkAllOTPFill();
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(width: Get.width / 40),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: txtOTP6,
+                                              focusNode: otp6FocusNode,
+                                              textAlign: TextAlign.center,
+                                              textInputAction: TextInputAction.done,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.digitsOnly,
+                                              ],
+                                              keyboardType: TextInputType.number,
+                                              maxLength: 1,
+                                              decoration: otpInputDecoration,
+                                              onChanged: (value) {
+                                                debugPrint('OTP Field 6 changed: $value');
+                                                checkAllOTPFill();
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                            ],
+                                  ),
+                                  SizedBox(height: height * 0.025),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        otpController.start.value == 0 
+                                            ? "Didn't receive OTP - " 
+                                            : "Resend OTP in ",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: ConstantColor.blackColor,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      otpController.start.value != 0
+                                          ? Text(
+                                              "00:${otpController.start.value.toString().length == 1 ? "0${otpController.start.value}" : otpController.start.value}",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: ConstantColor.blackColor,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            )
+                                          : GestureDetector(
+                                              onTap: _resendOTP,
+                                              child: Text(
+                                                "Resend",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: ConstantColor.primary,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                    ],
+                                  ),
+                                  SizedBox(height: height * 0.035),
+                                  AppButton(
+                                    onTap: _verifyOTPAndLogin,
+                                    title: "Log in",
+                                    isLoading: otpController.isButtonLoading.value,
+                                    arrowShow: false,
+                                  ),
+                                ],
+                                  ),
+                            ),
                           ),
-                          SizedBox(height: height * 0.03),
-                          AppButton(
-                            onTap: _verifyOTPAndLogin,
-                            title: "Log in",
-                            isLoading: otpController.isButtonLoading.value,
-                            arrowShow: false,
-                          ),
-                           SizedBox(height: height * 0.02),
-                        ],
-                      ),
-                    ),
                   ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  /// Helper to create beautiful background bubbles
+  Widget _buildBackgroundBubbles(double height, double width) {
+    return Stack(
+      children: [
+        // Large bubble top left
+        _bubble(
+          left: -width * 0.2,
+          top: -height * 0.1,
+          size: height * 0.4,
+          color: ConstantColor.primary,
+          opacity: 0.15,
+        ),
+        // Large bubble bottom right
+        _bubble(
+          right: -width * 0.2,
+          bottom: -height * 0.1,
+          size: height * 0.35,
+          color: ConstantColor.primaryDark,
+          opacity: 0.12,
+        ),
+        // Medium warm orange bubble center-left
+        _bubble(
+          left: -width * 0.1,
+          top: height * 0.4,
+          size: height * 0.22,
+          color: ConstantColor.orangeColor,
+          opacity: 0.08,
+        ),
+        // Medium bubble top right
+        _bubble(
+          right: width * 0.05,
+          top: height * 0.12,
+          size: height * 0.15,
+          color: ConstantColor.primary,
+          opacity: 0.12,
+        ),
+        // Medium bubble bottom left
+        _bubble(
+          left: width * 0.05,
+          bottom: height * 0.15,
+          size: height * 0.12,
+          color: ConstantColor.primaryDark,
+          opacity: 0.12,
+        ),
+        // Small decorative bubble
+        _bubble(
+          right: width * 0.2,
+          top: height * 0.35,
+          size: height * 0.08,
+          color: ConstantColor.primary,
+          opacity: 0.15,
+        ),
+      ],
+    );
+  }
+
+  /// Creates a soft radial bubble positioned anywhere
+  Widget _bubble({
+    double? left,
+    double? right,
+    double? top,
+    double? bottom,
+    required double size,
+    required Color color,
+    required double opacity,
+  }) {
+    return Positioned(
+      left: left,
+      right: right,
+      top: top,
+      bottom: bottom,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            center: const Alignment(-0.3, -0.3),
+            radius: 0.85,
+            colors: [
+              color.withOpacity(opacity),
+              color.withOpacity(0.01),
+            ],
           ),
-        );
+        ),
+      ),
+    );
   }
 
   InputDecoration otpInputDecoration = InputDecoration(
+    filled: true,
+    fillColor: Colors.white.withOpacity(0.8),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(
-        color: ConstantColor.blackColor,
+        color: ConstantColor.primary.withOpacity(0.3),
+        width: 1,
       ),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(
-        color: ConstantColor.grayColor.withAlpha(77),
+        color: ConstantColor.grayColor.withOpacity(0.3),
+        width: 1,
       ),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(
-        color: ConstantColor.blackColor,
+        color: ConstantColor.primary,
+        width: 2,
       ),
     ),
     contentPadding: EdgeInsets.symmetric(
-        horizontal: Get.width / 30, vertical: Get.width / 25),
+        horizontal: Get.width / 35, vertical: Get.width / 25),
     counterText: '',
   );
 }

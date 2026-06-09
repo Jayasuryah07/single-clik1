@@ -23,6 +23,7 @@ import 'package:single_clik/utils/cache_manager.dart';
 import 'package:single_clik/widget/app_image_assets.dart';
 import 'package:single_clik/widget/app_button.dart';
 import 'package:single_clik/screens/home_tab_bar_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/constant_string.dart';
 import '../constants/network_to_file_image.dart';
@@ -36,12 +37,10 @@ class AppDrawer extends StatefulWidget {
 }
 
 class AppDrawerState extends State<AppDrawer> {
-  // Map? userData = {};
   String versionCode = "";
   HomeController homeController = Get.put(HomeController());
   ProfileController profileController = Get.put(ProfileController());
-  BusinessSignUpController businessSignUpController =
-  Get.put(BusinessSignUpController());
+  BusinessSignUpController businessSignUpController = Get.put(BusinessSignUpController());
 
   @override
   void initState() {
@@ -55,26 +54,21 @@ class AppDrawerState extends State<AppDrawer> {
     setState(() {});
   }
 
-
   @override
   Widget build(BuildContext context) {
-
     double height = MediaQuery.of(context).size.height;
 
     return Drawer(
       child: SingleChildScrollView(
         child: Obx(
-              () => Column(
+          () => Column(
             children: [
               SizedBox(height: height * 0.07),
               ClipRRect(
                 borderRadius: BorderRadius.circular(1000),
                 child: AppImageAsset(
-                  // ValueKey forces Flutter to recreate this widget (and re-download
-                  // the image) whenever photoVersion increments after a refresh.
                   key: ValueKey('drawer_photo_${homeController.photoVersion.value}'),
-                  image:
-                  "${ConstantString.userImgUrlPath}${homeController.userData['photo']}",
+                  image: "${ConstantString.userImgUrlPath}${homeController.userData['photo']}",
                   isFile: false,
                   fit: BoxFit.cover,
                   height: 100,
@@ -90,7 +84,6 @@ class AppDrawerState extends State<AppDrawer> {
                   color: ConstantColor.blackColor,
                 ),
               ),
-              // ── Full App Refresh button ────────────────────────────────────
               SizedBox(height: height * 0.012),
               Obx(() => homeController.isFullRefreshing.value
                   ? const SizedBox(
@@ -117,7 +110,6 @@ class AppDrawerState extends State<AppDrawer> {
                             borderRadius: BorderRadius.circular(20)),
                       ),
                     )),
-              // ─────────────────────────────────────────────────────────────
               SizedBox(height: height * 0.01),
               Divider(color: ConstantColor.blackColor, thickness: 1.2),
               Padding(
@@ -131,7 +123,6 @@ class AppDrawerState extends State<AppDrawer> {
                       onTap: () {
                         homeController.selectTab.value = 0;
                         Get.back();
-                        // Get.offAll(() => HomeTabBarScreen());
                       },
                     ),
                     Divider(color: ConstantColor.grayColor, thickness: 1),
@@ -149,7 +140,8 @@ class AppDrawerState extends State<AppDrawer> {
                     ),
                     Divider(color: ConstantColor.grayColor, thickness: 1),
                     drawerButton(
-                      icon: "assets/icons/my_enquiries_dr_icon.png",
+                      icon: "assets/icons/sen.png",
+                      iconColor: const Color.fromARGB(255, 0, 47, 86),
                       title: homeController.userData['user_type'] != 2
                           ? "My Enquiries"
                           : "Send Enquiry",
@@ -157,109 +149,107 @@ class AppDrawerState extends State<AppDrawer> {
                       onTap: () {
                         homeController.selectTab.value = 2;
                         Get.back();
-                        // Get.offAll(() => HomeTabBarScreen(selectTab: 2));
                       },
                     ),
                     Divider(color: ConstantColor.grayColor, thickness: 1),
                     drawerButton(
                       icon: homeController.userData['user_type'] != 2
                           ? "assets/icons/logo.svg"
-                          : "assets/icons/recevied_dr_icon.png",
+                          : "assets/icons/rec.png",
+                      iconColor: const Color.fromARGB(255, 0, 47, 86),
                       title: homeController.userData['user_type'] != 2
                           ? "Join as a Seller"
                           : "Received Enquiries",
                       padding: 4,
                       onTap: () async {
                         Get.back();
+
                         if (homeController.userData['user_type'] != 2) {
-                          if (homeController.userData['category'] != null &&
-                              homeController.userData['category']
-                                  .toString()
-                                  .trim()
-                                  .isNotEmpty) {
-                            EasyLoading.showError(
-                                ConstantString.alreadyJoinAsMsg);
-                          } else {
-                            EasyLoading.show(
-                              status: ConstantString.pleaseWaitLabel,
-                            );
-                            // businessSignUpController
-                            //     .isButtonLoading.value = false;
-                            businessSignUpController.txtFullName.value.clear();
-                            businessSignUpController.txtCompanyName.value
-                                .clear();
-                            businessSignUpController.txtMobileNo.value.clear();
-                            businessSignUpController.txtEmailId.value.clear();
-                            businessSignUpController.txtWhatsappNo.value
-                                .clear();
-                            businessSignUpController.txtWebsite.value.clear();
-                            businessSignUpController.txtAbout.value.clear();
-                            businessSignUpController.txtArea.value.clear();
-                            businessSignUpController.txtReferredCode.value
-                                .clear();
-                            businessSignUpController.txtOtherCategory.value
-                                .clear();
-                            businessSignUpController.txtOtherSubCategory.value
-                                .clear();
-                            businessSignUpController.selectedProfileType.value =
-                            '';
-                            businessSignUpController.selectedCategory.value =
-                            {};
-                            businessSignUpController.selectedSubCategory.value =
-                            {};
-                            String photoPath = await NetworkToFileImage
-                                .networkToFileImage
-                                .getNetworkToFileImage(
-                                url:
-                                '${ConstantString.userImgUrlPath}${homeController.userData['photo']}');
-                            businessSignUpController.filePath.value = photoPath;
-                            try {
-                              businessSignUpController.categoryDataList.value =
-                              await businessSignUpController
-                                  .getCategoryDataApi();
-                              businessSignUpController
-                                  .subCategoryDataList.value = [];
-                              EasyLoading.dismiss();
-                            } on TimeoutException catch (error) {
-                              businessSignUpController.categoryDataList.value =
-                              [];
-                              businessSignUpController
-                                  .subCategoryDataList.value = [];
-                              EasyLoading.dismiss();
-                              ShowToast.showToast(
-                                error.message.toString(),
-                                showSuccess: false,
-                              );
-                            } on SocketException catch (error) {
-                              businessSignUpController.categoryDataList.value =
-                              [];
-                              businessSignUpController
-                                  .subCategoryDataList.value = [];
-                              EasyLoading.dismiss();
-                              ShowToast.showToast(
-                                error.message.toString(),
-                                showSuccess: false,
-                              );
-                            } catch (error) {
-                              businessSignUpController.categoryDataList.value =
-                              [];
-                              businessSignUpController
-                                  .subCategoryDataList.value = [];
-                              debugPrint(error.toString());
-                              EasyLoading.dismiss();
-                              ShowToast.showToast(
-                                'Something went wrong.',
-                                showSuccess: false,
-                              );
+                          EasyLoading.show(
+                            status: ConstantString.pleaseWaitLabel,
+                          );
+
+                          // Call new API to check business profile status
+                          final checkResult = await businessSignUpController.checkProfileBusinessProfileApi();
+                          EasyLoading.dismiss();
+
+                          if (checkResult['status'] == true) {
+                            if (context.mounted) {
+                              _showAlreadySubmittedDialog(context);
                             }
-                            EasyLoading.dismiss();
-                            Get.to(
-                              BusinessSignUpPage(),
-                            );
+                          } else {
+                            if (homeController.userData['category'] != null &&
+                                homeController.userData['category']
+                                    .toString()
+                                    .trim()
+                                    .isNotEmpty) {
+                              EasyLoading.showError(
+                                ConstantString.alreadyJoinAsMsg,
+                              );
+                            } else {
+                              EasyLoading.show(
+                                status: ConstantString.pleaseWaitLabel,
+                              );
+
+                              businessSignUpController.isButtonLoading.value = false;
+                              businessSignUpController.txtFullName.value.clear();
+                              businessSignUpController.txtCompanyName.value.clear();
+                              businessSignUpController.txtMobileNo.value.clear();
+                              businessSignUpController.txtEmailId.value.clear();
+                              businessSignUpController.txtWhatsappNo.value.clear();
+                              businessSignUpController.txtWebsite.value.clear();
+                              businessSignUpController.txtAbout.value.clear();
+                              businessSignUpController.txtArea.value.clear();
+                              businessSignUpController.txtReferredCode.value.clear();
+                              businessSignUpController.txtOtherCategory.value.clear();
+                              businessSignUpController.txtOtherSubCategory.value.clear();
+                              businessSignUpController.selectedProfileType.value = '';
+                              businessSignUpController.selectedCategory.value = {};
+                              businessSignUpController.selectedSubCategory.value = {};
+                              
+                              String photoPath = await NetworkToFileImage
+                                  .networkToFileImage
+                                  .getNetworkToFileImage(
+                                  url: '${ConstantString.userImgUrlPath}${homeController.userData['photo']}');
+                              businessSignUpController.filePath.value = photoPath;
+                              
+                              try {
+                                businessSignUpController.categoryDataList.value =
+                                await businessSignUpController.getCategoryDataApi();
+                                businessSignUpController.subCategoryDataList.value = [];
+                                EasyLoading.dismiss();
+                              } on TimeoutException catch (error) {
+                                businessSignUpController.categoryDataList.value = [];
+                                businessSignUpController.subCategoryDataList.value = [];
+                                EasyLoading.dismiss();
+                                ShowToast.showToast(
+                                  error.message.toString(),
+                                  showSuccess: false,
+                                );
+                              } on SocketException catch (error) {
+                                businessSignUpController.categoryDataList.value = [];
+                                businessSignUpController.subCategoryDataList.value = [];
+                                EasyLoading.dismiss();
+                                ShowToast.showToast(
+                                  error.message.toString(),
+                                  showSuccess: false,
+                                );
+                              } catch (error) {
+                                businessSignUpController.categoryDataList.value = [];
+                                businessSignUpController.subCategoryDataList.value = [];
+                                debugPrint(error.toString());
+                                EasyLoading.dismiss();
+                                ShowToast.showToast(
+                                  'Something went wrong.',
+                                  showSuccess: false,
+                                );
+                              }
+                              EasyLoading.dismiss();
+                              await Get.to(() => const BusinessSignUpPage());
+                            }
                           }
                         } else {
                           homeController.selectTab.value = 1;
-                          // Get.offAll(() => HomeTabBarScreen(selectTab: 1));
                         }
                       },
                     ),
@@ -315,7 +305,6 @@ class AppDrawerState extends State<AppDrawer> {
                       },
                     ),
                     Divider(color: ConstantColor.grayColor, thickness: 1),
-                    // ── Refresh App (menu item) ───────────────────────────────
                     Obx(() => InkWell(
                       onTap: homeController.isFullRefreshing.value
                           ? null
@@ -394,16 +383,16 @@ class AppDrawerState extends State<AppDrawer> {
         ),
       ),
     );
-
   }
 
-  InkWell drawerButton(
-      {String? icon,
-        String? title,
-        Function()? onTap,
-        double? padding,
-        Color? textColor}) {
-
+  InkWell drawerButton({
+    String? icon,
+    String? title,
+    Function()? onTap,
+    double? padding,
+    Color? textColor,
+    Color? iconColor,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -412,18 +401,20 @@ class AppDrawerState extends State<AppDrawer> {
           children: [
             icon.toString().contains(".svg")
                 ? SvgPicture.asset(
-              icon ?? "",
-              height: 25,
-              width: 25,
-              colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-            )
-                : AppImageAsset(
-              image: icon ?? "",
-              isFile: false,
-              height: 25,
-              width: 25,
-              color: textColor,
-            ),
+                    icon ?? "",
+                    height: 25,
+                    width: 25,
+                    colorFilter: ColorFilter.mode(
+                      iconColor ?? ConstantColor.primary,
+                      BlendMode.srcIn,
+                    ),
+                  )
+                : Image.asset(
+                    icon ?? "",
+                    height: 25,
+                    width: 25,
+                    color: iconColor,
+                  ),
             const SizedBox(width: 15),
             Flexible(
               child: Text(
@@ -440,13 +431,118 @@ class AppDrawerState extends State<AppDrawer> {
         ),
       ),
     );
+  }
 
+  void _showAlreadySubmittedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(horizontal: Get.width / 15),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: ConstantColor.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.pending_actions_rounded,
+                    color: ConstantColor.primary,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Request Already Submitted",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Your business account request is already submitted. Please wait for admin approval, or contact our support team for immediate assistance.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(
+                          "Close",
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Get.back();
+                          EasyLoading.show(status: 'Loading support...');
+                          try {
+                            final value = await profileController.postDeveloperApi();
+                            EasyLoading.dismiss();
+                            if (value['code'] == 200) {
+                              final phone = value['data']['company_mobile'] ?? '';
+                              Uri url = Uri.parse('tel:+$phone');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url);
+                              } else {
+                                ShowToast.showToast("Could not launch dialer", showSuccess: false);
+                              }
+                            }
+                          } catch (e) {
+                            EasyLoading.dismiss();
+                            debugPrint(e.toString());
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ConstantColor.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("Call Support"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void areYouSureWantAlertDialog(BuildContext context, {
     required String title,
     required String description,
-    required void Function() onPressed,}) {
+    required void Function() onPressed,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -490,18 +586,34 @@ class AppDrawerState extends State<AppDrawer> {
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                    },
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: ConstantColor.whiteColor,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6))),
-                    child: Text(
-                      "Cancel",
-                      style: TextStyle(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
                         color: ConstantColor.primary,
+                        width: 1,
+                      ),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ConstantColor.whiteColor,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: ConstantColor.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -510,16 +622,29 @@ class AppDrawerState extends State<AppDrawer> {
                   width: Get.width * 0.02,
                 ),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: onPressed,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: ConstantColor.primary,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: ConstantColor.primaryGradient,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: onPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6))),
-                    child: Text(
-                      "Confirm",
-                      style: TextStyle(
-                        color: ConstantColor.whiteColor,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        "Confirm",
+                        style: TextStyle(
+                          color: ConstantColor.whiteColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -531,97 +656,9 @@ class AppDrawerState extends State<AppDrawer> {
       },
     );
   }
-
-  Future logoutDialog(BuildContext context, double height, double width) {
-    return showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: ConstantColor.whiteColor,
-        surfaceTintColor: ConstantColor.whiteColor,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        child: SingleChildScrollView(
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Get.back();
-                      },
-                      child: Image.asset(
-                        "assets/icons/icon_close.png",
-                        height: 25,
-                        width: 25,
-                      ),
-                    )
-                  ],
-                ),
-                SizedBox(height: height * 0.02),
-                Text(
-                  "Are You sure want to log out ?",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: ConstantColor.blackColor,
-                  ),
-                ),
-                SizedBox(height: height * 0.03),
-                SizedBox(
-                  height: 58,
-                  width: width / 1.8,
-                  child: AppButton(
-                    onTap: () async {
-                      await SharPreferences.clearSharPreference();
-                      await CacheManager.clearAll();
-                      Get.offAll(() => const MobileNumberScreen());
-                    },
-                    title: "Logout",
-                  ),
-                ),
-                SizedBox(height: height * 0.02),
-                /*  Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        "Delete My Account ?? ",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: ConstantColor.grayColor,
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Get.back();
-                        deleteDialog(context, height, width);
-                      },
-                      child:  Text(
-                        "Click Here",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color:  ConstantColor.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),*/
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
+// Delete dialog function - moved outside AppDrawer for reuse
 Future deleteDialog(BuildContext context, double height, double width) {
   return showDialog(
     context: context,
@@ -654,7 +691,7 @@ Future deleteDialog(BuildContext context, double height, double width) {
               Text(
                 "Are you sure you want to delete your account? This will permanently erase your account.",
                 style: TextStyle(
-                  fontSize: Get.width*0.04,
+                  fontSize: Get.width * 0.04,
                   fontWeight: FontWeight.w600,
                   color: ConstantColor.blackColor,
                 ),
@@ -665,16 +702,52 @@ Future deleteDialog(BuildContext context, double height, double width) {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => postDeleteProfileApi(),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text("Delete"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        "Delete",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                  SizedBox(width: Get.width*0.04,),
+                  SizedBox(width: Get.width * 0.04),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Get.back(),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-                      child:  Text("Cancel",style: TextStyle(color: Colors.black,),),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: ConstantColor.primary,
+                          width: 1,
+                        ),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () => Get.back(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ConstantColor.whiteColor,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(
+                          "Cancel",
+                          style: TextStyle(
+                            color: ConstantColor.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -690,8 +763,7 @@ Future deleteDialog(BuildContext context, double height, double width) {
 
 Future postDeleteProfileApi() async {
   try {
-    final request =
-    http.MultipartRequest('POST', Uri.parse(API.deleteProfile));
+    final request = http.MultipartRequest('POST', Uri.parse(API.deleteProfile));
     request.headers.addAll({
       'Authorization': 'Bearer ${await SharPreferences.getString(SharPreferences.token)}',
     });

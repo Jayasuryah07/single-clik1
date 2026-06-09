@@ -27,11 +27,16 @@ class API {
   static const createFeedback = "${baseUrl}create-feedback";
   static const fetchProfile = "${baseUrl}fetch-profile";
   static const updateProfile = "${baseUrl}update-profile";
+  static const updateUserProfile = "${baseUrl}update-user-profile";
   static const deleteProfile = "${baseUrl}delete-profile";
   static const enquirySentCount = "${baseUrl}fetch-enquiry-sent-count";
   static const enquiryReceivedCount = "${baseUrl}fetch-enquiry-received-count";
   static const developer = "${baseUrl}fetch-developer";
   static const notification = "${baseUrl}fetch-notification";
   static const onboard = "${baseUrl}fetch-onboarding";
+  static const createProductServices = "${baseUrl}create-product-services";
+  static const deleteProductServices = "${baseUrl}delete-product-services";
+  static const fetchProductServices = "${baseUrl}fetch-product-services";
+  static const checkProfileBusinessProfile = "${baseUrl}check-profile-business-profile";
 
 }
