@@ -9,6 +9,7 @@ import 'package:single_clik/constants/constant_color.dart';
 import 'package:single_clik/constants/constant_string.dart';
 import 'package:single_clik/constants/network_to_file_image.dart';
 import 'package:single_clik/controller/auth_controller/business_sign_up_controller.dart';
+import 'package:single_clik/controller/home_controller/profile_controller.dart';
 import 'package:single_clik/controller/home_controller/home_controller.dart';
 import 'package:single_clik/screens/auth_screens/business_sign_up_page.dart';
 import 'package:single_clik/screens/home_screens/enquiries_received_screens/enquiries_received_screen.dart';
@@ -52,6 +53,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
     const EnquiriesReceivedScreen(),
     const EnquiriesSentScreen(),
   ];
+  
   @override
   void initState() {
     super.initState();
@@ -271,6 +273,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
 
   BusinessSignUpController businessSignUpController =
       Get.put(BusinessSignUpController());
+  ProfileController profileController = Get.put(ProfileController());
   RxBool searchClick = true.obs;
   RxBool showText = true.obs;
 
@@ -318,7 +321,6 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
           });
         }
       },
-
       child: Scaffold(
         key: homeController.scaffoldKey,
         backgroundColor: Colors.white,
@@ -337,424 +339,443 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                   gradient: ConstantColor.primaryGradient,
                 ),
               ),
-          leading: GestureDetector(
-            onTap: () {
-              homeController.scaffoldKey.currentState!.openDrawer();
-            },
-            child: Center(
-              child: Image.asset(
-                "assets/icons/icon_menu.png",
-                height: 20,
-                width: 20,
-              ),
-            ),
-          ),
-          actions: [
-            // ── Refresh button (all tabs, both user & business) ──────────────
-            Obx(() {
-              final spinning = homeController.isFullRefreshing.value;
-              return Tooltip(
-                message: 'Refresh App',
-                child: IconButton(
-                  icon: AnimatedRotation(
-                    turns: spinning ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 800),
-                    child: Icon(
-                      Icons.refresh_rounded,
-                      color: spinning
-                          ? Colors.white54
-                          : Colors.white,
-                    ),
+              leading: GestureDetector(
+                onTap: () {
+                  homeController.scaffoldKey.currentState!.openDrawer();
+                },
+                child: Center(
+                  child: Image.asset(
+                    "assets/icons/icon_menu.png",
+                    height: 20,
+                    width: 20,
                   ),
-                  onPressed: spinning
-                      ? null
-                      : () async {
-                          await homeController.fullAppRefresh();
-                        },
                 ),
-              );
-            }),
-            // ── Search button (home tab only) ─────────────────────────────────
-            Obx(() => homeController.selectTab.value == 0 &&
-                    homeController.tabIndex.value == 0 &&
-                    !homeController.isLoading.value
-                ? IconButton(
-                    icon: Icon(homeController.isSearchOpen.value ? Icons.close : Icons.search),
-                    onPressed: () {
-                      setState(() {
-                        if (homeController.isSearchOpen.value) {
-                          homeController.searchController.value.clear();
-                          homeController.searchProduct("");
-                        }
-                        homeController.isSearchOpen.value = !homeController.isSearchOpen.value;
-                      });
-                    },
-                  )
-                : Container()),
-          ],
-          title: Obx(
-            () => homeController.selectTab.value == 0 &&
-                    homeController.tabIndex.value == 0 &&
-                    !homeController.isLoading.value
-                ?
-
-                AnimatedSwitcher(
-                    duration: Duration(milliseconds: 300),
-                    child: homeController.isSearchOpen.value
-                        ? SizedBox(
-                          height: 35,
-                          child: TextField(
-                              key: ValueKey(1), // Unique key for animation
-                              controller: homeController.searchController.value,
-                              onChanged: (value) {
-                                debugPrint('value on Change : $value');
-                                homeController.searchProduct(value);
-                              },
-                              onSubmitted: (value) {
-                                debugPrint('value on Change : $value');
-                                homeController.searchProduct(value);
-                              },
-                              decoration: InputDecoration(
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 0, horizontal: 15),
-                                hintText: "Search",
-                                hintStyle: TextStyle(
-                                    fontSize: 18,
-                                    color: ConstantColor.grayColor,
-                                    fontWeight: FontWeight.w400),
-                                filled: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(100.0),
-                                  borderSide: const BorderSide(
-                                    color: Colors.transparent,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(100.0),
-                                  borderSide: const BorderSide(
-                                    color: Colors.transparent,
-                                  ),
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(100.0),
-                                  borderSide: const BorderSide(
-                                    color: Colors.transparent,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(100.0),
-                                  borderSide: const BorderSide(
-                                    color: Colors.transparent,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        )
-                        : Text('Single Clik',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w400,
-                              color: ConstantColor.whiteColor,
-                            ),
-                            key: ValueKey(2)),
-                  )
-
-                : Text(
-                    homeController.selectTab.value == 0
-                        ? "Single Clik"
-                        : homeController.selectTab.value == 1
-                            ? "Enquiries Received"
-                            : "My Enquiries",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w400,
-                      color: ConstantColor.whiteColor,
-                    ),
-                  ),
-          ),
-          bottom: _buildTabBarForCurrentTab(),
-        );
-      }),
-    ),
-        bottomNavigationBar: Container(
-          height: 65,
-          decoration: BoxDecoration(
-            gradient: ConstantColor.primaryGradient,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(15),
-              topRight: Radius.circular(15),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xff555E58).withAlpha(23),
-                // blurRadius: 0.1,
-                blurRadius: 10,
-                spreadRadius: 10,
               ),
-            ],
-          ),
-          child: Obx(
-            () => Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: List.generate(
-                    homeTabBarList.length,
-                    (index) => Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          homeController.isSearchOpen.value = false;
-                          homeController.tabController.index = 0;
-                          enquiriesReceivedController.tabController.index = 0;
-                          enquiriesSentController.tabController.index = 0;
-                          if (homeController.selectTab.value != 0) {
-                            homeController.searchController.value.clear();
-                            homeController.searchProduct('');
-                          }
-                          if (index == 1) {
-                            if (homeController.userData['user_type'] != 2) {
-                              if (homeController.userData['category'] != null &&
-                                  homeController.userData['category']
-                                      .toString()
-                                      .trim()
-                                      .isNotEmpty) {
-                                EasyLoading.showError(
-                                    ConstantString.alreadyJoinAsMsg);
-                              } else {
-                                EasyLoading.show(
-                                  status: ConstantString.pleaseWaitLabel,
-                                );
-                                businessSignUpController.isButtonLoading.value =
-                                    false;
-                                businessSignUpController.txtFullName.value
-                                    .clear();
-                                businessSignUpController.txtCompanyName.value
-                                    .clear();
-                                businessSignUpController.txtMobileNo.value
-                                    .clear();
-                                businessSignUpController.txtEmailId.value
-                                    .clear();
-                                businessSignUpController.txtWhatsappNo.value
-                                    .clear();
-                                businessSignUpController.txtWebsite.value
-                                    .clear();
-                                businessSignUpController.txtAbout.value.clear();
-                                businessSignUpController.txtArea.value.clear();
-                                businessSignUpController.txtReferredCode.value
-                                    .clear();
-                                businessSignUpController.txtOtherCategory.value
-                                    .clear();
-                                businessSignUpController
-                                    .txtOtherSubCategory.value
-                                    .clear();
-                                businessSignUpController
-                                    .selectedProfileType.value = '';
-                                businessSignUpController
-                                    .selectedCategory.value = {};
-                                businessSignUpController
-                                    .selectedSubCategory.value = {};
-                                String photoPath = await NetworkToFileImage
-                                    .networkToFileImage
-                                    .getNetworkToFileImage(
-                                        url:
-                                            '${ConstantString.userImgUrlPath}${homeController.userData['photo']}');
-                                businessSignUpController.filePath.value =
-                                    photoPath;
-                                try {
-                                  businessSignUpController
-                                          .categoryDataList.value =
-                                      await businessSignUpController
-                                          .getCategoryDataApi();
-                                  businessSignUpController
-                                      .subCategoryDataList.value = [];
-                                  EasyLoading.dismiss();
-                                } on TimeoutException catch (error) {
-                                  businessSignUpController
-                                      .categoryDataList.value = [];
-                                  businessSignUpController
-                                      .subCategoryDataList.value = [];
-                                  EasyLoading.dismiss();
-                                  ShowToast.showToast(
-                                    error.message.toString(),
-                                    showSuccess: false,
-                                  );
-                                } on SocketException catch (error) {
-                                  businessSignUpController
-                                      .categoryDataList.value = [];
-                                  businessSignUpController
-                                      .subCategoryDataList.value = [];
-                                  EasyLoading.dismiss();
-                                  ShowToast.showToast(
-                                    error.message.toString(),
-                                    showSuccess: false,
-                                  );
-                                } catch (error) {
-                                  businessSignUpController
-                                      .categoryDataList.value = [];
-                                  businessSignUpController
-                                      .subCategoryDataList.value = [];
-                                  debugPrint(error.toString());
-                                  EasyLoading.dismiss();
-                                  ShowToast.showToast(
-                                    'Something went wrong.',
-                                    showSuccess: false,
-                                  );
-                                }
-                                EasyLoading.dismiss();
-                                 await Get.to(
-                                   () => const BusinessSignUpPage(),
-                                 );
-                                 await getUserData();
-                              }
-                            } else {
-                              // Business user tapping Received tab — mark as seen
-                              enquiriesReceivedController.markOpenEnquiriesAsSeen();
-                              homeController.selectTab.value = index;
-                              // setState(() {});
+              actions: [
+                // ── Refresh button (all tabs, both user & business) ──────────────
+                Obx(() {
+                  final spinning = homeController.isFullRefreshing.value;
+                  return Tooltip(
+                    message: 'Refresh App',
+                    child: IconButton(
+                      icon: AnimatedRotation(
+                        turns: spinning ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 800),
+                        child: Icon(
+                          Icons.refresh_rounded,
+                          color: spinning
+                              ? Colors.white54
+                              : Colors.white,
+                        ),
+                      ),
+                      onPressed: spinning
+                          ? null
+                          : () async {
+                              await homeController.fullAppRefresh();
+                            },
+                    ),
+                  );
+                }),
+                // ── Search button (home tab only) ─────────────────────────────────
+                Obx(() => homeController.selectTab.value == 0 &&
+                        homeController.tabIndex.value == 0 &&
+                        !homeController.isLoading.value
+                    ? IconButton(
+                        icon: Icon(homeController.isSearchOpen.value ? Icons.close : Icons.search),
+                        onPressed: () {
+                          setState(() {
+                            if (homeController.isSearchOpen.value) {
+                              homeController.searchController.value.clear();
+                              homeController.searchProduct("");
+                            }
+                            homeController.isSearchOpen.value = !homeController.isSearchOpen.value;
+                          });
+                        },
+                      )
+                    : Container()),
+              ],
+              title: Obx(
+                () => homeController.selectTab.value == 0 &&
+                        homeController.tabIndex.value == 0 &&
+                        !homeController.isLoading.value
+                    ?
+                    AnimatedSwitcher(
+                        duration: Duration(milliseconds: 300),
+                        child: homeController.isSearchOpen.value
+                            ? SizedBox(
+                                height: 35,
+                                child: TextField(
+                                    key: ValueKey(1), // Unique key for animation
+                                    controller: homeController.searchController.value,
+                                    onChanged: (value) {
+                                      debugPrint('value on Change : $value');
+                                      homeController.searchProduct(value);
+                                    },
+                                    onSubmitted: (value) {
+                                      debugPrint('value on Change : $value');
+                                      homeController.searchProduct(value);
+                                    },
+                                    decoration: InputDecoration(
+                                      fillColor: Colors.white,
+                                      contentPadding: const EdgeInsets.symmetric(
+                                          vertical: 0, horizontal: 15),
+                                      hintText: "Search",
+                                      hintStyle: TextStyle(
+                                          fontSize: 18,
+                                          color: ConstantColor.grayColor,
+                                          fontWeight: FontWeight.w400),
+                                      filled: true,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                        borderSide: const BorderSide(
+                                          color: Colors.transparent,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                        borderSide: const BorderSide(
+                                          color: Colors.transparent,
+                                        ),
+                                      ),
+                                      disabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                        borderSide: const BorderSide(
+                                          color: Colors.transparent,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                        borderSide: const BorderSide(
+                                          color: Colors.transparent,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              )
+                            : Text('Single Clik',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w400,
+                                  color: ConstantColor.whiteColor,
+                                ),
+                                key: ValueKey(2)),
+                      )
+                    : Text(
+                        homeController.selectTab.value == 0
+                            ? "Single Clik"
+                            : homeController.selectTab.value == 1
+                                ? "Enquiries Received"
+                                : "My Enquiries",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w400,
+                          color: ConstantColor.whiteColor,
+                        ),
+                      ),
+              ),
+              bottom: _buildTabBarForCurrentTab(),
+            );
+          }),
+        ),
+        bottomNavigationBar: Container(
+  height: 65,
+  decoration: BoxDecoration(
+    gradient: ConstantColor.primaryGradient,
+    borderRadius: const BorderRadius.only(
+      topLeft: Radius.circular(10),
+      topRight: Radius.circular(10 ),
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withAlpha(23),
+        blurRadius: 10,
+        spreadRadius: 10,
+      ),
+    ],
+  ),
+  child: ClipRRect(
+    borderRadius: const BorderRadius.only(
+      topLeft: Radius.circular(10),
+      topRight: Radius.circular(10),
+    ),
+    child: Container(
+      color: const Color.fromARGB(0, 201, 59, 59), // Make the clipped area transparent to show gradient
+      child: Obx(
+        () => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: List.generate(
+                homeTabBarList.length,
+                (index) => Expanded(
+                  child: InkWell(
+                    onTap: () async {
+                      homeController.isSearchOpen.value = false;
+                      homeController.tabController.index = 0;
+                      enquiriesReceivedController.tabController.index = 0;
+                      enquiriesSentController.tabController.index = 0;
+                      if (homeController.selectTab.value != 0) {
+                        homeController.searchController.value.clear();
+                        homeController.searchProduct('');
+                      }
+                      if (index == 1) {
+                        if (homeController.userData['user_type'] != 2) {
+                          EasyLoading.show(
+                            status: ConstantString.pleaseWaitLabel,
+                          );
+
+                          // Call new API to check business profile status
+                          final checkResult = await businessSignUpController.checkProfileBusinessProfileApi();
+                          EasyLoading.dismiss();
+
+                          if (checkResult['status'] == true) {
+                            if (context.mounted) {
+                              _showAlreadySubmittedDialog(context);
                             }
                           } else {
-                            homeController.selectTab.value = index;
-                            // setState(() {});
+                            if (homeController.userData['category'] != null &&
+                                homeController.userData['category']
+                                    .toString()
+                                    .trim()
+                                    .isNotEmpty) {
+                              EasyLoading.showError(
+                                  ConstantString.alreadyJoinAsMsg);
+                            } else {
+                              EasyLoading.show(
+                                status: ConstantString.pleaseWaitLabel,
+                              );
+                              businessSignUpController.isButtonLoading.value =
+                                  false;
+                              businessSignUpController.txtFullName.value
+                                  .clear();
+                              businessSignUpController.txtCompanyName.value
+                                  .clear();
+                              businessSignUpController.txtMobileNo.value
+                                  .clear();
+                              businessSignUpController.txtEmailId.value
+                                  .clear();
+                              businessSignUpController.txtWhatsappNo.value
+                                  .clear();
+                              businessSignUpController.txtWebsite.value
+                                  .clear();
+                              businessSignUpController.txtAbout.value.clear();
+                              businessSignUpController.txtArea.value.clear();
+                              businessSignUpController.txtReferredCode.value
+                                  .clear();
+                              businessSignUpController.txtOtherCategory.value
+                                  .clear();
+                              businessSignUpController
+                                  .txtOtherSubCategory.value
+                                  .clear();
+                              businessSignUpController
+                                  .selectedProfileType.value = '';
+                              businessSignUpController
+                                  .selectedCategory.value = {};
+                              businessSignUpController
+                                  .selectedSubCategory.value = {};
+                              String photoPath = await NetworkToFileImage
+                                  .networkToFileImage
+                                  .getNetworkToFileImage(
+                                      url:
+                                          '${ConstantString.userImgUrlPath}${homeController.userData['photo']}');
+                              businessSignUpController.filePath.value =
+                                  photoPath;
+                              try {
+                                businessSignUpController
+                                        .categoryDataList.value =
+                                    await businessSignUpController
+                                        .getCategoryDataApi();
+                                businessSignUpController
+                                    .subCategoryDataList.value = [];
+                                EasyLoading.dismiss();
+                              } on TimeoutException catch (error) {
+                                businessSignUpController
+                                    .categoryDataList.value = [];
+                                businessSignUpController
+                                    .subCategoryDataList.value = [];
+                                EasyLoading.dismiss();
+                                ShowToast.showToast(
+                                  error.message.toString(),
+                                  showSuccess: false,
+                                );
+                              } on SocketException catch (error) {
+                                businessSignUpController
+                                    .categoryDataList.value = [];
+                                businessSignUpController
+                                    .subCategoryDataList.value = [];
+                                EasyLoading.dismiss();
+                                ShowToast.showToast(
+                                  error.message.toString(),
+                                  showSuccess: false,
+                                );
+                              } catch (error) {
+                                businessSignUpController
+                                    .categoryDataList.value = [];
+                                businessSignUpController
+                                    .subCategoryDataList.value = [];
+                                debugPrint(error.toString());
+                                EasyLoading.dismiss();
+                                ShowToast.showToast(
+                                  'Something went wrong.',
+                                  showSuccess: false,
+                                );
+                              }
+                              EasyLoading.dismiss();
+                              await Get.to(
+                                () => const BusinessSignUpPage(),
+                              );
+                              await getUserData();
+                            }
                           }
-                          if (homeController.userData['user_type'] == 2) {
-                            await homeController
-                                .getSentEnquiriesUnreadCount("1");
-                          }
-                        },
-                        child: Container(
-                          width: Get.width,
-                          color: Colors.transparent,
-                          child: Column(
-                            children: [
-                              index == 1 && homeController.userData['user_type'] == 2
-                                  ? Obx(() {
-                                      final newCount = enquiriesReceivedController.newOpenCount.value;
-                                      final unreadCount = homeController.receivedUnreadCount.value;
-                                      // Show badge if either new enquiries arrived or there are unread
-                                      final badgeCount = newCount > 0 ? newCount : unreadCount;
-                                      return badgeCount == 0
-                                          ? SizedBox(
-                                              height: 25,
-                                              width: 25,
-                                              child: Image.asset(
-                                                homeTabBarList[index]['image'],
-                                                color: homeController.selectTab.value == index
-                                                    ? Colors.white
-                                                    : Colors.white.withOpacity(0.6),
-                                              ),
-                                            )
-                                          : badges.Badge(
-                                              badgeContent: Text(
-                                                badgeCount.toString(),
-                                                style: TextStyle(
-                                                  color: ConstantColor.whiteColor,
-                                                  fontSize: 10,
-                                                ),
-                                              ),
-                                              badgeStyle: const badges.BadgeStyle(
-                                                badgeColor: Colors.red,
-                                                padding: EdgeInsets.all(5),
-                                              ),
-                                              child: SizedBox(
-                                                height: 25,
-                                                width: 25,
-                                                child: Image.asset(
-                                                  homeTabBarList[index]['image'],
-                                                  color: homeController.selectTab.value == index
-                                                      ? Colors.white
-                                                      : Colors.white.withOpacity(0.6),
-                                                ),
-                                              ),
-                                            );
-                                    })
-                                  : index == 2
-                                      ? homeController.pendingOpenInquiriesCount
-                                                  .value
-                                                  .toString() ==
-                                              "0"
-                                          ? SizedBox(
-                                              height: 25,
-                                              width: 25,
-                                              child: Image.asset(
-                                                homeTabBarList[index]['image'],
-                                                color: homeController
-                                                            .selectTab.value ==
-                                                        index
-                                                    ? Colors.white
-                                                    : Colors.white.withOpacity(0.6),
-                                              ),
-                                            )
-                                          : badges.Badge(
-                                              badgeContent: Obx(
-                                                () => Text(
-                                                  homeController
-                                                      .pendingOpenInquiriesCount
-                                                      .value
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                    color: ConstantColor
-                                                        .whiteColor,
-                                                    fontSize: 10,
-                                                  ),
-                                                ),
-                                              ),
-                                              child: SizedBox(
-                                                height: 25,
-                                                width: 25,
-                                                child: Image.asset(
-                                                  homeTabBarList[index]
-                                                      ['image'],
-                                                  color: homeController
-                                                              .selectTab
-                                                              .value ==
-                                                          index
-                                                      ? Colors.white
-                                                      : Colors.white.withOpacity(0.6),
-                                                ),
-                                              ),
-                                            )
-                                      : SizedBox(
+                        } else {
+                          // Business user tapping Received tab — mark as seen
+                          enquiriesReceivedController.markOpenEnquiriesAsSeen();
+                          homeController.selectTab.value = index;
+                          // setState(() {});
+                        }
+                      } else {
+                        homeController.selectTab.value = index;
+                        // setState(() {});
+                      }
+                      if (homeController.userData['user_type'] == 2) {
+                        await homeController
+                            .getSentEnquiriesUnreadCount("1");
+                      }
+                    },
+                    child: Container(
+                      width: Get.width,
+                      color: Colors.transparent,
+                      child: Column(
+                        children: [
+                          index == 1 && homeController.userData['user_type'] == 2
+                              ? Obx(() {
+                                  final newCount = enquiriesReceivedController.newOpenCount.value;
+                                  final unreadCount = homeController.receivedUnreadCount.value;
+                                  // Show badge if either new enquiries arrived or there are unread
+                                  final badgeCount = newCount > 0 ? newCount : unreadCount;
+                                  return badgeCount == 0
+                                      ? SizedBox(
                                           height: 25,
                                           width: 25,
                                           child: Image.asset(
                                             homeTabBarList[index]['image'],
-                                            color: index == 1 &&
-                                                    homeController.userData[
-                                                            'user_type'] !=
-                                                        2
-                                                ? null
-                                                : homeController
-                                                            .selectTab.value ==
-                                                        index
-                                                    ? Colors.white
-                                                    : Colors.white.withOpacity(0.6),
+                                            color: homeController.selectTab.value == index
+                                                ? Colors.white
+                                                : Colors.white.withOpacity(0.6),
                                           ),
-                                        ),
-                              const SizedBox(height: 2),
-                              Text(
-                                homeTabBarList[index]['title'],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: homeController.selectTab.value == index
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.6),
-                                ),
-                              ),
-                            ],
+                                        )
+                                      : badges.Badge(
+                                          badgeContent: Text(
+                                            badgeCount.toString(),
+                                            style: TextStyle(
+                                              color: ConstantColor.whiteColor,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                          badgeStyle: const badges.BadgeStyle(
+                                            badgeColor: Colors.red,
+                                            padding: EdgeInsets.all(5),
+                                          ),
+                                          child: SizedBox(
+                                            height: 25,
+                                            width: 25,
+                                            child: Image.asset(
+                                              homeTabBarList[index]['image'],
+                                              color: homeController.selectTab.value == index
+                                                  ? Colors.white
+                                                  : Colors.white.withOpacity(0.6),
+                                            ),
+                                          ),
+                                        );
+                                })
+                              : index == 2
+                                  ? homeController.pendingOpenInquiriesCount
+                                              .value
+                                              .toString() ==
+                                          "0"
+                                      ? SizedBox(
+                                          height: 25,
+                                          width: 25,
+                                          child: Image.asset(
+                                            homeTabBarList[index]['image'],
+                                            color: homeController
+                                                        .selectTab.value ==
+                                                    index
+                                                ? Colors.white
+                                                : Colors.white.withOpacity(0.6),
+                                          ),
+                                        )
+                                      : badges.Badge(
+                                          badgeContent: Obx(
+                                            () => Text(
+                                              homeController
+                                                  .pendingOpenInquiriesCount
+                                                  .value
+                                                  .toString(),
+                                              style: TextStyle(
+                                                color: ConstantColor
+                                                    .whiteColor,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ),
+                                          child: SizedBox(
+                                            height: 25,
+                                            width: 25,
+                                            child: Image.asset(
+                                              homeTabBarList[index]
+                                                  ['image'],
+                                              color: homeController
+                                                          .selectTab
+                                                          .value ==
+                                                      index
+                                                  ? Colors.white
+                                                  : Colors.white.withOpacity(0.6),
+                                            ),
+                                          ),
+                                        )
+                                  : SizedBox(
+                                      height: 25,
+                                      width: 25,
+                                      child: Image.asset(
+                                        homeTabBarList[index]['image'],
+                                        color: index == 1 &&
+                                                homeController.userData[
+                                                        'user_type'] !=
+                                                    2
+                                            ? null
+                                            : homeController
+                                                        .selectTab.value ==
+                                                    index
+                                                ? Colors.white
+                                                : Colors.white.withOpacity(0.6),
+                                      ),
+                                    ),
+                          const SizedBox(height: 2),
+                          Text(
+                            homeTabBarList[index]['title'],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: homeController.selectTab.value == index
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.6),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
-
+    ),
+  ),
+),
+      ),
     );
   }
 
@@ -914,4 +935,114 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
     }
   }
 
+  void _showAlreadySubmittedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(horizontal: Get.width / 15),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: ConstantColor.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.pending_actions_rounded,
+                    color: ConstantColor.primary,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Request Already Submitted",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Your business account request is already submitted. Please wait for admin approval, or contact our support team for immediate assistance.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(
+                          "Close",
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Get.back();
+                          EasyLoading.show(status: 'Loading support...');
+                          try {
+                            final value =
+                                await profileController.postDeveloperApi();
+                            EasyLoading.dismiss();
+                            if (value['code'] == 200) {
+                              final phone =
+                                  value['data']['company_mobile'] ?? '';
+                              Uri url = Uri.parse('tel:+$phone');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url);
+                              } else {
+                                ShowToast.showToast(
+                                    "Could not launch dialer",
+                                    showSuccess: false);
+                              }
+                            }
+                          } catch (e) {
+                            EasyLoading.dismiss();
+                            debugPrint(e.toString());
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ConstantColor.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("Call Support"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

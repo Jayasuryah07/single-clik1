@@ -1,6 +1,5 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:single_clik/constants/constant_color.dart';
 import 'package:single_clik/constants/constant_string.dart';
@@ -8,7 +7,6 @@ import 'package:single_clik/constants/show_toast.dart';
 import 'package:single_clik/controller/home_controller/home_controller.dart';
 import 'package:single_clik/screens/home_screens/home_screens/user_details_screen.dart';
 import 'package:single_clik/screens/home_screens/home_screens/user_list_screen.dart';
-import 'package:single_clik/widget/app_button.dart';
 import 'package:single_clik/widget/app_image_assets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -611,32 +609,20 @@ class _HomeScreenState extends State<HomeScreen>
                                   itemBuilder: (context, index) =>
                                       GestureDetector(
                                     onTap: () {
-                                      if (homeController.businessList[index]
-                                                  ['member_count'] ==
-                                              null ||
-                                          homeController.businessList[index]
-                                                  ['member_count'] ==
-                                              0) {
-                                        EasyLoading.showError(
-                                          ConstantString
-                                              .businessServiceMembersEmptyMsg,
-                                        );
-                                      } else {
-                                        Get.to(
-                                          () => UserListScreen(
-                                            categoryId: (homeController
-                                                            .businessList[index]
-                                                        ['id'] ??
-                                                    "")
-                                                .toString(),
-                                            categoryName: (homeController
-                                                            .businessList[index]
-                                                        ['category'] ??
-                                                    "")
-                                                .toString(),
-                                          ),
-                                        );
-                                      }
+                                      Get.to(
+                                        () => UserListScreen(
+                                          categoryId: (homeController
+                                                          .businessList[index]
+                                                      ['id'] ??
+                                                  "")
+                                              .toString(),
+                                          categoryName: (homeController
+                                                          .businessList[index]
+                                                      ['category'] ??
+                                                  "")
+                                              .toString(),
+                                        ),
+                                      );
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -658,14 +644,32 @@ class _HomeScreenState extends State<HomeScreen>
                                             ),
                                             child: ClipRRect(
                                               borderRadius: BorderRadius.circular(10),
-                                              child: AppImageAsset(
-                                                image:
-                                                    "${ConstantString.categoriesImgUrlPath}${homeController.businessList[index]['category_image']}",
-                                                isFile: false,
-                                                fit: BoxFit.cover,
-                                                height: 80,
-                                                width: 80,
-                                              ),
+                                              child: (homeController.businessList[index]['member_count'] == null ||
+                                                      homeController.businessList[index]['member_count'] == 0)
+                                                  ? ColorFiltered(
+                                                      colorFilter: const ColorFilter.matrix(<double>[
+                                                        0.2126, 0.7152, 0.0722, 0, 0,
+                                                        0.2126, 0.7152, 0.0722, 0, 0,
+                                                        0.2126, 0.7152, 0.0722, 0, 0,
+                                                        0,      0,      0,      0.5, 0,
+                                                      ]),
+                                                      child: AppImageAsset(
+                                                        image:
+                                                            "${ConstantString.categoriesImgUrlPath}${homeController.businessList[index]['category_image']}",
+                                                        isFile: false,
+                                                        fit: BoxFit.cover,
+                                                        height: 80,
+                                                        width: 80,
+                                                      ),
+                                                    )
+                                                  : AppImageAsset(
+                                                      image:
+                                                          "${ConstantString.categoriesImgUrlPath}${homeController.businessList[index]['category_image']}",
+                                                      isFile: false,
+                                                      fit: BoxFit.cover,
+                                                      height: 80,
+                                                      width: 80,
+                                                    ),
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -737,30 +741,18 @@ class _HomeScreenState extends State<HomeScreen>
                                   itemBuilder: (context, index) =>
                                       GestureDetector(
                                     onTap: () {
-                                      if (homeController.servicesList[index]
-                                                  ['member_count'] ==
-                                              null ||
-                                          homeController.servicesList[index]
-                                                  ['member_count'] ==
-                                              0) {
-                                        EasyLoading.showError(
-                                          ConstantString
-                                              .businessServiceMembersEmptyMsg,
-                                        );
-                                      } else {
-                                        Get.to(() => UserListScreen(
-                                              categoryId:
-                                                  (homeController.servicesList[
-                                                              index]['id'] ??
-                                                          "")
-                                                      .toString(),
-                                              categoryName: (homeController
-                                                              .servicesList[
-                                                          index]['category'] ??
-                                                      "")
-                                                  .toString(),
-                                            ));
-                                      }
+                                      Get.to(() => UserListScreen(
+                                            categoryId:
+                                                (homeController.servicesList[
+                                                            index]['id'] ??
+                                                        "")
+                                                    .toString(),
+                                            categoryName: (homeController
+                                                            .servicesList[
+                                                        index]['category'] ??
+                                                    "")
+                                                .toString(),
+                                          ));
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -782,14 +774,32 @@ class _HomeScreenState extends State<HomeScreen>
                                             ),
                                             child: ClipRRect(
                                               borderRadius: BorderRadius.circular(10),
-                                              child: AppImageAsset(
-                                                image:
-                                                    "${ConstantString.categoriesImgUrlPath}${homeController.servicesList[index]['category_image']}",
-                                                isFile: false,
-                                                fit: BoxFit.cover,
-                                                height: 80,
-                                                width: 80,
-                                              ),
+                                              child: (homeController.servicesList[index]['member_count'] == null ||
+                                                      homeController.servicesList[index]['member_count'] == 0)
+                                                  ? ColorFiltered(
+                                                      colorFilter: const ColorFilter.matrix(<double>[
+                                                        0.2126, 0.7152, 0.0722, 0, 0,
+                                                        0.2126, 0.7152, 0.0722, 0, 0,
+                                                        0.2126, 0.7152, 0.0722, 0, 0,
+                                                        0,      0,      0,      0.5, 0,
+                                                      ]),
+                                                      child: AppImageAsset(
+                                                        image:
+                                                            "${ConstantString.categoriesImgUrlPath}${homeController.servicesList[index]['category_image']}",
+                                                        isFile: false,
+                                                        fit: BoxFit.cover,
+                                                        height: 80,
+                                                        width: 80,
+                                                      ),
+                                                    )
+                                                  : AppImageAsset(
+                                                      image:
+                                                          "${ConstantString.categoriesImgUrlPath}${homeController.servicesList[index]['category_image']}",
+                                                      isFile: false,
+                                                      fit: BoxFit.cover,
+                                                      height: 80,
+                                                      width: 80,
+                                                    ),
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -1173,86 +1183,93 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: controller.isButtonLoading.value
-                            ? null
-                            : () async {
-                                // Validate selections
-                                if (controller.categorySelect.isEmpty) {
-                                  ShowToast.showToast('Please Select Category', showSuccess: false);
-                                  return;
-                                }
-                                
-                                if (controller.subCategorySelect.isEmpty) {
-                                  ShowToast.showToast('Please Select Sub-Category', showSuccess: false);
-                                  return;
-                                }
-                                
-                                if (controller.priorityTypeSelect.value.isEmpty) {
-                                  ShowToast.showToast('Please Select Priority Type', showSuccess: false);
-                                  return;
-                                }
-                                
-                                // Get IDs safely
-                                String categoryId = controller.categorySelect['id']?.toString() ?? '';
-                                String subCategoryId = controller.subCategorySelect['id']?.toString() ?? '';
-                                String priorityType = controller.priorityTypeSelect.value == "Urgent" ? "0" : "1";
-                                String inquiryText = controller.inquiryController.value.text.trim();
-                                
-                                // Validate IDs
-                                if (categoryId.isEmpty) {
-                                  ShowToast.showToast('Invalid Category selected', showSuccess: false);
-                                  return;
-                                }
-                                
-                                if (subCategoryId.isEmpty) {
-                                  ShowToast.showToast('Invalid Sub-Category selected', showSuccess: false);
-                                  return;
-                                }
-                                
-                                var bodyParams = {
-                                  'category': categoryId,
-                                  'sub_category': subCategoryId,
-                                  'type': priorityType,
-                                  'enq_text': inquiryText,
-                                };
-                                
-                                debugPrint('Sending Inquiry with params: $bodyParams');
-                                
-                                // Call API
-                                bool success = await controller.postCreateEnquiryApi(bodyParams);
-                                
-                                if (success) {
-                                  if (context.mounted) {
-                                    Navigator.of(context).pop();
-                                  }
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0B3C9B),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: ConstantColor.primaryGradient,
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: controller.isButtonLoading.value
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
+                        child: ElevatedButton(
+                          onPressed: controller.isButtonLoading.value
+                              ? null
+                              : () async {
+                                  // Validate selections
+                                  if (controller.categorySelect.isEmpty) {
+                                    ShowToast.showToast('Please Select Category', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  if (controller.subCategorySelect.isEmpty) {
+                                    ShowToast.showToast('Please Select Sub-Category', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  if (controller.priorityTypeSelect.value.isEmpty) {
+                                    ShowToast.showToast('Please Select Priority Type', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  // Get IDs safely
+                                  String categoryId = controller.categorySelect['id']?.toString() ?? '';
+                                  String subCategoryId = controller.subCategorySelect['id']?.toString() ?? '';
+                                  String priorityType = controller.priorityTypeSelect.value == "Urgent" ? "0" : "1";
+                                  String inquiryText = controller.inquiryController.value.text.trim();
+                                  
+                                  // Validate IDs
+                                  if (categoryId.isEmpty) {
+                                    ShowToast.showToast('Invalid Category selected', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  if (subCategoryId.isEmpty) {
+                                    ShowToast.showToast('Invalid Sub-Category selected', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  var bodyParams = {
+                                    'category': categoryId,
+                                    'sub_category': subCategoryId,
+                                    'type': priorityType,
+                                    'enq_text': inquiryText,
+                                  };
+                                  
+                                  debugPrint('Sending Inquiry with params: $bodyParams');
+                                  
+                                  // Call API
+                                  bool success = await controller.postCreateEnquiryApi(bodyParams);
+                                  
+                                  if (success) {
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                          ),
+                          child: controller.isButtonLoading.value
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  "SUBMIT",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              )
-                            : const Text(
-                                "SUBMIT",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
+                        ),
                       ),
                     ),
                   ],
@@ -1265,4 +1282,5 @@ class _HomeScreenState extends State<HomeScreen>
     ),
   );
 }
+
 }

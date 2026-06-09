@@ -848,11 +848,54 @@ class HomeController extends GetxController
 
       if (res.statusCode == 200) {
         final responseBody = jsonDecode(responseDone.body);
-        final profileData = responseBody["data"][0] ?? responseBody["data"] ?? {};
-        userData.value = profileData;
+        dynamic dataField = responseBody["data"];
+        Map<String, dynamic> parsedProfile = {};
+        List<dynamic> parsedProducts = [];
+
+        if (dataField is List) {
+          if (dataField.isNotEmpty) {
+            var firstItem = dataField[0];
+            if (firstItem is Map) {
+              if (firstItem.containsKey('product_name') || firstItem.containsKey('product_status')) {
+                parsedProducts = dataField;
+              } else {
+                parsedProfile = Map<String, dynamic>.from(firstItem);
+                if (firstItem.containsKey('products')) {
+                  parsedProducts = List.from(firstItem['products'] ?? []);
+                } else if (firstItem.containsKey('product_services')) {
+                  parsedProducts = List.from(firstItem['product_services'] ?? []);
+                }
+              }
+            }
+          }
+        } else if (dataField is Map) {
+          parsedProfile = Map<String, dynamic>.from(dataField);
+          if (dataField.containsKey('products')) {
+            parsedProducts = List.from(dataField['products'] ?? []);
+          } else if (dataField.containsKey('product_services')) {
+            parsedProducts = List.from(dataField['product_services'] ?? []);
+          }
+        }
+
+        if (responseBody['products'] is List) {
+          parsedProducts = List.from(responseBody['products']);
+        } else if (responseBody['product_services'] is List) {
+          parsedProducts = List.from(responseBody['product_services']);
+        }
+
+        // Fetch products/services from the dedicated endpoint as the primary source
+        final productsList = await postFetchProductServicesApi();
+        if (productsList.isNotEmpty) {
+          parsedProducts = productsList;
+        }
+
+        parsedProfile['products'] = parsedProducts;
+        parsedProfile['product_services'] = parsedProducts;
+
+        userData.value = parsedProfile;
         
         await CacheManager.set(CACHE_USER_PROFILE, {
-          'data': profileData,
+          'data': parsedProfile,
           'timestamp': DateTime.now().toIso8601String(),
         });
         debugPrint('✅ Profile data cached');
@@ -865,6 +908,36 @@ class HomeController extends GetxController
     } finally {
       _requestLocks['profile'] = false;
     }
+  }
+
+  Future<List<dynamic>> postFetchProductServicesApi({String? userId}) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(API.fetchProductServices));
+      final token = await SharPreferences.getString(SharPreferences.token) ?? '';
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+      if (userId == null || userId.isEmpty) {
+        userId = await SharPreferences.getString(SharPreferences.userId) ?? '';
+      }
+      if (userId.isNotEmpty) {
+        request.fields.addAll({'user_id': userId});
+      }
+      var res = await request.send();
+      var responseDone = await http.Response.fromStream(res);
+      debugPrint('Fetch Product Services Response Code: ${res.statusCode}');
+      debugPrint('Fetch Product Services Response: ${responseDone.body}');
+      if (res.statusCode == 200) {
+        final responseData = json.decode(responseDone.body);
+        if (responseData['data'] is List) {
+          return responseData['data'];
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in fetch product services: $e');
+    }
+    return [];
   }
 
   /// Clears ONLY the SharedPreferences API-response cache.

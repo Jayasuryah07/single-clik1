@@ -40,25 +40,99 @@ class UserDetailsController extends GetxController
       if (res.statusCode == 200) {
         final responseData = json.decode(responseDone.body);
         log(">>>>sub>>>>>>> ${responseDone.body}");
-        userDetails = responseData['data'];
-        userDetailsProduct = responseData;
+
+        dynamic dataField = responseData['data'];
+        Map<String, dynamic> parsedProfile = {};
+        List<dynamic> parsedProducts = [];
+
+        if (dataField is List) {
+          if (dataField.isNotEmpty) {
+            var firstItem = dataField[0];
+            if (firstItem is Map) {
+              if (firstItem.containsKey('product_name') || firstItem.containsKey('product_status')) {
+                parsedProducts = dataField;
+              } else {
+                parsedProfile = Map<String, dynamic>.from(firstItem);
+                if (firstItem.containsKey('products')) {
+                  parsedProducts = List.from(firstItem['products'] ?? []);
+                } else if (firstItem.containsKey('product_services')) {
+                  parsedProducts = List.from(firstItem['product_services'] ?? []);
+                }
+              }
+            }
+          }
+        } else if (dataField is Map) {
+          parsedProfile = Map<String, dynamic>.from(dataField);
+          if (dataField.containsKey('products')) {
+            parsedProducts = List.from(dataField['products'] ?? []);
+          } else if (dataField.containsKey('product_services')) {
+            parsedProducts = List.from(dataField['product_services'] ?? []);
+          }
+        }
+
+        if (responseData['products'] is List) {
+          parsedProducts = List.from(responseData['products']);
+        } else if (responseData['product_services'] is List) {
+          parsedProducts = List.from(responseData['product_services']);
+        }
+
+        // Fetch products/services from the dedicated endpoint as the primary source
+        final productsList = await postFetchProductServicesApi(userId: userId);
+        if (productsList.isNotEmpty) {
+          parsedProducts = productsList;
+        }
+
+        parsedProfile['products'] = parsedProducts;
+        parsedProfile['product_services'] = parsedProducts;
+
+        userDetails = parsedProfile;
+        
+        // Ensure products are also in the userDetailsProduct map for compatibility
+        final updatedResponseData = Map<String, dynamic>.from(responseData);
+        updatedResponseData['products'] = parsedProducts;
+        updatedResponseData['product_services'] = parsedProducts;
+        userDetailsProduct = updatedResponseData;
+        
         isLoading.value = false;
       } else {
         isLoading.value = false;
         // ShowToast.showToast(responseData['msg'] ?? 'Something went wrong.',showSuccess: false,);
       }
     }
-    // on TimeoutException catch (e) {
-    //   isLoading.value = false;
-    //   ShowToast.showToast(e.message.toString(),showSuccess: false,);
-    // } on SocketException catch (e) {
-    //   isLoading.value = false;
-    //   ShowToast.showToast(e.message.toString(),showSuccess: false,);
-    // }
     catch (e) {
       isLoading.value = false;
       // ShowToast.showToast('Something went wrong.',showSuccess: false,);
       debugPrint(e.toString());
     }
+  }
+
+  Future<List<dynamic>> postFetchProductServicesApi({String? userId}) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(API.fetchProductServices));
+      final token = await SharPreferences.getString(SharPreferences.token) ?? '';
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+      if (userId == null || userId.isEmpty) {
+        userId = await SharPreferences.getString(SharPreferences.userId) ?? '';
+      }
+      if (userId.isNotEmpty) {
+        request.fields.addAll({'user_id': userId});
+      }
+      var res = await request.send();
+      var responseDone = await http.Response.fromStream(res);
+      debugPrint('Fetch Product Services UserDetails Response Code: ${res.statusCode}');
+      debugPrint('Fetch Product Services UserDetails Response: ${responseDone.body}');
+      if (res.statusCode == 200) {
+        final responseData = json.decode(responseDone.body);
+        if (responseData['data'] is List) {
+          return responseData['data'];
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in fetch product services: $e');
+    }
+    return [];
   }
 }
