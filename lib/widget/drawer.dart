@@ -156,7 +156,7 @@ class AppDrawerState extends State<AppDrawer> {
                       icon: homeController.userData['user_type'] != 2
                           ? "assets/icons/logo.svg"
                           : "assets/icons/rec.png",
-                      iconColor: const Color.fromARGB(255, 0, 47, 86),
+                      iconColor: const Color.fromARGB(255, 0, 135, 245),
                       title: homeController.userData['user_type'] != 2
                           ? "Join as a Seller"
                           : "Received Enquiries",

@@ -366,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                                               Container(
                                                                             decoration: BoxDecoration(
                                                                                 border: Border.all(
-                                                                                  color: ConstantColor.primary,
+                                                                                  color: ConstantColor.bgColor,
                                                                                   width: 2,
                                                                                 ),
                                                                                 borderRadius: BorderRadius.circular(15)),
