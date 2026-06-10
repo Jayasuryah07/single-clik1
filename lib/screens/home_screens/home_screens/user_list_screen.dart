@@ -79,7 +79,7 @@ _Digital Network & Directory_
 
 ━━━━━━━━━━━━━━━━━━━━━
 
-👋 Hey! I'm looking for *${widget.categoryName}* providers on *Single Clik* — but they aren't listed yet!
+👋 Hey! I'm looking for *${widget.categoryName}* providers on *Single Clik* — but you aren't listed in that category!
 
 💼 *What is Single Clik?*
 A powerful business directory where you can:
@@ -105,7 +105,7 @@ _One tap. One profile. One click away._ ✨
 
     return '''SINGLE CLIK — Digital Network & Directory
 
-Hey! I'm looking for "${widget.categoryName}" providers on Single Clik — but they aren't listed yet!
+Hey! I'm looking for "${widget.categoryName}" providers on Single Clik — but you aren't listed in that category!
 
 What is Single Clik?
 A powerful business directory where you can:
@@ -479,181 +479,186 @@ One tap. One profile. One click away.''';
                           ),
                         ),
                       )
-                    : Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: ListView.builder(
-                          itemCount: userListController.userList.length,
-                          shrinkWrap: true,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: () {
-                                Get.to(() => UserDetailsScreen(
-                                      id: userListController.userList[index]
-                                              ['id']
-                                          .toString(),
-                                    ));
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: ConstantColor.whiteColor,
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: ConstantColor.primary,
-                                          width: 2,
+                    : ListView.builder(
+                        itemCount: userListController.userList.length,
+                        itemBuilder: (context, index) {
+                          return Column(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Get.to(() => UserDetailsScreen(
+                                        id: userListController.userList[index]
+                                                ['id']
+                                            .toString(),
+                                      ));
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: ConstantColor.whiteColor,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: ConstantColor.primary,
+                                            width: 2,
+                                          ),
+                                          shape: BoxShape.circle,
                                         ),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: ClipOval(
-                                        child: AppImageAsset(
-                                          image:
-                                              '${ConstantString.userImgUrlPath}${userListController.userList[index]['photo']}',
-                                          isFile: false,
-                                          fit: BoxFit.cover,
-                                          height: width / 3.5,
-                                          width: width / 3.5,
+                                        child: ClipOval(
+                                          child: AppImageAsset(
+                                            image:
+                                                '${ConstantString.userImgUrlPath}${userListController.userList[index]['photo']}',
+                                            isFile: false,
+                                            fit: BoxFit.cover,
+                                            height: width / 3.5,
+                                            width: width / 3.5,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(width: width * 0.02),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            userListController.userList[index]
-                                                            ['name'] ==
-                                                        null ||
-                                                    userListController
-                                                        .userList[index]['name']
-                                                        .toString()
-                                                        .trim()
-                                                        .isEmpty
-                                                ? 'Name ${ConstantString.naLabel}'
-                                                : userListController
-                                                    .userList[index]['name']
-                                                    .toString()
-                                                    .trim(),
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                              color: ConstantColor.primary,
-                                            ),
-                                          ),
-                                          SizedBox(height: width / 90),
-                                          Text(
-                                            userListController.userList[index]
-                                                            ['company_name'] ==
-                                                        null ||
-                                                    userListController
-                                                        .userList[index]
-                                                            ['company_name']
-                                                        .toString()
-                                                        .trim()
-                                                        .isEmpty
-                                                ? 'Company Name ${ConstantString.naLabel}'
-                                                : userListController
-                                                    .userList[index]
-                                                        ['company_name']
-                                                    .toString()
-                                                    .trim(),
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: ConstantColor.primaryDark,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          SizedBox(height: width / 90),
-                                          Container(
-                                            width: width,
-                                            margin: EdgeInsets.only(
-                                                right: Get.width / 30),
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(1000),
-                                              gradient: LinearGradient(
-                                                begin: Alignment.centerLeft,
-                                                end: Alignment.centerRight,
-                                                colors: [
-                                                  Colors.deepOrange
-                                                      .withAlpha(0),
-                                                  Colors.deepOrange.shade900
-                                                      .withAlpha(128),
-                                                ],
-                                              ),
-                                            ),
-                                            padding: EdgeInsets.fromLTRB(
-                                              width / 90,
-                                              width / 90,
-                                              width / 40,
-                                              width / 90,
-                                            ),
-                                            child: Text(
+                                      SizedBox(width: width * 0.02),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
                                               userListController.userList[index]
-                                                              ['category'] ==
+                                                              ['name'] ==
                                                           null ||
                                                       userListController
-                                                          .userList[index]
-                                                              ['category']
+                                                          .userList[index]['name']
                                                           .toString()
                                                           .trim()
                                                           .isEmpty
-                                                  ? 'Category ${ConstantString.naLabel}'
+                                                  ? 'Name ${ConstantString.naLabel}'
                                                   : userListController
-                                                      .userList[index]
-                                                          ['category']
+                                                      .userList[index]['name']
                                                       .toString()
                                                       .trim(),
-                                              style: const TextStyle(
-                                                fontSize: 19,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.deepOrange,
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w600,
+                                                color: ConstantColor.primary,
                                               ),
                                             ),
-                                          ),
-                                          SizedBox(height: width / 90),
-                                          Text(
-                                            userListController.userList[index]
-                                                            ['subcategory'] ==
-                                                        null ||
-                                                    userListController
-                                                        .userList[index]
-                                                            ['subcategory']
-                                                        .toString()
-                                                        .trim()
-                                                        .isEmpty
-                                                ? 'Sub Category ${ConstantString.naLabel}'
-                                                : userListController
-                                                    .userList[index]
-                                                        ['subcategory']
-                                                    .toString()
-                                                    .trim(),
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey.shade600,
+                                            SizedBox(height: width / 90),
+                                            Text(
+                                              userListController.userList[index]
+                                                              ['company_name'] ==
+                                                          null ||
+                                                      userListController
+                                                          .userList[index]
+                                                              ['company_name']
+                                                          .toString()
+                                                          .trim()
+                                                          .isEmpty
+                                                  ? 'Company Name ${ConstantString.naLabel}'
+                                                  : userListController
+                                                      .userList[index]
+                                                          ['company_name']
+                                                      .toString()
+                                                      .trim(),
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: ConstantColor.primaryDark,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ),
-                                        ],
+                                            SizedBox(height: width / 90),
+                                            Container(
+                                              width: width,
+                                              margin: EdgeInsets.only(
+                                                  right: Get.width / 30),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(1000),
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.centerLeft,
+                                                  end: Alignment.centerRight,
+                                                  colors: [
+                                                    Colors.deepOrange
+                                                        .withAlpha(0),
+                                                    Colors.deepOrange.shade900
+                                                        .withAlpha(128),
+                                                  ],
+                                                ),
+                                              ),
+                                              padding: EdgeInsets.fromLTRB(
+                                                width / 90,
+                                                width / 90,
+                                                width / 40,
+                                                width / 90,
+                                              ),
+                                              child: Text(
+                                                userListController.userList[index]
+                                                                ['category'] ==
+                                                            null ||
+                                                        userListController
+                                                            .userList[index]
+                                                                ['category']
+                                                            .toString()
+                                                            .trim()
+                                                            .isEmpty
+                                                    ? 'Category ${ConstantString.naLabel}'
+                                                    : userListController
+                                                        .userList[index]
+                                                            ['category']
+                                                        .toString()
+                                                        .trim(),
+                                                style: const TextStyle(
+                                                  fontSize: 19,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.deepOrange,
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(height: width / 90),
+                                            Text(
+                                              userListController.userList[index]
+                                                              ['subcategory'] ==
+                                                          null ||
+                                                      userListController
+                                                          .userList[index]
+                                                              ['subcategory']
+                                                          .toString()
+                                                          .trim()
+                                                          .isEmpty
+                                                  ? 'Sub Category ${ConstantString.naLabel}'
+                                                  : userListController
+                                                      .userList[index]
+                                                          ['subcategory']
+                                                      .toString()
+                                                      .trim(),
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                              // Black line divider
+                              if (index != userListController.userList.length - 1)
+                                Container(
+                                  height: 1,
+                                  color: const Color.fromARGB(255, 180, 180, 180),
+                                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                                ),
+                            ],
+                          );
+                        },
                       ),
               ),
       ),
@@ -760,7 +765,6 @@ class _InvitePreviewCard extends StatelessWidget {
                               letterSpacing: 1.2,
                             ),
                           ),
-                          
                         ],
                       ),
                     ),
