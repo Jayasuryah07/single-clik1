@@ -62,48 +62,60 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
     double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: ConstantColor.bgColor,
+      backgroundColor: const Color(0xffF8FAFC), // Light grey background
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: ConstantColor.primaryGradient,
-          ),
-        ),
+        backgroundColor: Colors.white,
+        elevation: 1, // Subtle shadow matching the image
+        shadowColor: Colors.black.withOpacity(0.1),
         leading: GestureDetector(
           onTap: () {
             Get.back();
           },
-          child: Center(
+          child: const Center(
             child: Icon(
-              Icons.arrow_back_outlined,
-              color: ConstantColor.whiteColor,
+              Icons.arrow_back,
+              color: Color(0xff1E40AF), // Dark blue back arrow
             ),
           ),
         ),
+        titleSpacing: 0,
         title: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(1000),
-              child: AppImageAsset(
-                image: "${ConstantString.userImgUrlPath}${widget.userData['photo']}",
-                isFile: false,
-                fit: BoxFit.cover,
-                height: 40,
-                width: 40,
+            /// Avatar
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xffE2E8F0), width: 1),
+              ),
+              child: ClipOval(
+                child: AppImageAsset(
+                  image: "${ConstantString.userImgUrlPath}${widget.userData['photo']}",
+                  isFile: false,
+                  fit: BoxFit.cover,
+                  height: 38,
+                  width: 38,
+                ),
               ),
             ),
-            SizedBox(width: width * 0.03),
+            const SizedBox(width: 12),
+            /// Title and Online Status
             Expanded(
-              child: Text(
-                widget.userData['name'] ?? "User",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: ConstantColor.whiteColor,
-                ),
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.userData['name'] ?? "User",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff0F172A), // Dark text
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                 
+                ],
               ),
             ),
           ],
@@ -131,8 +143,8 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
                         itemCount: messages.length,
                         controller: chatSentController.scrollController,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0, 
-                          vertical: 10,
+                          horizontal: 16.0, 
+                          vertical: 20,
                         ),
                         itemBuilder: (context, index) {
                           final chatItem = messages[messages.length - 1 - index];
@@ -191,14 +203,14 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
   Widget _buildMessageInput(double width) {
     return Obx(
       () => Container(
-        padding: const EdgeInsets.only(left: 15, right: 15, bottom: 15, top: 10),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24), // Extra bottom padding for safe area
         decoration: BoxDecoration(
-          color: ConstantColor.bgColor,
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 10,
-              offset: const Offset(0, -5),
+              offset: const Offset(0, -4),
             ),
           ],
         ),
@@ -208,16 +220,8 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(100.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xff000000).withAlpha(48),
-                      blurRadius: 0,
-                      offset: const Offset(0, 2),
-                      spreadRadius: 1,
-                    ),
-                  ],
+                  color: const Color(0xffF1F5F9), // Light gray pill background from image
+                  borderRadius: BorderRadius.circular(30.0),
                 ),
                 child: TextFormField(
                   controller: chatSentController.textController,
@@ -228,56 +232,51 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
                   onFieldSubmitted: (_) => _sendMessage(),
                   textInputAction: TextInputAction.send,
                   enabled: !chatSentController.isSending.value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: ConstantColor.blackColor,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xff0F172A),
                     fontWeight: FontWeight.w500,
                   ),
-                  decoration: InputDecoration(
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 15,
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 20,
                     ),
                     hintText: "Type your message...",
                     hintStyle: TextStyle(
-                      fontSize: 16,
-                      color: ConstantColor.grayColor,
+                      fontSize: 14,
+                      color: Color(0xff94A3B8),
                       fontWeight: FontWeight.w400,
                     ),
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(100.0),
-                      borderSide: BorderSide.none,
-                    ),
+                    border: InputBorder.none,
                   ),
                 ),
               ),
             ),
-            SizedBox(width: width * 0.02),
+            const SizedBox(width: 12),
             GestureDetector(
               onTap: chatSentController.isSending.value ? null : _sendMessage,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
+                height: 48,
+                width: 48,
                 decoration: BoxDecoration(
                   color: chatSentController.isSending.value 
                       ? Colors.grey 
-                      : ConstantColor.primary,
+                      : const Color(0xff1E40AF), // Dark blue from image
                   shape: BoxShape.circle,
                 ),
-                padding: const EdgeInsets.all(12),
                 child: chatSentController.isSending.value
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                    ? const Padding(
+                        padding: EdgeInsets.all(14.0),
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                          strokeWidth: 2.5,
                           color: Colors.white,
                         ),
                       )
-                    : Icon(
-                        Icons.send,
-                        color: ConstantColor.whiteColor,
+                    : const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
                         size: 20,
                       ),
               ),
@@ -323,39 +322,40 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0, 
-                vertical: 10.0,
-              ),
-              decoration: BoxDecoration(
-                color: isMe 
-                    ? (isOptimistic 
-                        ? const Color(0xffD5EDFB).withOpacity(0.6) 
-                        : const Color(0xffD5EDFB))
-                    : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16.0),
-                  topRight: const Radius.circular(16.0),
-                  bottomLeft: isMe ? const Radius.circular(16.0) : const Radius.circular(4.0),
-                  bottomRight: isMe ? const Radius.circular(4.0) : const Radius.circular(16.0),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14.0, 
+            vertical: 10.0,
+          ),
+          decoration: BoxDecoration(
+            color: isMe 
+                ? (isOptimistic 
+                    ? const Color(0xffDDE8FF).withOpacity(0.6) 
+                    : const Color(0xffDDE8FF)) // Light blue from image
+                : Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16.0),
+              topRight: const Radius.circular(16.0),
+              bottomLeft: Radius.circular(isMe ? 16.0 : 4.0),
+              bottomRight: Radius.circular(isMe ? 4.0 : 16.0),
+            ),
+            boxShadow: [
+              if (!isMe)
+                BoxShadow(
+                  color: const Color(0xff000000).withAlpha(10),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xff000000).withAlpha(15),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Row(
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isOptimistic && isMe) ...[
@@ -367,42 +367,46 @@ class _ChatSentScreenState extends State<ChatSentScreen> {
                         color: ConstantColor.primary.withOpacity(0.7),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                   ],
                   Flexible(
                     child: Text(
                       message,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w400,
                         fontSize: 14,
-                        color: ConstantColor.blackColor,
+                        color: Color(0xff0F172A), // Dark text inside bubble
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 4),
-            if (!isOptimistic)
-              Text(
-                timeString,
-                style: TextStyle(
-                  fontWeight: FontWeight.w400,
-                  fontSize: 10,
-                  color: ConstantColor.grayColor.withOpacity(0.8),
-                ),
-              ),
-            if (isOptimistic)
-              Text(
-                "Sending...",
-                style: TextStyle(
-                  fontWeight: FontWeight.w400,
-                  fontSize: 10,
-                  color: ConstantColor.grayColor.withOpacity(0.7),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-          ],
+              const SizedBox(height: 4),
+              /// Inner Timestamp & Read Receipt
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isOptimistic ? "Sending..." : timeString,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 10,
+                      color: const Color(0xff64748B),
+                      fontStyle: isOptimistic ? FontStyle.italic : FontStyle.normal,
+                    ),
+                  ),
+                  if (isMe && !isOptimistic) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.done_all_rounded, // Read Receipt checkmarks
+                      size: 14,
+                      color: Color(0xff3B82F6),
+                    ),
+                  ]
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );

@@ -76,44 +76,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       backgroundColor: ConstantColor.bgColor,
-      floatingActionButton: SizedBox(
-        width: Get.width,
-        child: Row(
-          children: [
-            const Spacer(),
-            Obx(
-              () => Transform.scale(
-                scale: scale.value,
-                child: GestureDetector(
-                  onTap: () {
-                    raiseInquiryDialog(context, homeController, height, width);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: ConstantColor.primaryGradient,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: ConstantColor.primary.withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(15),
-                    child: Image.asset(
-                      "assets/icons/icon_add.png",
-                      height: 25,
-                      width: 25,
-                      color: ConstantColor.whiteColor,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      
       body: Obx(
         () => homeController.isLoading.value
             ? const Center(
@@ -392,178 +355,217 @@ class _HomeScreenState extends State<HomeScreen>
                                                           )
                                                     : const SizedBox(),
                                         itemBuilder: (context, index) {
-                                          return GestureDetector(
-                                            onTap: () {
-                                              debugPrint('Id: ${homeController.allList[index]['id']}');
-                                              Get.to(() => UserDetailsScreen(
-                                                    id: homeController
-                                                        .allList[index]['id']
-                                                        .toString(),
-                                                  ));
-                                            },
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.all(16),
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 8),
-                                              decoration: BoxDecoration(
-                                                color: ConstantColor.whiteColor,
-                                                borderRadius: BorderRadius.circular(16),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withOpacity(0.04),
-                                                    blurRadius: 10,
-                                                    offset: const Offset(0, 4),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Container(
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                        color: const Color(0xff0B3C9B),
-                                                        width: 2.5,
-                                                      ),
-                                                      shape: BoxShape.circle,
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Colors.black.withOpacity(0.06),
-                                                          blurRadius: 8,
-                                                          offset: const Offset(0, 3),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: ClipOval(
-                                                      child: AppImageAsset(
-                                                        image:
-                                                            "${ConstantString.userImgUrlPath}${homeController.allList[index]['photo']}",
-                                                        isFile: false,
-                                                        fit: BoxFit.cover,
-                                                        height: width / 3.8,
-                                                        width: width / 3.8,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: width * 0.035),
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          (homeController.allList[
-                                                                      index]
-                                                                  ['name'] ??
-                                                              ""),
-                                                          style: const TextStyle(
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                            color: Color(0xff1E293B),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(height: 4),
-                                                        Text(
-                                                          homeController.allList[
-                                                                      index][
-                                                                  'company_name'] ??
-                                                              "",
-                                                          style: TextStyle(
-                                                            fontSize: 13,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: Colors.grey.shade600,
-                                                          ),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                        const SizedBox(height: 6),
-                                                        Container(
-                                                          decoration: BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(6),
-                                                            color: const Color(0xffFFF2E6),
-                                                          ),
-                                                          padding: const EdgeInsets.symmetric(
-                                                            horizontal: 10,
-                                                            vertical: 4,
-                                                          ),
-                                                          child: Text(
-                                                            homeController.allList[index]
-                                                                            [
-                                                                            'category'] ==
-                                                                        null ||
-                                                                    homeController
-                                                                        .allList[
-                                                                            index]
-                                                                            [
-                                                                            'category']
-                                                                        .toString()
-                                                                        .trim()
-                                                                        .isEmpty
-                                                                ? 'Category ${ConstantString.naLabel}'
-                                                                : homeController
-                                                                    .allList[
-                                                                        index][
-                                                                        'category']
-                                                                    .toString()
-                                                                    .toUpperCase(),
-                                                            style: const TextStyle(
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w800,
-                                                                color: Colors
-                                                                    .deepOrange,
-                                                                letterSpacing:
-                                                                    1.2),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(height: 4),
-                                                        Text(
-                                                          homeController.allList[
-                                                                              index]
-                                                                          [
-                                                                          'subcategory'] ==
-                                                                      null ||
-                                                                  homeController
-                                                                      .allList[
-                                                                          index]
-                                                                          [
-                                                                          'subcategory']
-                                                                      .toString()
-                                                                      .trim()
-                                                                      .isEmpty
-                                                              ? 'Sub Category ${ConstantString.naLabel}'
-                                                              : homeController
-                                                                  .allList[
-                                                                      index][
-                                                                      'subcategory']
-                                                                  .toString(),
-                                                          style: TextStyle(
-                                                            fontSize: 13,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: Colors
-                                                                .grey.shade500,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        },
+  return GestureDetector(
+    onTap: () {
+      debugPrint('Id: ${homeController.allList[index]['id']}');
+      Get.to(() => UserDetailsScreen(
+            id: homeController.allList[index]['id'].toString(),
+          ));
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: ConstantColor.whiteColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          height: 128,
+          child: Stack(
+            children: [
+              /// ── Left small wave decoration ──
+              Positioned(
+                left: 0,
+                bottom: 0,
+                width: 90,
+                height: 45,
+                child: CustomPaint(
+                  painter: _LeftWavePainter(),
+                ),
+              ),
+
+              /// ── Right blue wave decoration (Two waves) ──
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: width * 0.48,
+                child: CustomPaint(
+                  painter: _WavePainter(),
+                ),
+              ),
+
+              /// ── Chevron button ──
+              Positioned(
+                right: 16,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Container(
+                    height: 36,
+                    width: 36,
+                    decoration: BoxDecoration(
+                      color: ConstantColor.whiteColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xff0B3C9B),
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+
+              /// ── Content Row ──
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    /// Avatar
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xffF0F4FF),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xff0B3C9B).withOpacity(0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: AppImageAsset(
+                          image:
+                              "${ConstantString.userImgUrlPath}${homeController.allList[index]['photo']}",
+                          isFile: false,
+                          fit: BoxFit.cover,
+                          height: width / 5.5,
+                          width: width / 5.5,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 14),
+
+                    /// Text content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          /// Name
+                          Text(
+                            (homeController.allList[index]['name'] ?? ""),
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xff0F172A),
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const SizedBox(height: 3),
+
+                          /// Company name
+                          Text(
+                            homeController.allList[index]['company_name'] ?? "",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xff64748B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          /// Category chip
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xffEEF2FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            child: Text(
+                              homeController.allList[index]['category'] == null ||
+                                      homeController.allList[index]['category']
+                                          .toString()
+                                          .trim()
+                                          .isEmpty
+                                  ? 'Category ${ConstantString.naLabel}'
+                                  : homeController.allList[index]['category']
+                                      .toString()
+                                      .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xff0B3C9B),
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          /// Sub-category
+                          Text(
+                            homeController.allList[index]['subcategory'] == null ||
+                                    homeController.allList[index]['subcategory']
+                                        .toString()
+                                        .trim()
+                                        .isEmpty
+                                ? 'Sub Category ${ConstantString.naLabel}'
+                                : homeController.allList[index]['subcategory']
+                                    .toString(),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xff94A3B8),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    /// Right spacer so text doesn't overlap chevron
+                    const SizedBox(width: 44),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+},
                                       ),
                                     ],
                                   ),
@@ -1283,4 +1285,73 @@ class _HomeScreenState extends State<HomeScreen>
   );
 }
 
+}
+class _WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // ── Layer 1 (Lightest / Background Wave) ──
+    final path1 = Path();
+    path1.moveTo(size.width * 0.1, size.height);
+    path1.cubicTo(
+      size.width * 0.6, size.height * 0.75, // Lift off
+      size.width * 0.6, size.height * 0.15,  // Flatten out above chevron
+      size.width, size.height * 0.15,
+    );
+    path1.lineTo(size.width, size.height);
+    path1.lineTo(size.width * 0.1, size.height);
+    path1.close();
+    canvas.drawPath(path1, Paint()..color = const Color(0xffDDE8FF));
+    // ── Layer 2 (Middle Wave) ──
+final pathMiddle = Path();
+
+pathMiddle.moveTo(size.width * 0.28, size.height);
+
+pathMiddle.cubicTo(
+  size.width * 0.6, size.height * 0.78,
+  size.width * 0.68, size.height * 0.35,
+  size.width, size.height * 0.35,
+);
+
+pathMiddle.lineTo(size.width, size.height);
+pathMiddle.close();
+
+canvas.drawPath(
+  pathMiddle,
+  Paint()..color = const Color(0xffC7D8F8),
+);
+    // ── Layer 2 (Darker / Foreground Wave) ──
+    final path2 = Path();
+    path2.moveTo(size.width * 0.45, size.height);
+    path2.cubicTo(
+      size.width * 0.65, size.height * 0.8,  // Lift off
+      size.width * 0.75, size.height * 0.55, // Flatten out below chevron
+      size.width, size.height * 0.55,
+    );
+    path2.lineTo(size.width, size.height);
+    path2.close();
+    canvas.drawPath(path2, Paint()..color = const Color.fromARGB(255, 204, 217, 245));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _LeftWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path();
+    path.moveTo(0, size.height * 0.1); // Start midway up the left edge
+    path.quadraticBezierTo(
+      size.width * 0.2, size.height * 1.2, // Sweep down towards bottom right
+      size.width, size.height, // End at bottom right of the 90x45 box
+    );
+    path.lineTo(0, size.height);
+    path.close();
+    
+    // Using the lightest blue to match the reference images
+    canvas.drawPath(path, Paint()..color = const Color(0xffDDE8FF));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

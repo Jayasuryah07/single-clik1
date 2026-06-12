@@ -8,6 +8,7 @@ import 'package:single_clik/controller/home_controller/enquiries_sent_controller
 import 'package:single_clik/controller/home_controller/home_controller.dart';
 import 'package:single_clik/screens/home_screens/enquiries_sent_screens/enquiries_sent_group_screen.dart';
 import '../../../widget/dialogs.dart';
+import '../../../widget/app_image_assets.dart';
 
 class EnquiriesSentScreen extends StatefulWidget {
   const EnquiriesSentScreen({super.key});
@@ -84,10 +85,8 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
-
     return Scaffold(
-      backgroundColor: ConstantColor.bgColor,
+      backgroundColor: const Color(0xffF8FAFC), // Matches the new UI background
       body: Obx(
         () => (enquiriesSentController.isLoading.value && 
                enquiriesSentController.openSentList.isEmpty && 
@@ -96,49 +95,21 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
                 child: CircularProgressIndicator(),
               )
             : Stack(
-                      children: [
-                        TabBarView(
-                          controller: enquiriesSentController.tabController,
-                          children: [
-                            _buildOpenTab(height),
-                            _buildClosedTab(height),
-                          ],
-                        ),
-                        // Auto-refresh indicator
-                        if (enquiriesSentController.isAutoRefreshing.value)
-                          Positioned(
-                            bottom: 16,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: ConstantColor.primary,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                children: [
+                  TabBarView(
+                    controller: enquiriesSentController.tabController,
+                    children: [
+                      _buildOpenTab(),
+                      _buildClosedTab(),
+                    ],
+                  ),
+                ],
+              ),
       ),
     );
   }
   
-  Widget _buildOpenTab(double height) {
+  Widget _buildOpenTab() {
     return RefreshIndicator(
       onRefresh: () async {
         await enquiriesSentController.postSentApi("1", isAutoRefresh: false);
@@ -147,32 +118,30 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
       backgroundColor: ConstantColor.whiteColor,
       color: ConstantColor.primary,
       child: enquiriesSentController.openSentList.isEmpty
-          ? ListView(
-              children: [
-                SizedBox(
-                  height: Get.height / 2.8,
-                ),
-                Center(
-                  child: Text(
-                    ConstantString.dataNotFoundLabel,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: ConstantColor.blackColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            )
+          ? _buildEmptyState()
           : ListView.builder(
+              padding: const EdgeInsets.only(top: 8, bottom: 20),
               itemCount: enquiriesSentController.openSentList.length,
               shrinkWrap: true,
               itemBuilder: (context, index) {
                 final enquiry = enquiriesSentController.openSentList[index];
-                final hasUnread = (enquiry['unread_reply_count'] != null && 
-                                    enquiry['unread_reply_count'] > 0);
                 
-                return GestureDetector(
+                return _buildEnquiryCard(
+                  itemData: enquiry,
+                  isOpen: true,
+                  onClose: () {
+                    Dialogs.dialogs.areYouSureAlertDialog(
+                      context: context,
+                      title: 'Close Enquiry?',
+                      description: 'Do you want to close this enquiry?',
+                      onPressed: () async {
+                        Get.back();
+                        await enquiriesSentController.postCloseSentApi(
+                          enquiry['id'].toString()
+                        );
+                      },
+                    );
+                  },
                   onTap: () async {
                     await Get.to(
                       () => EnquiriesSentGroupScreen(
@@ -189,146 +158,13 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
                       await homeController.getSentEnquiriesUnreadCount("1");
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20, 
-                      vertical: 12,
-                    ),
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 8, 
-                      horizontal: 15,
-                    ),
-                    decoration: BoxDecoration(
-                      color: hasUnread 
-                          ? ConstantColor.primary.withOpacity(0.05)
-                          : ConstantColor.whiteColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: hasUnread
-                          ? Border.all(
-                              color: ConstantColor.primary,
-                              width: 1.5,
-                            )
-                          : null,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                "${enquiry['category'] == null || enquiry['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiry['category']} (${enquiry['subcategory'] == null || enquiry['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiry['subcategory']})",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: ConstantColor.blackColor,
-                                ),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                if (hasUnread)
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      enquiry['unread_reply_count'].toString(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                GestureDetector(
-                                  onTap: () async {
-                                    Dialogs.dialogs.areYouSureAlertDialog(
-                                      context: context,
-                                      title: 'Close Enquiry?',
-                                      description: 'Do you want to close this enquiry?',
-                                      onPressed: () async {
-                                        Get.back();
-                                        await enquiriesSentController.postCloseSentApi(
-                                          enquiry['id'].toString()
-                                        );
-                                      },
-                                    );
-                                  },
-                                  child: const SizedBox(
-                                    height: 30,
-                                    width: 30,
-                                    child: Icon(
-                                      Icons.close,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        if (enquiry['enq_text'] != null && 
-                            enquiry['enq_text'].toString().trim().isNotEmpty) ...[
-                          SizedBox(height: height * 0.01),
-                          Text(
-                            enquiry['enq_text'] ?? "",
-                            style: TextStyle(
-                              color: ConstantColor.blackColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                        SizedBox(height: height * 0.01),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              enquiry['status'] ?? "",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                color: enquiry['status'] == 'Open'
-                                    ? ConstantColor.greenColor
-                                    : ConstantColor.grayColor,
-                              ),
-                            ),
-                            Text(
-                              DateFormat('dd-MM-yyyy').format(
-                                DateTime.parse(
-                                  enquiry['created_at'] ?? DateTime.now().toString()
-                                )
-                              ),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                color: ConstantColor.grayColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
                 );
               },
             ),
     );
   }
   
-  Widget _buildClosedTab(double height) {
+  Widget _buildClosedTab() {
     return RefreshIndicator(
       onRefresh: () async {
         await enquiriesSentController.postSentApi("2", isAutoRefresh: false);
@@ -336,30 +172,17 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
       backgroundColor: ConstantColor.whiteColor,
       color: ConstantColor.primary,
       child: enquiriesSentController.closeSentList.isEmpty
-          ? ListView(
-              children: [
-                SizedBox(
-                  height: Get.height / 2.8,
-                ),
-                Center(
-                  child: Text(
-                    ConstantString.dataNotFoundLabel,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: ConstantColor.blackColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            )
+          ? _buildEmptyState()
           : ListView.builder(
+              padding: const EdgeInsets.only(top: 8, bottom: 20),
               itemCount: enquiriesSentController.closeSentList.length,
               shrinkWrap: true,
               itemBuilder: (context, index) {
                 final enquiry = enquiriesSentController.closeSentList[index];
                 
-                return GestureDetector(
+                return _buildEnquiryCard(
+                  itemData: enquiry,
+                  isOpen: false,
                   onTap: () async {
                     await Get.to(
                       () => EnquiriesSentGroupScreen(
@@ -374,77 +197,409 @@ class EnquiriesSentScreenState extends State<EnquiriesSentScreen> {
                       await enquiriesSentController.postSentApi("2", isAutoRefresh: false);
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20, 
-                      vertical: 12,
-                    ),
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 8, 
-                      horizontal: 15,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ConstantColor.whiteColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "${enquiry['category'] == null || enquiry['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiry['category']} (${enquiry['subcategory'] == null || enquiry['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiry['subcategory']})",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: ConstantColor.blackColor,
-                          ),
-                        ),
-                        if (enquiry['enq_text'] != null && 
-                            enquiry['enq_text'].toString().trim().isNotEmpty) ...[
-                          SizedBox(height: height * 0.01),
-                          Text(
-                            enquiry['enq_text'] ?? "",
-                            style: TextStyle(
-                              color: ConstantColor.blackColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                        SizedBox(height: height * 0.01),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              enquiry['status'] ?? "",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                color: ConstantColor.grayColor,
-                              ),
-                            ),
-                            Text(
-                              DateFormat('dd-MM-yyyy').format(
-                                DateTime.parse(
-                                  enquiry['created_at'] ?? DateTime.now().toString()
-                                )
-                              ),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                color: ConstantColor.grayColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
                 );
               },
             ),
     );
   }
+
+  /// Reusable empty state logic
+  Widget _buildEmptyState() {
+    return ListView(
+      children: [
+        SizedBox(height: Get.height / 2.8),
+        Center(
+          child: Text(
+            ConstantString.dataNotFoundLabel,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: ConstantColor.blackColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// ── THE NEW UI CARD DESIGN ──
+  Widget _buildEnquiryCard({
+    required Map<dynamic, dynamic> itemData,
+    required bool isOpen,
+    required VoidCallback onTap,
+    VoidCallback? onClose, // Optional close button for open enquiries
+  }) {
+    // Formatting variables
+    String category = itemData['category'] == null || itemData['category'].toString().trim().isEmpty
+        ? 'Category ${ConstantString.naLabel}'
+        : itemData['category'].toString();
+
+    String subCategory = itemData['subcategory'] == null || itemData['subcategory'].toString().trim().isEmpty
+        ? 'Sub Category ${ConstantString.naLabel}'
+        : itemData['subcategory'].toString();
+
+    String desc = itemData['enq_text'] ?? "No description provided";
+
+    String formattedDate = "";
+    try {
+      formattedDate = DateFormat('dd MMM yyyy').format(
+          DateTime.parse(itemData['created_at'].toString()));
+    } catch (e) {
+      formattedDate = DateFormat('dd MMM yyyy').format(DateTime.now());
+    }
+
+    int unreadCount = int.tryParse(itemData['unread_reply_count'].toString()) ?? 0;
+    bool hasUnread = unreadCount > 0;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: hasUnread
+              ? Border.all(color: ConstantColor.primary.withOpacity(0.5), width: 1.5)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              /// ── Bottom Wave Decoration ──
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 120,
+                child: CustomPaint(
+                  painter: _BottomWavePainter(),
+                ),
+              ),
+
+              /// ── Card Content ──
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// Avatar
+                        Container(
+                          height: 52,
+                          width: 52,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            border: Border.all(
+                              color: const Color(0xffA8C0F0),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: itemData['photo'] != null && itemData['photo'].toString().isNotEmpty
+                                ? AppImageAsset(
+                                    image: "${ConstantString.userImgUrlPath}${itemData['photo']}",
+                                    isFile: false,
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Center(
+                                    child: Icon(
+                                      Icons.assignment_outlined, 
+                                      color: Color(0xffA8C0F0),
+                                      size: 24,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        /// Main Texts
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                category,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xff0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                subCategory,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xff64748B),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                desc,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xff94A3B8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        /// Status Badge, Close Button & Unread Logic
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                /// Close 'X' Button (Only if open)
+                                if (isOpen && onClose != null)
+                                  GestureDetector(
+                                    onTap: onClose,
+                                    child: Container(
+                                      margin: const EdgeInsets.only(right: 8),
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                /// Open/Closed Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isOpen
+                                        ? const Color(0xffE8F5E9)
+                                        : const Color(0xffF1F5F9),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    isOpen ? "Open" : "Closed",
+                                    style: TextStyle(
+                                      color: isOpen
+                                          ? const Color(0xff2E7D32)
+                                          : const Color(0xff64748B),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            /// Unread Badge Indicator
+                            if (hasUnread) ...[
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xffE53945),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  unreadCount.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            ]
+                          ],
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    /// Bottom Row (Date & Button)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        /// Date
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 15,
+                              color: Color(0xff64748B),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              formattedDate,
+                              style: const TextStyle(
+                                color: Color(0xff64748B),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        /// View Details Button
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xff4F86FF), // Light Blue
+                                Color(0xff0B3C9B), // Primary Blue
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "View Details",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom painter for the triple-layered blue waves at the bottom of the card
+class _BottomWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+
+    /// BACK WAVE
+    final path1 = Path();
+    path1.moveTo(0, size.height * 0.55);
+
+    path1.quadraticBezierTo(
+      size.width * 0.25,
+      size.height * 0.15,
+      size.width * 0.55,
+      size.height * 0.55,
+    );
+
+    path1.quadraticBezierTo(
+      size.width * 0.80,
+      size.height * 0.90,
+      size.width,
+      size.height * 0.25,
+    );
+
+    path1.lineTo(size.width, size.height);
+    path1.lineTo(0, size.height);
+    path1.close();
+
+    canvas.drawPath(
+      path1,
+      Paint()..color = const Color(0xFFF4F7FD)
+    );
+
+    /// MIDDLE WAVE
+    final path2 = Path();
+    path2.moveTo(0, size.height * 0.80);
+
+    path2.quadraticBezierTo(
+      size.width * 0.30,
+      size.height * 1.00,
+      size.width * 0.60,
+      size.height * 0.55,
+    );
+
+    path2.quadraticBezierTo(
+      size.width * 0.82,
+      size.height * 0.18,
+      size.width,
+      size.height * 0.42,
+    );
+
+    path2.lineTo(size.width, size.height);
+    path2.lineTo(0, size.height);
+    path2.close();
+
+    canvas.drawPath(
+      path2,
+      Paint()..color = const Color(0xFFE7EEF9),
+    );
+
+    /// FRONT WAVE (RIGHT SIDE ONLY)
+    final path3 = Path();
+
+    path3.moveTo(size.width * 0.40, size.height);
+
+    path3.quadraticBezierTo(
+      size.width * 0.68,
+      size.height * 0.55,
+      size.width * 0.84,
+      size.height * 0.32,
+    );
+
+    path3.quadraticBezierTo(
+      size.width * 0.92,
+      size.height * 0.20,
+      size.width,
+      size.height * 0.32,
+    );
+
+    path3.lineTo(size.width, size.height);
+    path3.close();
+
+    canvas.drawPath(
+      path3,
+      Paint()..color = const Color(0xFFDCE7F7)
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -467,7 +467,7 @@ class UserDetailsScreenState extends State<UserDetailsScreen> {
                                           backgroundColor: Colors.transparent,
                                           elevation: 0,
                                         ),
-                                        SizedBox(height: width * 0.03),
+                                       
                                         Center(
                                           child: GestureDetector(
                                             onTap: () {
@@ -561,7 +561,7 @@ class UserDetailsScreenState extends State<UserDetailsScreen> {
                                                   ),
                                                 ],
                                               ),
-                                        SizedBox(height: height * 0.01),
+                                        SizedBox(height: height * 0.01)
                                       ],
                                     ),
                                   ),

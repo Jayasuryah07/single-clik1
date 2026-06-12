@@ -26,7 +26,7 @@ import '../widget/app_image_assets.dart';
 
 class HomeTabBarScreen extends StatefulWidget {
   final int? selectTab;
-
+  
   const HomeTabBarScreen({
     super.key,
     this.selectTab = 0,
@@ -36,8 +36,10 @@ class HomeTabBarScreen extends StatefulWidget {
   State<HomeTabBarScreen> createState() => HomeTabBarScreenState();
 }
 
-class HomeTabBarScreenState extends State<HomeTabBarScreen> {
-
+class HomeTabBarScreenState extends State<HomeTabBarScreen>
+    with SingleTickerProviderStateMixin {
+ late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
   List homeTabBarList = [
     {"title": "Home", "image": "assets/icons/hm1.png"},
     {"title": "Received", "image": "assets/icons/rec.png"},
@@ -57,6 +59,22 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
   @override
   void initState() {
     super.initState();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.4,
+    ).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         homeController.selectTab.value = widget.selectTab ?? 0;
@@ -74,11 +92,11 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
         };
       } else {
         homeTabBarList[1] = {
-          "title": "Received",
+          "title": "Recd Enquiry",
           "image": "assets/icons/rec.png"
         };
         homeTabBarList[2] = {
-          "title": "Send Enquiry",
+          "title": "Sent Enquiry",
           "image": "assets/icons/sen.png"
         };
       }
@@ -111,11 +129,11 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
           if (mounted) {
             setState(() {
               homeTabBarList[1] = {
-                "title": "Received",
+                "title": "Recd Enquiry",
                 "image": "assets/icons/rec.png"
               };
               homeTabBarList[2] = {
-                "title": "Send Enquiry",
+                "title": "Sent Enquiry",
                 "image": "assets/icons/sen.png"
               };
             });
@@ -137,7 +155,11 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
       },
     );
   }
-
+ @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
   Future<void> openPopupSliderList() async {
     await homeController.postDashboardAdvPopUpSliderApi().then((value) {
       if (homeController.allAdvPopUpSliderList.isNotEmpty) {
@@ -309,6 +331,8 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
 
   @override
   Widget build(BuildContext context) {
+     double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
@@ -322,6 +346,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
         }
       },
       child: Scaffold(
+        extendBody: true,
         key: homeController.scaffoldKey,
         backgroundColor: Colors.white,
         body: Obx(
@@ -329,7 +354,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
         ),
         drawer: const AppDrawer(),
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight + 48),
+          preferredSize: const Size.fromHeight(kToolbarHeight + 30),
           child: Obx(() {
             return AppBar(
               backgroundColor: Colors.transparent,
@@ -467,7 +492,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
                                 ? "Enquiries Received"
                                 : "My Enquiries",
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.w400,
                           color: ConstantColor.whiteColor,
                         ),
@@ -477,302 +502,267 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
             );
           }),
         ),
-        bottomNavigationBar: Container(
-  height: 65,
-  decoration: BoxDecoration(
-    gradient: ConstantColor.primaryGradient,
-    borderRadius: const BorderRadius.only(
-      topLeft: Radius.circular(10),
-      topRight: Radius.circular(10 ),
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withAlpha(23),
-        blurRadius: 10,
-        spreadRadius: 10,
-      ),
-    ],
-  ),
-  child: ClipRRect(
-    borderRadius: const BorderRadius.only(
-      topLeft: Radius.circular(10),
-      topRight: Radius.circular(10),
-    ),
-    child: Container(
-      color: const Color.fromARGB(0, 201, 59, 59), // Make the clipped area transparent to show gradient
-      child: Obx(
-        () => Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
+       bottomNavigationBar: Container(
+  color: Colors.transparent, // Required for the floating gap effect
+  padding: const EdgeInsets.only(left: 16, bottom: 24, right: 0),
+  height: 80,
+  child: Row(
+    children: [
+      /// ── Left Floating Pill (3 Tabs) ──
+      Expanded(
+        child: Container(
+          decoration: BoxDecoration(
+          color: Colors.white,
+            borderRadius: BorderRadius.circular(40),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Obx(
+            () => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(
                 homeTabBarList.length,
-                (index) => Expanded(
-                  child: InkWell(
-                    onTap: () async {
-                      homeController.isSearchOpen.value = false;
-                      homeController.tabController.index = 0;
-                      enquiriesReceivedController.tabController.index = 0;
-                      enquiriesSentController.tabController.index = 0;
-                      if (homeController.selectTab.value != 0) {
-                        homeController.searchController.value.clear();
-                        homeController.searchProduct('');
-                      }
-                      if (index == 1) {
-                        if (homeController.userData['user_type'] != 2) {
-                          EasyLoading.show(
-                            status: ConstantString.pleaseWaitLabel,
-                          );
+                (index) {
+                  final isSelected = homeController.selectTab.value == index;
+                  
+                  // Keep original logo color for 'Join as', otherwise use Red/Grey tint
+                  Color? iconColor;
+                  if (index == 1 && homeController.userData['user_type'] != 2) {
+                    iconColor = null; 
+                  } else {
+                    iconColor = isSelected ? const Color.fromARGB(255, 106, 133, 231) : const Color(0xff8A95A5);
+                  }
 
-                          // Call new API to check business profile status
-                          final checkResult = await businessSignUpController.checkProfileBusinessProfileApi();
-                          EasyLoading.dismiss();
+                Widget styledIcon = SizedBox(
+  height: 16,
+  width: 16,
+  child: Image.asset(
+    homeTabBarList[index]['image'],
+    color: isSelected
+        ? const Color(0xff0B3C9B) // Blue when selected
+        : const Color(0xff8A95A5), // Grey when not selected
+  ),
+);
 
-                          if (checkResult['status'] == true) {
-                            if (context.mounted) {
-                              _showAlreadySubmittedDialog(context);
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        // ── START OF YOUR ORIGINAL ON-TAP LOGIC ──
+                        homeController.isSearchOpen.value = false;
+                        homeController.tabController.index = 0;
+                        enquiriesReceivedController.tabController.index = 0;
+                        enquiriesSentController.tabController.index = 0;
+                        if (homeController.selectTab.value != 0) {
+                          homeController.searchController.value.clear();
+                          homeController.searchProduct('');
+                        }
+                        if (index == 1) {
+                          if (homeController.userData['user_type'] != 2) {
+                            EasyLoading.show(status: ConstantString.pleaseWaitLabel);
+                            final checkResult = await businessSignUpController.checkProfileBusinessProfileApi();
+                            EasyLoading.dismiss();
+
+                            if (checkResult['status'] == true) {
+                              if (context.mounted) {
+                                _showAlreadySubmittedDialog(context);
+                              }
+                            } else {
+                              if (homeController.userData['category'] != null &&
+                                  homeController.userData['category'].toString().trim().isNotEmpty) {
+                                EasyLoading.showError(ConstantString.alreadyJoinAsMsg);
+                              } else {
+                                EasyLoading.show(status: ConstantString.pleaseWaitLabel);
+                                businessSignUpController.isButtonLoading.value = false;
+                                businessSignUpController.txtFullName.value.clear();
+                                businessSignUpController.txtCompanyName.value.clear();
+                                businessSignUpController.txtMobileNo.value.clear();
+                                businessSignUpController.txtEmailId.value.clear();
+                                businessSignUpController.txtWhatsappNo.value.clear();
+                                businessSignUpController.txtWebsite.value.clear();
+                                businessSignUpController.txtAbout.value.clear();
+                                businessSignUpController.txtArea.value.clear();
+                                businessSignUpController.txtReferredCode.value.clear();
+                                businessSignUpController.txtOtherCategory.value.clear();
+                                businessSignUpController.txtOtherSubCategory.value.clear();
+                                businessSignUpController.selectedProfileType.value = '';
+                                businessSignUpController.selectedCategory.value = {};
+                                businessSignUpController.selectedSubCategory.value = {};
+                                String photoPath = await NetworkToFileImage.networkToFileImage
+                                    .getNetworkToFileImage(
+                                        url: '${ConstantString.userImgUrlPath}${homeController.userData['photo']}');
+                                businessSignUpController.filePath.value = photoPath;
+                                try {
+                                  businessSignUpController.categoryDataList.value =
+                                      await businessSignUpController.getCategoryDataApi();
+                                  businessSignUpController.subCategoryDataList.value = [];
+                                  EasyLoading.dismiss();
+                                } on TimeoutException catch (error) {
+                                  businessSignUpController.categoryDataList.value = [];
+                                  businessSignUpController.subCategoryDataList.value = [];
+                                  EasyLoading.dismiss();
+                                  ShowToast.showToast(error.message.toString(), showSuccess: false);
+                                } on SocketException catch (error) {
+                                  businessSignUpController.categoryDataList.value = [];
+                                  businessSignUpController.subCategoryDataList.value = [];
+                                  EasyLoading.dismiss();
+                                  ShowToast.showToast(error.message.toString(), showSuccess: false);
+                                } catch (error) {
+                                  businessSignUpController.categoryDataList.value = [];
+                                  businessSignUpController.subCategoryDataList.value = [];
+                                  debugPrint(error.toString());
+                                  EasyLoading.dismiss();
+                                  ShowToast.showToast('Something went wrong.', showSuccess: false);
+                                }
+                                EasyLoading.dismiss();
+                                await Get.to(() => const BusinessSignUpPage());
+                                await getUserData();
+                              }
                             }
                           } else {
-                            if (homeController.userData['category'] != null &&
-                                homeController.userData['category']
-                                    .toString()
-                                    .trim()
-                                    .isNotEmpty) {
-                              EasyLoading.showError(
-                                  ConstantString.alreadyJoinAsMsg);
-                            } else {
-                              EasyLoading.show(
-                                status: ConstantString.pleaseWaitLabel,
-                              );
-                              businessSignUpController.isButtonLoading.value =
-                                  false;
-                              businessSignUpController.txtFullName.value
-                                  .clear();
-                              businessSignUpController.txtCompanyName.value
-                                  .clear();
-                              businessSignUpController.txtMobileNo.value
-                                  .clear();
-                              businessSignUpController.txtEmailId.value
-                                  .clear();
-                              businessSignUpController.txtWhatsappNo.value
-                                  .clear();
-                              businessSignUpController.txtWebsite.value
-                                  .clear();
-                              businessSignUpController.txtAbout.value.clear();
-                              businessSignUpController.txtArea.value.clear();
-                              businessSignUpController.txtReferredCode.value
-                                  .clear();
-                              businessSignUpController.txtOtherCategory.value
-                                  .clear();
-                              businessSignUpController
-                                  .txtOtherSubCategory.value
-                                  .clear();
-                              businessSignUpController
-                                  .selectedProfileType.value = '';
-                              businessSignUpController
-                                  .selectedCategory.value = {};
-                              businessSignUpController
-                                  .selectedSubCategory.value = {};
-                              String photoPath = await NetworkToFileImage
-                                  .networkToFileImage
-                                  .getNetworkToFileImage(
-                                      url:
-                                          '${ConstantString.userImgUrlPath}${homeController.userData['photo']}');
-                              businessSignUpController.filePath.value =
-                                  photoPath;
-                              try {
-                                businessSignUpController
-                                        .categoryDataList.value =
-                                    await businessSignUpController
-                                        .getCategoryDataApi();
-                                businessSignUpController
-                                    .subCategoryDataList.value = [];
-                                EasyLoading.dismiss();
-                              } on TimeoutException catch (error) {
-                                businessSignUpController
-                                    .categoryDataList.value = [];
-                                businessSignUpController
-                                    .subCategoryDataList.value = [];
-                                EasyLoading.dismiss();
-                                ShowToast.showToast(
-                                  error.message.toString(),
-                                  showSuccess: false,
-                                );
-                              } on SocketException catch (error) {
-                                businessSignUpController
-                                    .categoryDataList.value = [];
-                                businessSignUpController
-                                    .subCategoryDataList.value = [];
-                                EasyLoading.dismiss();
-                                ShowToast.showToast(
-                                  error.message.toString(),
-                                  showSuccess: false,
-                                );
-                              } catch (error) {
-                                businessSignUpController
-                                    .categoryDataList.value = [];
-                                businessSignUpController
-                                    .subCategoryDataList.value = [];
-                                debugPrint(error.toString());
-                                EasyLoading.dismiss();
-                                ShowToast.showToast(
-                                  'Something went wrong.',
-                                  showSuccess: false,
-                                );
-                              }
-                              EasyLoading.dismiss();
-                              await Get.to(
-                                () => const BusinessSignUpPage(),
-                              );
-                              await getUserData();
-                            }
+                            enquiriesReceivedController.markOpenEnquiriesAsSeen();
+                            homeController.selectTab.value = index;
                           }
                         } else {
-                          // Business user tapping Received tab — mark as seen
-                          enquiriesReceivedController.markOpenEnquiriesAsSeen();
                           homeController.selectTab.value = index;
-                          // setState(() {});
                         }
-                      } else {
-                        homeController.selectTab.value = index;
-                        // setState(() {});
-                      }
-                      if (homeController.userData['user_type'] == 2) {
-                        await homeController
-                            .getSentEnquiriesUnreadCount("1");
-                      }
-                    },
-                    child: Container(
-                      width: Get.width,
-                      color: Colors.transparent,
-                      child: Column(
-                        children: [
-                          index == 1 && homeController.userData['user_type'] == 2
-                              ? Obx(() {
-                                  final newCount = enquiriesReceivedController.newOpenCount.value;
-                                  final unreadCount = homeController.receivedUnreadCount.value;
-                                  // Show badge if either new enquiries arrived or there are unread
-                                  final badgeCount = newCount > 0 ? newCount : unreadCount;
-                                  return badgeCount == 0
-                                      ? SizedBox(
-                                          height: 25,
-                                          width: 25,
-                                          child: Image.asset(
-                                            homeTabBarList[index]['image'],
-                                            color: homeController.selectTab.value == index
-                                                ? Colors.white
-                                                : Colors.white.withOpacity(0.6),
-                                          ),
-                                        )
-                                      : badges.Badge(
-                                          badgeContent: Text(
-                                            badgeCount.toString(),
-                                            style: TextStyle(
-                                              color: ConstantColor.whiteColor,
-                                              fontSize: 10,
+                        if (homeController.userData['user_type'] == 2) {
+                          await homeController.getSentEnquiriesUnreadCount("1");
+                        }
+                        // ── END OF YOUR ORIGINAL ON-TAP LOGIC ──
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color.fromARGB(255, 227, 232, 251) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            /// Badge & Icon Logic
+                            index == 1 && homeController.userData['user_type'] == 2
+                                ? Obx(() {
+                                    final newCount = enquiriesReceivedController.newOpenCount.value;
+                                    final unreadCount = homeController.receivedUnreadCount.value;
+                                    final badgeCount = newCount > 0 ? newCount : unreadCount;
+                                    return badgeCount == 0
+                                        ? styledIcon
+                                        : badges.Badge(
+                                            badgeContent: Text(
+                                              badgeCount.toString(),
+                                              style: const TextStyle(color: Colors.white, fontSize: 10),
                                             ),
-                                          ),
-                                          badgeStyle: const badges.BadgeStyle(
-                                            badgeColor: Colors.red,
-                                            padding: EdgeInsets.all(5),
-                                          ),
-                                          child: SizedBox(
-                                            height: 25,
-                                            width: 25,
-                                            child: Image.asset(
-                                              homeTabBarList[index]['image'],
-                                              color: homeController.selectTab.value == index
-                                                  ? Colors.white
-                                                  : Colors.white.withOpacity(0.6),
+                                            badgeStyle: const badges.BadgeStyle(
+                                                badgeColor: Color.fromARGB(255, 134, 141, 227), padding: EdgeInsets.all(5)),
+                                            child: styledIcon,
+                                          );
+                                  })
+                                : index == 2
+                                    ? Obx(() => homeController.pendingOpenInquiriesCount.value.toString() == "0"
+                                        ? styledIcon
+                                        : badges.Badge(
+                                            badgeContent: Text(
+                                              homeController.pendingOpenInquiriesCount.value.toString(),
+                                              style: const TextStyle(color: Colors.white, fontSize: 10),
                                             ),
-                                          ),
-                                        );
-                                })
-                              : index == 2
-                                  ? homeController.pendingOpenInquiriesCount
-                                              .value
-                                              .toString() ==
-                                          "0"
-                                      ? SizedBox(
-                                          height: 25,
-                                          width: 25,
-                                          child: Image.asset(
-                                            homeTabBarList[index]['image'],
-                                            color: homeController
-                                                        .selectTab.value ==
-                                                    index
-                                                ? Colors.white
-                                                : Colors.white.withOpacity(0.6),
-                                          ),
-                                        )
-                                      : badges.Badge(
-                                          badgeContent: Obx(
-                                            () => Text(
-                                              homeController
-                                                  .pendingOpenInquiriesCount
-                                                  .value
-                                                  .toString(),
-                                              style: TextStyle(
-                                                color: ConstantColor
-                                                    .whiteColor,
-                                                fontSize: 10,
-                                              ),
-                                            ),
-                                          ),
-                                          child: SizedBox(
-                                            height: 25,
-                                            width: 25,
-                                            child: Image.asset(
-                                              homeTabBarList[index]
-                                                  ['image'],
-                                              color: homeController
-                                                          .selectTab
-                                                          .value ==
-                                                      index
-                                                  ? Colors.white
-                                                  : Colors.white.withOpacity(0.6),
-                                            ),
-                                          ),
-                                        )
-                                  : SizedBox(
-                                      height: 25,
-                                      width: 25,
-                                      child: Image.asset(
-                                        homeTabBarList[index]['image'],
-                                        color: index == 1 &&
-                                                homeController.userData[
-                                                        'user_type'] !=
-                                                    2
-                                            ? null
-                                            : homeController
-                                                        .selectTab.value ==
-                                                    index
-                                                ? Colors.white
-                                                : Colors.white.withOpacity(0.6),
-                                      ),
-                                    ),
-                          const SizedBox(height: 2),
-                          Text(
-                            homeTabBarList[index]['title'],
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: homeController.selectTab.value == index
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.6),
+                                            badgeStyle: const badges.BadgeStyle(
+                                                badgeColor: const Color.fromARGB(255, 106, 133, 231), padding: EdgeInsets.all(5)),
+                                            child: styledIcon,
+                                          ))
+                                    : styledIcon,
+                            
+                            const SizedBox(height: 0),
+                            
+                            /// Title
+                            Text(
+                              homeTabBarList[index]['title'],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                color: isSelected ? const Color(0xff0B3C9B) : const Color(0xff8A95A5),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
+            ),
+          ),
+        ),
+      ),
+      
+      const SizedBox(width: 12),
+
+      /// ── Right Chopped Pill (Healthy Mode) ──
+      Container(
+        width: 85,
+        decoration: const BoxDecoration(
+         gradient: LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      const Color(0xff4F86FF), // Light Blue
+      const Color(0xff0B3C9B), // Primary Blue
+    ],
+  ),// The dark green from the image
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(35),
+            bottomLeft: Radius.circular(35),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(-2, 4),
             ),
           ],
         ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(35),
+              bottomLeft: Radius.circular(35),
+            ),
+             onTap: () {
+                    raiseInquiryDialog(context, homeController, height, width);
+                  },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+              ScaleTransition(
+  scale: _pulseAnimation,
+  child: const Icon(
+    Icons.add,
+    color: Colors.white,
+    size: 18,
+  ),
+),
+              const Text(
+                            "New Enquiry",
+                             
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                               color: Colors.white
+                              ),
+                            ),
+              ],
+            ),
+          ),
+        ),
       ),
-    ),
+    ],
   ),
 ),
       ),
@@ -786,7 +776,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
         controller: homeController.tabController,
         indicatorColor: ConstantColor.whiteColor,
         indicatorSize: TabBarIndicatorSize.tab,
-        indicatorWeight: 4,
+        indicatorWeight: 2,
         onTap: (value) async {
           homeController.tabIndex.value = value;
           homeController.isSearchOpen.value = false;
@@ -803,7 +793,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
             child: Text(
               "All",
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: ConstantColor.whiteColor,
               ),
@@ -813,7 +803,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
             child: Text(
               "Business",
               style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: ConstantColor.whiteColor),
             ),
@@ -822,7 +812,7 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
             child: Text(
               "Services",
               style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: ConstantColor.whiteColor),
             ),
@@ -1045,4 +1035,449 @@ class HomeTabBarScreenState extends State<HomeTabBarScreen> {
       },
     );
   }
+   Future<void> raiseInquiryDialog(BuildContext context,
+    HomeController controller,
+    double height,
+    double width) async {
+
+  await controller.postCategoriesApi();
+  controller.categorySelect.value = {};
+  controller.subCategorySelect.value = {};
+  controller.priorityTypeSelect.value = "";
+  controller.subCategoryList.value = [];
+  controller.inquiryController.value.clear();
+  
+  List categoryList = List.from(controller.categoryList);
+
+  categoryList.removeWhere(
+    (element) =>
+        element['category'].toString().trim().toLowerCase() ==
+        'Not in List'.trim().toLowerCase(),
+  );
+
+  if (!context.mounted) return;
+  final dialogContext = context;
+
+  return showDialog(
+    context: dialogContext,
+    barrierDismissible: false,
+    builder: (context) => Obx(
+      () => Dialog(
+        backgroundColor: ConstantColor.whiteColor,
+        surfaceTintColor: ConstantColor.whiteColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    "Raise Inquiry",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: ConstantColor.blackColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  "Category",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      color: const Color(0xffF7F8FA),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xffEBEFF2),
+                        width: 1,
+                      )),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 16,
+                  ),
+                  child: DropdownButton(
+                    dropdownColor: ConstantColor.whiteColor,
+                    value: controller.categorySelect['category'] == null ||
+                            controller.categorySelect['category']
+                                .toString()
+                                .trim()
+                                .isEmpty
+                        ? null
+                        : controller.categorySelect['category'].toString(),
+                    padding: EdgeInsets.zero,
+                    isExpanded: true,
+                    onChanged: (dynamic newValue) {
+                      for (int i = 0; i < categoryList.length; i++) {
+                        if (categoryList[i]['category'].toString() == newValue.toString()) {
+                          debugPrint('Selected Category Data: ${categoryList[i]}');
+                          controller.categorySelect.value = categoryList[i] ?? {};
+                          debugPrint('Category ID: ${controller.categorySelect['id']}');
+                          controller.postSubCategoriesApi(
+                              controller.categorySelect['id'].toString());
+                        }
+                      }
+                    },
+                    items: categoryList.map(
+                      (val) {
+                        return DropdownMenuItem(
+                          value: val['category']?.toString() ?? "",
+                          child: Text(
+                            val['category']?.toString() ?? "",
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: ConstantColor.blackColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      },
+                    ).toList(),
+                    underline: const SizedBox(),
+                    hint: Text(
+                      "Select Category",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      size: 24,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Sub-Category",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      color: const Color(0xffF7F8FA),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xffEBEFF2),
+                        width: 1,
+                      )),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 16,
+                  ),
+                  child: DropdownButton(
+                    dropdownColor: ConstantColor.whiteColor,
+                    value: controller.subCategorySelect['subcategory'] == null ||
+                            controller.subCategorySelect['subcategory']
+                                .toString()
+                                .trim()
+                                .isEmpty
+                        ? null
+                        : controller.subCategorySelect['subcategory'].toString(),
+                    padding: EdgeInsets.zero,
+                    isExpanded: true,
+                    onChanged: (dynamic newValue) {
+                      for (int i = 0; i < controller.subCategoryList.length; i++) {
+                        if (controller.subCategoryList[i]['subcategory'].toString() == newValue.toString()) {
+                          debugPrint('Selected SubCategory Data: ${controller.subCategoryList[i]}');
+                          controller.subCategorySelect.value = controller.subCategoryList[i] ?? {};
+                          debugPrint('SubCategory ID: ${controller.subCategorySelect['id']}');
+                        }
+                      }
+                    },
+                    hint: Text(
+                      "Select SubCategory",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    items: controller.subCategoryList.map(
+                      (val) {
+                        return DropdownMenuItem(
+                          value: val['subcategory']?.toString() ?? "",
+                          child: Text(
+                            val['subcategory']?.toString() ?? "",
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: ConstantColor.blackColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      },
+                    ).toList(),
+                    underline: const SizedBox(),
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      size: 24,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Priority type",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        controller.priorityTypeSelect.value = "Urgent";
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            controller.priorityTypeSelect.value == "Urgent"
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color: controller.priorityTypeSelect.value == "Urgent"
+                                ? const Color(0xff0B3C9B)
+                                : Colors.grey.shade400,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Urgent",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: controller.priorityTypeSelect.value == "Urgent"
+                                  ? ConstantColor.blackColor
+                                  : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 32),
+                    GestureDetector(
+                      onTap: () {
+                        controller.priorityTypeSelect.value = "General";
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            controller.priorityTypeSelect.value == "General"
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color: controller.priorityTypeSelect.value == "General"
+                                ? const Color(0xff0B3C9B)
+                                : Colors.grey.shade400,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "General",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: controller.priorityTypeSelect.value == "General"
+                                  ? ConstantColor.blackColor
+                                  : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xffF7F8FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xffEBEFF2),
+                      width: 1,
+                    ),
+                  ),
+                  child: TextFormField(
+                    controller: controller.inquiryController.value,
+                    textInputAction: TextInputAction.newline,
+                    maxLines: 5,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: ConstantColor.blackColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    keyboardType: TextInputType.multiline,
+                    cursorColor: ConstantColor.blackColor,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 16),
+                      hintText: "Need Photographer for one day for birthday celebration.",
+                      hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w400),
+                      filled: false,
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          if (!controller.isButtonLoading.value) {
+                            Get.back();
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xffD0D5DD), width: 1.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "CANCEL",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xff344054),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: ConstantColor.primaryGradient,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: ElevatedButton(
+                          onPressed: controller.isButtonLoading.value
+                              ? null
+                              : () async {
+                                  // Validate selections
+                                  if (controller.categorySelect.isEmpty) {
+                                    ShowToast.showToast('Please Select Category', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  if (controller.subCategorySelect.isEmpty) {
+                                    ShowToast.showToast('Please Select Sub-Category', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  if (controller.priorityTypeSelect.value.isEmpty) {
+                                    ShowToast.showToast('Please Select Priority Type', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  // Get IDs safely
+                                  String categoryId = controller.categorySelect['id']?.toString() ?? '';
+                                  String subCategoryId = controller.subCategorySelect['id']?.toString() ?? '';
+                                  String priorityType = controller.priorityTypeSelect.value == "Urgent" ? "0" : "1";
+                                  String inquiryText = controller.inquiryController.value.text.trim();
+                                  
+                                  // Validate IDs
+                                  if (categoryId.isEmpty) {
+                                    ShowToast.showToast('Invalid Category selected', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  if (subCategoryId.isEmpty) {
+                                    ShowToast.showToast('Invalid Sub-Category selected', showSuccess: false);
+                                    return;
+                                  }
+                                  
+                                  var bodyParams = {
+                                    'category': categoryId,
+                                    'sub_category': subCategoryId,
+                                    'type': priorityType,
+                                    'enq_text': inquiryText,
+                                  };
+                                  
+                                  debugPrint('Sending Inquiry with params: $bodyParams');
+                                  
+                                  // Call API
+                                  bool success = await controller.postCreateEnquiryApi(bodyParams);
+                                  
+                                  if (success) {
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                          ),
+                          child: controller.isButtonLoading.value
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  "SUBMIT",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
 }

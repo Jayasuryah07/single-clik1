@@ -461,7 +461,7 @@ class _Loader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'CREATING MAGIC',
+          'Loading',
           style: GoogleFonts.poppins(
             fontSize: width * 0.028,
             fontWeight: FontWeight.w600,

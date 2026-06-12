@@ -406,7 +406,7 @@ class ChatSentController extends GetxController {
         ShowToast.showToast('Message sent', showSuccess: true);
       } else {
         // Keep optimistic message for a bit longer
-        ShowToast.showToast('Message will be delivered', showSuccess: true);
+        ShowToast.showToast('Sent Successfully', showSuccess: true);
         
         // Try to refresh after 2 seconds
         Future.delayed(const Duration(seconds: 2), () {

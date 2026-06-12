@@ -17,8 +17,8 @@ class EnquiriesReceivedScreen extends StatefulWidget {
 }
 
 class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
-
-  EnquiriesReceivedController enquiriesReceivedController = Get.put(EnquiriesReceivedController());
+  EnquiriesReceivedController enquiriesReceivedController =
+      Get.put(EnquiriesReceivedController());
   HomeController homeController = Get.put(HomeController());
 
   @override
@@ -37,27 +37,24 @@ class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
 
   Future<void> getData(String status) async {
     await enquiriesReceivedController.postReceivedApi(status);
-    await homeController
-        .getSentEnquiriesUnreadCount("1");
+    await homeController.getSentEnquiriesUnreadCount("1");
   }
 
   @override
   Widget build(BuildContext context) {
-
-    double width = MediaQuery.of(context).size.width;
-
     return Scaffold(
-      backgroundColor: ConstantColor.bgColor,
+      backgroundColor: const Color(0xffF8FAFC), // Lighter background to match UI
       body: Obx(
         () => enquiriesReceivedController.isLoading.value
             ? const Center(
                 child: CircularProgressIndicator(),
               )
-                  : Column(
+            : Column(
                 children: [
                   // Real-time new enquiry notification banner
                   Obx(() {
-                    final newCount = enquiriesReceivedController.newOpenCount.value;
+                    final newCount =
+                        enquiriesReceivedController.newOpenCount.value;
                     if (newCount <= 0) return const SizedBox.shrink();
                     return GestureDetector(
                       onTap: () {
@@ -66,7 +63,8 @@ class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 16),
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             colors: [Color(0xFF00C853), Color(0xFF00897B)],
@@ -75,7 +73,8 @@ class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.notifications_active, color: Colors.white, size: 18),
+                            const Icon(Icons.notifications_active,
+                                color: Colors.white, size: 18),
                             const SizedBox(width: 8),
                             Text(
                               '$newCount new ${newCount == 1 ? 'enquiry' : 'enquiries'} received! Tap to dismiss',
@@ -92,715 +91,443 @@ class EnquiriesReceivedScreenState extends State<EnquiriesReceivedScreen> {
                   }),
                   Expanded(
                     child: TabBarView(
-                controller: enquiriesReceivedController.tabController,
-                children: [
-                  RefreshIndicator(
-                    onRefresh: () async {
-                      await enquiriesReceivedController.postReceivedApi("1");
-                      await homeController
-                          .getSentEnquiriesUnreadCount("1");
-                    },
-                    backgroundColor: ConstantColor.whiteColor,
-                    color: ConstantColor.primary,
-                    child: enquiriesReceivedController.openReceivedList.isEmpty
-                        ? ListView(
+                      controller: enquiriesReceivedController.tabController,
                       children: [
-                        SizedBox(
-                          height: Get.height / 2.8,
+                        /// ── OPEN TAB ──
+                        RefreshIndicator(
+                          onRefresh: () async {
+                            await enquiriesReceivedController.postReceivedApi("1");
+                            await homeController.getSentEnquiriesUnreadCount("1");
+                          },
+                          backgroundColor: ConstantColor.whiteColor,
+                          color: ConstantColor.primary,
+                          child: enquiriesReceivedController.openReceivedList.isEmpty
+                              ? _buildEmptyState()
+                              : ListView.builder(
+                                  padding: const EdgeInsets.only(top: 8, bottom: 20),
+                                  itemCount: enquiriesReceivedController.openReceivedList.length,
+                                  itemBuilder: (context, index) {
+                                    final itemData = enquiriesReceivedController.openReceivedList[index];
+                                    return _buildEnquiryCard(
+                                      itemData: itemData,
+                                      isOpen: true,
+                                      onTap: () async {
+                                        await Get.to(
+                                          () => ChatReceivedScreen(
+                                              userData: itemData, isChat: true),
+                                          arguments: itemData,
+                                        )?.then((value) async {
+                                          await enquiriesReceivedController.postReceivedApi("1");
+                                          await homeController.getSentEnquiriesUnreadCount("1");
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
                         ),
-                        Center(
-                          child: Text(
-                            ConstantString.dataNotFoundLabel,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: ConstantColor.blackColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+
+                        /// ── CLOSED TAB ──
+                        RefreshIndicator(
+                          onRefresh: () async {
+                            await enquiriesReceivedController.postReceivedApi("2");
+                            await homeController.getSentEnquiriesUnreadCount("1");
+                          },
+                          backgroundColor: ConstantColor.whiteColor,
+                          color: ConstantColor.primary,
+                          child: enquiriesReceivedController.closeReceivedList.isEmpty
+                              ? _buildEmptyState()
+                              : ListView.builder(
+                                  padding: const EdgeInsets.only(top: 8, bottom: 20),
+                                  itemCount: enquiriesReceivedController.closeReceivedList.length,
+                                  itemBuilder: (context, index) {
+                                    final itemData = enquiriesReceivedController.closeReceivedList[index];
+                                    return _buildEnquiryCard(
+                                      itemData: itemData,
+                                      isOpen: false,
+                                      onTap: () async {
+                                        await Get.to(
+                                          () => ChatReceivedScreen(
+                                              userData: itemData, isChat: false),
+                                          arguments: itemData,
+                                        )?.then((value) async {
+                                          await enquiriesReceivedController.postReceivedApi("2");
+                                          await homeController.getSentEnquiriesUnreadCount("1");
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
                         ),
                       ],
-                    )
-                        : ListView.builder(
-                      itemCount:
-                      enquiriesReceivedController.openReceivedList.length,
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        debugPrint(
-                            'Enquiries : ${enquiriesReceivedController.openReceivedList[index]}');
-
-                        return GestureDetector(
-                          onTap: () async {
-                            await Get.to(
-                                  () => ChatReceivedScreen(
-                                  userData: enquiriesReceivedController
-                                      .openReceivedList[index],
-                                  isChat: true),
-                              arguments: enquiriesReceivedController
-                                  .openReceivedList[index],
-                            )?.then((value) async {
-                              await enquiriesReceivedController
-                                  .postReceivedApi("1");
-                              await homeController
-                                  .getSentEnquiriesUnreadCount(
-                                  "1");
-                            });
-                          },
-                          child: Container(
-                            padding: EdgeInsets.fromLTRB(
-                                Get.width / 30,
-                                Get.width / 120,
-                                Get.width / 50,
-                                Get.width / 30),
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 15),
-                            decoration: BoxDecoration(
-                                color: ConstantColor.whiteColor,
-                                borderRadius:
-                                BorderRadius.circular(8)),
-                            child: Column(
-                              children: [
-                                Row(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment
-                                          .center,
-                                      children: [
-                                        SizedBox(
-                                          height:
-                                          Get.width / 50,
-                                        ),
-                                        Container(
-                                          decoration:
-                                          BoxDecoration(
-                                            border: Border.all(
-                                              color:
-                                              ConstantColor
-                                                  .primary,
-                                              width: 1.5,
-                                            ),
-                                            shape:
-                                            BoxShape.circle,
-                                          ),
-                                          child: ClipOval(
-                                            child:
-                                            AppImageAsset(
-                                              image:
-                                              "${ConstantString.userImgUrlPath}${enquiriesReceivedController.openReceivedList[index]['photo']}",
-                                              isFile: false,
-                                              fit: BoxFit.cover,
-                                              height:
-                                              Get.width /
-                                                  5.6,
-                                              width: Get.width /
-                                                  5.6,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height:
-                                          Get.width / 90,
-                                        ),
-                                        Text(
-                                          "${enquiriesReceivedController.openReceivedList[index]['name'] == null || enquiriesReceivedController.openReceivedList[index]['name'].toString().trim().isEmpty ? 'Name ${ConstantString.naLabel}' : enquiriesReceivedController.openReceivedList[index]['name']}",
-                                          maxLines: 2,
-                                          overflow: TextOverflow
-                                              .ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight:
-                                            FontWeight.w800,
-                                            color: ConstantColor
-                                                .primaryDark,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                        width: width * 0.04),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment
-                                            .start,
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment
-                                                .start,
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                  CrossAxisAlignment
-                                                      .start,
-                                                  children: [
-                                                    SizedBox(
-                                                      height:
-                                                      Get.width /
-                                                          50,
-                                                    ),
-                                                    Text(
-                                                      "${enquiriesReceivedController.openReceivedList[index]['category'] == null || enquiriesReceivedController.openReceivedList[index]['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiriesReceivedController.openReceivedList[index]['category']} (${enquiriesReceivedController.openReceivedList[index]['subcategory'] == null || enquiriesReceivedController.openReceivedList[index]['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiriesReceivedController.openReceivedList[index]['subcategory']})",
-                                                      style:
-                                                      TextStyle(
-                                                        fontSize:
-                                                        15,
-                                                        fontWeight:
-                                                        FontWeight.w600,
-                                                        color: ConstantColor
-                                                            .blackColor,
-                                                      ),
-                                                    ),
-
-                                                    Text(
-                                                      enquiriesReceivedController.openReceivedList[index]
-                                                      [
-                                                      'enq_text'] ??
-                                                          "",
-                                                      style:
-                                                      TextStyle(
-                                                        color: ConstantColor
-                                                            .blackColor,
-                                                        fontSize:
-                                                        13,
-                                                        fontWeight:
-                                                        FontWeight.w400,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              (enquiriesReceivedController.openReceivedList[index]
-                                              [
-                                              'unread_reply_count'] ??
-                                                  0) ==
-                                                  0
-                                                  ? const SizedBox()
-                                                  : Container(
-                                                decoration:
-                                                BoxDecoration(
-                                                  color: ConstantColor
-                                                      .greenColor,
-                                                  shape: BoxShape
-                                                      .circle,
-                                                ),
-                                                padding: const EdgeInsets
-                                                    .all(
-                                                    10),
-                                                child:
-                                                Center(
-                                                  child:
-                                                  Text(
-                                                    "${enquiriesReceivedController.openReceivedList[index]['unread_reply_count'] ?? ""}",
-                                                    style:
-                                                    TextStyle(
-                                                      fontSize:
-                                                      13,
-                                                      fontWeight:
-                                                      FontWeight.w400,
-                                                      color:
-                                                      ConstantColor.whiteColor,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            height:
-                                            Get.width / 10,
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Text(
-                                                DateFormat(
-                                                    'dd-MM-yyyy')
-                                                    .format(DateTime.parse(enquiriesReceivedController.openReceivedList[index]
-                                                [
-                                                'created_at'] ??
-                                                    DateTime
-                                                        .now())),
-                                                style:
-                                                TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight:
-                                                  FontWeight
-                                                      .w400,
-                                                  color: ConstantColor
-                                                      .grayColor,
-                                                ),
-                                              ),
-                                              Container(
-                                                decoration:
-                                                BoxDecoration(
-                                                  color: ConstantColor
-                                                      .primary,
-                                                  borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                      30),
-                                                ),
-                                                padding: EdgeInsets
-                                                    .symmetric(
-                                                  vertical:
-                                                  Get.width /
-                                                      120,
-                                                  horizontal: Get.width/90,
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                  MainAxisSize
-                                                      .min,
-                                                  children: [
-                                                    Text(
-                                                      " View",
-                                                      style:
-                                                      TextStyle(
-                                                        fontSize:
-                                                        12,
-                                                        fontWeight:
-                                                        FontWeight.w400,
-                                                        color: ConstantColor
-                                                            .whiteColor,
-                                                      ),
-                                                    ),
-                                                    Icon(
-                                                      Icons
-                                                          .arrow_forward_ios_rounded,
-                                                      color: ConstantColor
-                                                          .whiteColor,
-                                                      size:
-                                                      Get.width /
-                                                          30,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // SizedBox(
-                                //   height: Get.width / 90,
-                                // ),
-                                // Row(
-                                //   children: [
-                                //     Expanded(
-                                //       child: Text(
-                                //         "${controller.openReceivedList[index]['name'] == null || controller.openReceivedList[index]['name'].toString().trim().isEmpty ? 'Name ${ConstantString.naLabel}' : controller.openReceivedList[index]['name']}",
-                                //         // maxLines: 2,
-                                //         // overflow:
-                                //         //     TextOverflow
-                                //         //         .ellipsis,
-                                //         style: TextStyle(
-                                //           fontSize: 13,
-                                //           fontWeight:
-                                //               FontWeight.w800,
-                                //           color: ConstantColor
-                                //               .primaryDark,
-                                //         ),
-                                //       ),
-                                //     ),
-                                //     Text(
-                                //       controller.openReceivedList[
-                                //                   index]
-                                //               ['status'] ??
-                                //           "",
-                                //       style: TextStyle(
-                                //         fontSize: 12,
-                                //         fontWeight:
-                                //             FontWeight.w400,
-                                //         color: ConstantColor
-                                //             .grayColor,
-                                //       ),
-                                //     ),
-                                //   ],
-                                // ),
-                                // SizedBox(
-                                //   height: Get.width / 90,
-                                // ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
                     ),
                   ),
-                  RefreshIndicator(
-                    onRefresh: () async {
-                      await enquiriesReceivedController.postReceivedApi("2");
-                      await homeController
-                          .getSentEnquiriesUnreadCount("1");
-                    },
-                    backgroundColor: ConstantColor.whiteColor,
-                    color: ConstantColor.primary,
-                    child: enquiriesReceivedController.closeReceivedList.isEmpty
-                        ? ListView(
-                      children: [
-                        SizedBox(
-                          height: Get.height / 2.8,
-                        ),
-                        Center(
-                          child: Text(
-                            ConstantString.dataNotFoundLabel,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: ConstantColor.blackColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                        : ListView.builder(
-                      itemCount:
-                      enquiriesReceivedController.closeReceivedList.length,
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        // List categoryDataList = homeController
-                        //     .categoryList
-                        //     .where(
-                        //       (element) =>
-                        //           element['id'].toString() ==
-                        //           controller
-                        //               .closeReceivedList[index]
-                        //                   ['category']
-                        //               .toString(),
-                        //     )
-                        //     .toList();
-                        // Map categoryData =
-                        //     categoryDataList.isEmpty
-                        //         ? {}
-                        //         : categoryDataList.first;
-                        // String categoryName =
-                        //     categoryData['category'] ?? '';
-                        return GestureDetector(
-                          onTap: () {
-                            Get.to(
-                                    () => ChatReceivedScreen(
-                                    userData: enquiriesReceivedController
-                                        .closeReceivedList[
-                                    index],
-                                    isChat: false),
-                                arguments: enquiriesReceivedController
-                                    .closeReceivedList[
-                                index])
-                                ?.then((value) async {
-
-                              await enquiriesReceivedController
-                                  .postReceivedApi("2");
-                              await homeController
-                                  .getSentEnquiriesUnreadCount(
-                                  "1");
-                            });
-                          },
-                          child: Container(
-                            padding: EdgeInsets.fromLTRB(
-                                Get.width / 30,
-                                Get.width / 120,
-                                Get.width / 50,
-                                Get.width / 30),
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 15),
-                            decoration: BoxDecoration(
-                                color: ConstantColor.whiteColor,
-                                borderRadius:
-                                BorderRadius.circular(8)),
-                            child: Column(
-                              children: [
-                                Row(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment
-                                          .center,
-                                      children: [
-                                        SizedBox(
-                                          height:
-                                          Get.width / 50,
-                                        ),
-                                        Container(
-                                          decoration:
-                                          BoxDecoration(
-                                            border: Border.all(
-                                              color:
-                                              ConstantColor
-                                                  .primary,
-                                              width: 1.5,
-                                            ),
-                                            shape:
-                                            BoxShape.circle,
-                                          ),
-                                          child: ClipOval(
-                                            child:
-                                            AppImageAsset(
-                                              image:
-                                              "${ConstantString.userImgUrlPath}${enquiriesReceivedController.closeReceivedList[index]['photo']}",
-                                              isFile: false,
-                                              fit: BoxFit.cover,
-                                              height:
-                                              Get.width /
-                                                  5.6,
-                                              width: Get.width /
-                                                  5.6,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height:
-                                          Get.width / 90,
-                                        ),
-                                        Text(
-                                          "${enquiriesReceivedController.closeReceivedList[index]['name'] == null || enquiriesReceivedController.closeReceivedList[index]['name'].toString().trim().isEmpty ? 'Name ${ConstantString.naLabel}' : enquiriesReceivedController.closeReceivedList[index]['name']}",
-                                          maxLines: 2,
-                                          overflow: TextOverflow
-                                              .ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight:
-                                            FontWeight.w800,
-                                            color: ConstantColor
-                                                .primaryDark,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                        width: width * 0.04),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment
-                                            .start,
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment
-                                                .start,
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                  CrossAxisAlignment
-                                                      .start,
-                                                  children: [
-                                                    SizedBox(
-                                                      height:
-                                                      Get.width /
-                                                          50,
-                                                    ),
-                                                    Text(
-                                                      "${enquiriesReceivedController.closeReceivedList[index]['category'] == null || enquiriesReceivedController.closeReceivedList[index]['category'].toString().trim().isEmpty ? 'Category ${ConstantString.naLabel}' : enquiriesReceivedController.closeReceivedList[index]['category']} (${enquiriesReceivedController.closeReceivedList[index]['subcategory'] == null || enquiriesReceivedController.closeReceivedList[index]['subcategory'].toString().trim().isEmpty ? 'Sub Category ${ConstantString.naLabel}' : enquiriesReceivedController.closeReceivedList[index]['subcategory']})",
-                                                      style:
-                                                      TextStyle(
-                                                        fontSize:
-                                                        15,
-                                                        fontWeight:
-                                                        FontWeight.w600,
-                                                        color: ConstantColor
-                                                            .blackColor,
-                                                      ),
-                                                    ),
-
-                                                    Text(
-                                                      enquiriesReceivedController.closeReceivedList[index]
-                                                      [
-                                                      'enq_text'] ??
-                                                          "",
-                                                      style:
-                                                      TextStyle(
-                                                        color: ConstantColor
-                                                            .blackColor,
-                                                        fontSize:
-                                                        13,
-                                                        fontWeight:
-                                                        FontWeight.w400,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              (enquiriesReceivedController.closeReceivedList[index]
-                                              [
-                                              'unread_reply_count'] ??
-                                                  0) ==
-                                                  0
-                                                  ? const SizedBox()
-                                                  : Container(
-                                                decoration:
-                                                BoxDecoration(
-                                                  color: ConstantColor
-                                                      .greenColor,
-                                                  shape: BoxShape
-                                                      .circle,
-                                                ),
-                                                padding: const EdgeInsets
-                                                    .all(
-                                                    10),
-                                                child:
-                                                Center(
-                                                  child:
-                                                  Text(
-                                                    "${enquiriesReceivedController.closeReceivedList[index]['unread_reply_count'] ?? ""}",
-                                                    style:
-                                                    TextStyle(
-                                                      fontSize:
-                                                      13,
-                                                      fontWeight:
-                                                      FontWeight.w400,
-                                                      color:
-                                                      ConstantColor.whiteColor,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            height:
-                                            Get.width / 10,
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Text(
-                                                DateFormat(
-                                                    'dd-MM-yyyy')
-                                                    .format(DateTime.parse(enquiriesReceivedController.closeReceivedList[index]
-                                                [
-                                                'created_at'] ??
-                                                    DateTime
-                                                        .now())),
-                                                style:
-                                                TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight:
-                                                  FontWeight
-                                                      .w400,
-                                                  color: ConstantColor
-                                                      .grayColor,
-                                                ),
-                                              ),
-                                              Container(
-                                                decoration:
-                                                BoxDecoration(
-                                                  color: ConstantColor
-                                                      .primary,
-                                                  borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                      30),
-                                                ),
-                                                padding: EdgeInsets
-                                                    .symmetric(
-                                                  vertical:
-                                                  Get.width /
-                                                      120,
-                                                  horizontal: Get.width/90,
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                  MainAxisSize
-                                                      .min,
-                                                  children: [
-                                                    Text(
-                                                      " View",
-                                                      style:
-                                                      TextStyle(
-                                                        fontSize:
-                                                        12,
-                                                        fontWeight:
-                                                        FontWeight.w400,
-                                                        color: ConstantColor
-                                                            .whiteColor,
-                                                      ),
-                                                    ),
-                                                    Icon(
-                                                      Icons
-                                                          .arrow_forward_ios_rounded,
-                                                      color: ConstantColor
-                                                          .whiteColor,
-                                                      size:
-                                                      Get.width /
-                                                          30,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // SizedBox(
-                                //   height: Get.width / 90,
-                                // ),
-                                // Row(
-                                //   children: [
-                                //     Expanded(
-                                //       child: Text(
-                                //         "${controller.openReceivedList[index]['name'] == null || controller.openReceivedList[index]['name'].toString().trim().isEmpty ? 'Name ${ConstantString.naLabel}' : controller.openReceivedList[index]['name']}",
-                                //         // maxLines: 2,
-                                //         // overflow:
-                                //         //     TextOverflow
-                                //         //         .ellipsis,
-                                //         style: TextStyle(
-                                //           fontSize: 13,
-                                //           fontWeight:
-                                //               FontWeight.w800,
-                                //           color: ConstantColor
-                                //               .primaryDark,
-                                //         ),
-                                //       ),
-                                //     ),
-                                //     Text(
-                                //       controller.openReceivedList[
-                                //                   index]
-                                //               ['status'] ??
-                                //           "",
-                                //       style: TextStyle(
-                                //         fontSize: 12,
-                                //         fontWeight:
-                                //             FontWeight.w400,
-                                //         color: ConstantColor
-                                //             .grayColor,
-                                //       ),
-                                //     ),
-                                //   ],
-                                // ),
-                                // SizedBox(
-                                //   height: Get.width / 90,
-                                // ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                 ],
-                ),   // close TabBarView
-                 ),  // close inner Expanded(TabBarView)
-                 ],  // close Column children
-               ),    // close Column
-       ),
-     );
-
+                ],
+              ),
+      ),
+    );
   }
 
+  /// Reusable empty state logic
+  Widget _buildEmptyState() {
+    return ListView(
+      children: [
+        SizedBox(height: Get.height / 2.8),
+        Center(
+          child: Text(
+            ConstantString.dataNotFoundLabel,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: ConstantColor.blackColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// ── THE NEW UI CARD DESIGN ──
+  Widget _buildEnquiryCard({
+    required Map<dynamic, dynamic> itemData,
+    required bool isOpen,
+    required VoidCallback onTap,
+  }) {
+    // Formatting variables
+    String name = itemData['name'] == null || itemData['name'].toString().trim().isEmpty
+        ? 'Name ${ConstantString.naLabel}'
+        : itemData['name'].toString();
+
+    String category = itemData['category'] == null || itemData['category'].toString().trim().isEmpty
+        ? 'Category ${ConstantString.naLabel}'
+        : itemData['category'].toString();
+
+    String subCategory = itemData['subcategory'] == null || itemData['subcategory'].toString().trim().isEmpty
+        ? 'Sub Category ${ConstantString.naLabel}'
+        : itemData['subcategory'].toString();
+
+    String desc = itemData['enq_text'] ?? "No description provided";
+
+    String formattedDate = "";
+    try {
+      formattedDate = DateFormat('dd MMM yyyy').format(
+          DateTime.parse(itemData['created_at'].toString()));
+    } catch (e) {
+      formattedDate = DateFormat('dd MMM yyyy').format(DateTime.now());
+    }
+
+    int unreadCount = int.tryParse(itemData['unread_reply_count'].toString()) ?? 0;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              /// ── Bottom Wave Decoration ──
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 120,
+                child: CustomPaint(
+                  painter: _BottomWavePainter(),
+                ),
+              ),
+
+              /// ── Card Content ──
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// Avatar
+                        Container(
+                          height: 52,
+                          width: 52,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xffA8C0F0),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: AppImageAsset(
+                              image:
+                                  "${ConstantString.userImgUrlPath}${itemData['photo']}",
+                              isFile: false,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        /// Main Texts
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xff0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "$category ($subCategory)",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xff64748B),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                desc,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xff94A3B8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        /// Status Badge & Unread Logic
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isOpen
+                                    ? const Color(0xffE8F5E9)
+                                    : const Color(0xffF1F5F9),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                isOpen ? "Open" : "Closed",
+                                style: TextStyle(
+                                  color: isOpen
+                                      ? const Color(0xff2E7D32)
+                                      : const Color(0xff64748B),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            if (unreadCount > 0) ...[
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xffE53945),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  unreadCount.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            ]
+                          ],
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    /// Bottom Row (Date & Button)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        /// Date
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 15,
+                              color: Color(0xff64748B),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              formattedDate,
+                              style: const TextStyle(
+                                color: Color(0xff64748B),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        /// View Details Button
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                           gradient: LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      const Color(0xff4F86FF), // Light Blue
+      const Color(0xff0B3C9B), // Primary Blue
+    ],
+  ),//
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "View Details",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom painter for the double-layered blue waves at the bottom of the card
+class _BottomWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+
+    /// BACK WAVE
+    final path1 = Path();
+    path1.moveTo(0, size.height * 0.55);
+
+    path1.quadraticBezierTo(
+      size.width * 0.25,
+      size.height * 0.15,
+      size.width * 0.55,
+      size.height * 0.55,
+    );
+
+    path1.quadraticBezierTo(
+      size.width * 0.80,
+      size.height * 0.90,
+      size.width,
+      size.height * 0.25,
+    );
+
+    path1.lineTo(size.width, size.height);
+    path1.lineTo(0, size.height);
+    path1.close();
+
+    canvas.drawPath(
+      path1,
+     Paint()..color = const Color(0xFFF4F7FD)
+    );
+
+    /// MIDDLE WAVE
+    final path2 = Path();
+    path2.moveTo(0, size.height * 0.80);
+
+    path2.quadraticBezierTo(
+      size.width * 0.30,
+      size.height * 1.00,
+      size.width * 0.60,
+      size.height * 0.55,
+    );
+
+    path2.quadraticBezierTo(
+      size.width * 0.82,
+      size.height * 0.18,
+      size.width,
+      size.height * 0.42,
+    );
+
+    path2.lineTo(size.width, size.height);
+    path2.lineTo(0, size.height);
+    path2.close();
+
+    canvas.drawPath(
+      path2,
+      Paint()..color = const Color(0xFFE7EEF9),
+    );
+
+    /// FRONT WAVE (RIGHT SIDE ONLY)
+    final path3 = Path();
+
+    path3.moveTo(size.width * 0.40, size.height);
+
+    path3.quadraticBezierTo(
+      size.width * 0.68,
+      size.height * 0.55,
+      size.width * 0.84,
+      size.height * 0.32,
+    );
+
+    path3.quadraticBezierTo(
+      size.width * 0.92,
+      size.height * 0.20,
+      size.width,
+      size.height * 0.32,
+    );
+
+    path3.lineTo(size.width, size.height);
+    path3.close();
+
+    canvas.drawPath(
+      path3,
+     Paint()..color = const Color(0xFFDCE7F7)
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
