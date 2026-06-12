@@ -268,24 +268,15 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SizedBox(height: height * 0.045),
                             Center(
                               child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: ConstantColor.primary.withOpacity(0.15),
-                                      blurRadius: 20,
-                                      spreadRadius: 2,
-                                    ),
-                                  ],
-                                ),
+                                
                                 padding: const EdgeInsets.all(12),
                                 child: Image.asset(
                                   "assets/images/sc_logo_new.png",
@@ -329,7 +320,18 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                 ],
                               ),
                             ),
-                            SizedBox(height: height * 0.035),
+                            Center(
+                              child: Text(
+                                "Lets Grow Together",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: ConstantColor.blackColor,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 80),
                             Text(
                               "Enter your Mobile number\nto Log in",
                               style: TextStyle(
@@ -631,7 +633,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
           top: -height * 0.1,
           size: height * 0.4,
           color: ConstantColor.primary,
-          opacity: 0.15,
+          opacity: 0.12,
         ),
         // Large bubble bottom right
         _bubble(
@@ -647,7 +649,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
           top: height * 0.4,
           size: height * 0.22,
           color: ConstantColor.orangeColor,
-          opacity: 0.08,
+          opacity: 0.12,
         ),
         // Medium bubble top right
         _bubble(
@@ -671,7 +673,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
           top: height * 0.35,
           size: height * 0.08,
           color: ConstantColor.primary,
-          opacity: 0.15,
+          opacity: 0.12,
         ),
       ],
     );
